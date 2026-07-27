@@ -5579,3 +5579,32 @@ rules:
         - "**/*.swift"
     patterns:
       - pattern: $LOW ... $HIGH - 1
+
+  - id: pocketcasts.server-module-raw-urlsession-transport
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: >-
+      First-party server traffic must flow through URLConnection so
+      ServerOriginPolicy blocking, the X-Installation-ID header, and the App
+      Attest lane all apply; a raw URLSession task in the Server module
+      silently bypasses every one of those controls. Fetches of genuinely
+      external publisher URLs belong outside this module or need an explicit
+      paths exclusion here (MetadataTask HEADs episode download URLs and is
+      exempt for that reason).
+    languages: [swift]
+    paths:
+      include:
+        - "**/Modules/Sources/PocketCastsServer/**"
+      exclude:
+        - "**/MetadataTask.swift"
+    patterns:
+      - pattern-either:
+          - pattern: URLSession.shared.dataTask(...)
+          - pattern: URLSession.shared.data(...)
+          - pattern: URLSession.shared.download(...)
+          - pattern: URLSession.shared.upload(...)

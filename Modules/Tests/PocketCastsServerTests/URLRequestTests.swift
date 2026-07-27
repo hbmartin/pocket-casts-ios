@@ -16,7 +16,10 @@ class URLRequestTests: XCTestCase {
         )
         LocalizationHelper.provider = provider
 
-        let url = try XCTUnwrap(URL(string: "https://api.pocketcasts.com/"))
+        // Resolve the first-party host through ServerConstants so the test holds
+        // regardless of which origin (hosted, loopback override, or blocked
+        // fallback) the test process resolves.
+        let url = try XCTUnwrap(URL(string: ServerConstants.Urls.api()))
         var request = URLRequest(url: url)
         request.addLocalizationHeaders()
 

@@ -200,7 +200,7 @@ public final class MainServerHandler: Sendable {
             jsonRequest["push_token"] = pushToken
         }
         jsonRequest["push_on"] = pushEnabled ? "true" : "false"
-        jsonRequest["push_environment"] = (ServerConfig.shared.syncDelegate?.production() ?? true) ? "production" : "sandbox"
+        jsonRequest["push_environment"] = (ServerConfig.shared.syncDelegate?.apnsProduction() ?? true) ? "production" : "sandbox"
         guard let data = try? JSONSerialization.data(withJSONObject: jsonRequest) else {
             FileLog.shared.addMessage("Failed to create refresh request")
             return nil

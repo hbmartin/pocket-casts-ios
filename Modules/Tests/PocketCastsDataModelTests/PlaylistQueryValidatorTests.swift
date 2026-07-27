@@ -1,6 +1,7 @@
 import XCTest
 import GRDB
 @testable import PocketCastsDataModel
+import PocketCastsUtils
 
 /// Exercises the SQL-mode validation pipeline end to end against a real database:
 /// legitimate fragments (including subqueries) pass with a match count, and every

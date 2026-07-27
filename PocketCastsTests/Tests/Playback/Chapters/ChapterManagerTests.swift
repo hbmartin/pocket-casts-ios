@@ -25,7 +25,7 @@ class ChapterManagerTests: XCTestCase {
             .appendingPathComponent("chapter-manager-cache-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: directory) }
         let store = OnDeviceChapterStore(directoryURL: directory)
-        let episode = makeEpisodeMock()
+        var episode = makeEpisodeMock()
         episode.uuid = "cached-episode"
         await store.save(.chapters([
             GeneratedChapter(title: "Intro", timestamp: "0:00", startTime: 0),
@@ -55,7 +55,7 @@ class ChapterManagerTests: XCTestCase {
             .appendingPathComponent("chapter-manager-cache-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: directory) }
         let store = OnDeviceChapterStore(directoryURL: directory)
-        let episode = makeEpisodeMock()
+        var episode = makeEpisodeMock()
         episode.uuid = "no-chapters-episode"
         await store.save(.noChapters, episodeUuid: episode.uuid)
         let transcriptLoads = Mutex(0)

@@ -1,6 +1,7 @@
 import Foundation
 import FoundationModels
 import PocketCastsServer
+import PocketCastsUtils
 
 @Generable(description: "Factual notes and possible chapter boundaries for one contiguous podcast transcript segment")
 nonisolated private struct CorpusMapResult {

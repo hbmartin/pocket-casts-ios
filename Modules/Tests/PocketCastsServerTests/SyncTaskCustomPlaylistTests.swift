@@ -164,7 +164,10 @@ final class SyncTaskCustomPlaylistTests: XCTestCase {
         let local = DataManager.sharedManager.findPlaylist(uuid: "custom-1")
         XCTAssertEqual(local?.playlistName, "Custom Local", "full sync must not delete-rewrite a custom playlist")
         XCTAssertEqual(local?.customQuery, customEnvelope, "the customQuery envelope must survive a full sync")
-        XCTAssertEqual(local?.syncStatus, SyncStatus.synced.rawValue, "markAllPlaylistsUnsynced skips custom playlists")
+        // Full sync re-marks custom playlists for push like every other playlist
+        // (see testMarkAllPlaylistsUnsyncedIncludesCustomPlaylists): the local copy
+        // is preserved, and the next incremental sync re-uploads it to the server.
+        XCTAssertEqual(local?.syncStatus, SyncStatus.notSynced.rawValue, "full sync re-marks custom playlists for push")
     }
 
     func testProcessServerPlaylistsStillRewritesNonCustomPlaylists() {

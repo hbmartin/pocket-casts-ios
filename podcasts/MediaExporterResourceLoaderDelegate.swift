@@ -40,6 +40,14 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
     private var session: URLSession?
     private var storedResponse: URLResponse?
     private var pendingRequests = Set<AVAssetResourceLoadingRequest>()
+    /// Requests currently owned by a delivery loop (`deliverChunks(for:)`). Only the
+    /// owning thread may respond to or finish a request while it is a member, which
+    /// keeps chunk offsets advancing on exactly one thread per request.
+    private var inFlightRequests = Set<AVAssetResourceLoadingRequest>()
+    /// Requests detached (e.g. by `invalidateAndCancelSession`) while a delivery loop
+    /// owned them. The owner finishes them with the stored error on its next step so
+    /// `finishLoading(with:)` never races the owner's `respond(with:)`.
+    private var deferredSettlements = [AVAssetResourceLoadingRequest: DeferredSettlement]()
     private var isDownloadComplete = false
     private var terminalStatusReported = false
     private var terminalError: (any Error)?
@@ -78,11 +86,41 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
 
     typealias FileExporterProgressReport = (_ status: FileExportStatus, _ contentType: String?, _ downloaded: Int64, _ total: Int64) -> ()
 
-    private struct RequestEffect {
+    /// A pending request an exclusive delivery loop has claimed, with the response
+    /// snapshot used to fill its content information request.
+    private struct ClaimedRequest {
         let request: AVAssetResourceLoadingRequest
         let response: URLResponse
-        let data: [Data]
-        let shouldFinish: Bool
+    }
+
+    /// The settlement recorded for a request detached while a delivery loop owned it.
+    private struct DeferredSettlement {
+        let error: (any Error)?
+    }
+
+    /// One step of the chunked delivery loop, computed under `lock` and performed
+    /// outside it. Every case except `.respond` releases the claim under the same
+    /// lock hold that computed it.
+    private enum DeliveryStep {
+        /// Respond with one bounded chunk; the claim is retained and the loop continues.
+        case respond(Data)
+        /// The request is fulfilled; finish it successfully.
+        case finish
+        /// Finish the request with the given error (`nil` finishes without one).
+        case finishWith((any Error)?)
+        /// Delivery failed; perform the failure effect (it includes this request).
+        case fail(FailureEffect)
+        /// The request was cancelled while in flight; stop without touching it.
+        case release
+        /// No cached bytes are available yet; the request stays pending for the next trigger.
+        case wait
+    }
+
+    /// Outcome of computing the next chunk for a data request under `lock`.
+    private enum ChunkOutcome {
+        case chunk(Data)
+        case fulfilled
+        case waiting
     }
 
     private struct FailureEffect {
@@ -166,24 +204,26 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
 
     func resourceLoader(_ resourceLoader: AVAssetResourceLoader, didCancel loadingRequest: AVAssetResourceLoadingRequest) {
         debugLogRequestInfo(loadingRequest, state: "Cancel")
-        _ = lock.withLock { pendingRequests.remove(loadingRequest) }
+        lock.withLock {
+            pendingRequests.remove(loadingRequest)
+            deferredSettlements.removeValue(forKey: loadingRequest)
+        }
     }
 
     // MARK: URLSessionDelegate
 
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
-        let transition = lock.withLock { () -> (effects: [RequestEffect], failure: FailureEffect?, progress: (String?, Int64)?) in
+        let transition = lock.withLock { () -> (claims: [ClaimedRequest], failure: FailureEffect?, progress: (String?, Int64)?) in
             guard !terminalStatusReported else { return ([], nil, nil) }
             do {
                 try fileHandle.append(data: data)
-                let effects = try pendingRequestEffectsLocked()
-                return (effects, nil, (storedResponse?.mimeType, Int64(fileHandle.safeFileSize)))
+                return (claimDeliverableRequestsLocked(), nil, (storedResponse?.mimeType, Int64(fileHandle.safeFileSize)))
             } catch {
                 FileLog.shared.addMessage("MediaExporterResourceLoaderDelegate: failed to write data to file: \(error)")
                 return ([], transitionToFailureLocked(error: error, notify: true), nil)
             }
         }
-        performRequestEffects(transition.effects)
+        transition.claims.forEach { deliverChunks(for: $0) }
         if let failure = transition.failure {
             performFailureEffect(failure)
         } else if let progress = transition.progress {
@@ -195,31 +235,14 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
     }
 
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
-        let transition = lock.withLock { () -> (effects: [RequestEffect], failure: FailureEffect?) in
-            guard !terminalStatusReported else { return ([], nil) }
+        // Claiming cannot throw, so this path has no failure branch: read errors
+        // surface inside the per-request delivery loops instead.
+        let claims = lock.withLock { () -> [ClaimedRequest] in
+            guard !terminalStatusReported else { return [] }
             storedResponse = response
-            do {
-                return (try pendingRequestEffectsLocked(), nil)
-            } catch {
-                if let failure = transitionToFailureLocked(error: error, notify: true) {
-                    return ([], failure)
-                }
-                let requests = pendingRequests
-                pendingRequests.removeAll()
-                return ([], FailureEffect(
-                    session: nil,
-                    requests: requests,
-                    error: error,
-                    contentType: storedResponse?.mimeType,
-                    notify: true,
-                    reportsTerminalStatus: false
-                ))
-            }
+            return claimDeliverableRequestsLocked()
         }
-        performRequestEffects(transition.effects)
-        if let failure = transition.failure {
-            performFailureEffect(failure)
-        }
+        claims.forEach { deliverChunks(for: $0) }
         completionHandler(.allow)
     }
 
@@ -310,7 +333,12 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
             session = nil
             let detachedRequests: Set<AVAssetResourceLoadingRequest>
             if shouldResetData {
-                detachedRequests = pendingRequests
+                // Requests owned by a delivery loop must be finished by their owner so
+                // finishLoading(with:) cannot race the owner's respond(with:).
+                for request in pendingRequests.intersection(inFlightRequests) {
+                    deferredSettlements[request] = DeferredSettlement(error: error)
+                }
+                detachedRequests = pendingRequests.subtracting(inFlightRequests)
                 pendingRequests.removeAll()
             } else {
                 detachedRequests = []
@@ -330,106 +358,148 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
     // MARK: Private methods
 
     private func processPendingRequests() {
-        let transition = lock.withLock { () -> (effects: [RequestEffect], failure: FailureEffect?) in
-            guard terminalError == nil else { return ([], nil) }
-            do {
-                return (try pendingRequestEffectsLocked(), nil)
-            } catch {
-                if let failure = transitionToFailureLocked(error: error, notify: true) {
-                    return ([], failure)
-                }
-                let requests = pendingRequests
-                pendingRequests.removeAll()
-                return ([], FailureEffect(
-                    session: nil,
-                    requests: requests,
-                    error: error,
-                    contentType: storedResponse?.mimeType,
-                    notify: true,
-                    reportsTerminalStatus: false
-                ))
-            }
+        let claims = lock.withLock { claimDeliverableRequestsLocked() }
+        claims.forEach { deliverChunks(for: $0) }
+    }
+
+    /// Claims every pending request no delivery loop currently owns. Caller must hold `lock`.
+    private func claimDeliverableRequestsLocked() -> [ClaimedRequest] {
+        guard let response = storedResponse, terminalError == nil else { return [] }
+        let claimable = pendingRequests.subtracting(inFlightRequests)
+        inFlightRequests.formUnion(claimable)
+        return claimable.map { ClaimedRequest(request: $0, response: response) }
+    }
+
+    /// Drives the delivery loop for one claimed request. The claim guarantees this
+    /// thread is the only one responding to or finishing the request, so the
+    /// request's `currentOffset` advances strictly between locked steps and no two
+    /// passes can compute overlapping chunk ranges. AVFoundation calls happen with
+    /// the lock released.
+    private func deliverChunks(for claim: ClaimedRequest) {
+        if let contentInformationRequest = claim.request.contentInformationRequest {
+            contentInformationRequest.contentType = claim.response.mimeType
+            contentInformationRequest.contentLength = claim.response.expectedContentLength
+            contentInformationRequest.isByteRangeAccessSupported = true
+            FileLog.shared.addMessage(
+                "MediaExporterResourceLoaderDelegate: Content Information Request filled: \(contentInformationRequest.contentLength)"
+            )
         }
-        performRequestEffects(transition.effects)
-        if let failure = transition.failure {
-            performFailureEffect(failure)
+        while true {
+            let step = lock.withLock { deliveryStepLocked(for: claim.request) }
+            switch step {
+            case .respond(let data):
+                claim.request.dataRequest?.respond(with: data)
+            case .finish:
+                debugLogRequestInfo(claim.request, state: "Finish")
+                claim.request.finishLoading()
+                return
+            case .finishWith(let error):
+                claim.request.finishLoading(with: error)
+                return
+            case .fail(let failure):
+                performFailureEffect(failure)
+                return
+            case .release:
+                return
+            case .wait:
+                debugLogRequestInfo(claim.request, state: "Partial")
+                return
+            }
         }
     }
 
-    /// Prepares reads and detaches fulfilled requests. Caller must hold `lock`.
-    private func pendingRequestEffectsLocked() throws -> [RequestEffect] {
-        guard let response = storedResponse else { return [] }
-
-        var effects: [RequestEffect] = []
-        var fulfilled = Set<AVAssetResourceLoadingRequest>()
-        for request in pendingRequests {
-            let prepared: (data: [Data], fulfilled: Bool)
-            if let dataRequest = request.dataRequest {
-                prepared = try dataForRequestLocked(dataRequest)
-            } else {
-                prepared = ([], true)
+    /// Computes the next action for a claimed request. Caller must hold `lock`.
+    /// Every case except `.respond` removes the claim before the lock is dropped,
+    /// so ownership state always matches the returned step.
+    private func deliveryStepLocked(for request: AVAssetResourceLoadingRequest) -> DeliveryStep {
+        if let settlement = deferredSettlements.removeValue(forKey: request) {
+            inFlightRequests.remove(request)
+            return .finishWith(settlement.error)
+        }
+        if let terminalError {
+            inFlightRequests.remove(request)
+            pendingRequests.remove(request)
+            return .finishWith(terminalError)
+        }
+        guard pendingRequests.contains(request) else {
+            // Cancelled via resourceLoader(_:didCancel:) while in flight.
+            inFlightRequests.remove(request)
+            return .release
+        }
+        guard let dataRequest = request.dataRequest else {
+            inFlightRequests.remove(request)
+            pendingRequests.remove(request)
+            return .finish
+        }
+        do {
+            switch try nextChunkLocked(for: dataRequest) {
+            case .chunk(let data):
+                return .respond(data)
+            case .fulfilled:
+                inFlightRequests.remove(request)
+                pendingRequests.remove(request)
+                return .finish
+            case .waiting:
+                inFlightRequests.remove(request)
+                return .wait
             }
-            effects.append(RequestEffect(
-                request: request,
-                response: response,
-                data: prepared.data,
-                shouldFinish: prepared.fulfilled
+        } catch {
+            inFlightRequests.remove(request)
+            pendingRequests.remove(request)
+            // The owner settles its own request, so fold it into the failure effect.
+            // When the export already settled terminally, only this request is
+            // finished and no terminal status is reported again.
+            let transition = transitionToFailureLocked(error: error, notify: true)
+            return .fail(FailureEffect(
+                session: transition?.session,
+                requests: (transition?.requests ?? []).union([request]),
+                error: error,
+                contentType: transition?.contentType ?? storedResponse?.mimeType,
+                notify: true,
+                reportsTerminalStatus: transition != nil
             ))
-            if prepared.fulfilled {
-                fulfilled.insert(request)
-            }
-        }
-        pendingRequests.subtract(fulfilled)
-        return effects
-    }
-
-    private func performRequestEffects(_ effects: [RequestEffect]) {
-        for effect in effects {
-            if let contentInformationRequest = effect.request.contentInformationRequest {
-                contentInformationRequest.contentType = effect.response.mimeType
-                contentInformationRequest.contentLength = effect.response.expectedContentLength
-                contentInformationRequest.isByteRangeAccessSupported = true
-                FileLog.shared.addMessage(
-                    "MediaExporterResourceLoaderDelegate: Content Information Request filled: \(contentInformationRequest.contentLength)"
-                )
-            }
-            if let dataRequest = effect.request.dataRequest {
-                effect.data.forEach { dataRequest.respond(with: $0) }
-            }
-            if effect.shouldFinish {
-                debugLogRequestInfo(effect.request, state: "Finish")
-                effect.request.finishLoading()
-            } else {
-                debugLogRequestInfo(effect.request, state: "Partial")
-            }
         }
     }
 
-    /// Reads response chunks while the file handle is protected. Caller must hold `lock`.
-    private func dataForRequestLocked(_ dataRequest: AVAssetResourceLoadingDataRequest) throws -> (data: [Data], fulfilled: Bool) {
+    /// Reads at most one `readDataLimit`-bounded chunk so peak memory and lock hold
+    /// time stay bounded; the delivery loop responds outside the lock and re-enters
+    /// for the next chunk. Caller must hold `lock`.
+    private func nextChunkLocked(for dataRequest: AVAssetResourceLoadingDataRequest) throws -> ChunkOutcome {
         let requestedOffset = Int(dataRequest.requestedOffset)
         let requestedLength = dataRequest.requestedLength
-        var currentOffset = Int(dataRequest.currentOffset)
+        let currentOffset = Int(dataRequest.currentOffset)
+        if currentOffset >= requestedOffset + requestedLength {
+            return .fulfilled
+        }
         let bytesCached = try fileHandle.fileSize()
 
         try validateCurrentOffsetLocked(currentOffset, bytesCached: bytesCached)
 
-        guard bytesCached > currentOffset else {
-            return ([], false)
+        guard let range = Self.nextChunkRange(
+            currentOffset: currentOffset,
+            requestedOffset: requestedOffset,
+            requestedLength: requestedLength,
+            bytesCached: bytesCached,
+            readDataLimit: readDataLimit
+        ) else {
+            return .waiting
         }
-
-        var chunks: [Data] = []
-        while currentOffset < min(requestedOffset + requestedLength, bytesCached) {
-            let bytesToRespond = min(bytesCached - currentOffset, requestedLength - (currentOffset - requestedOffset), readDataLimit)
-            guard bytesToRespond > 0 else { break }
-            guard let data = try fileHandle.readData(withOffset: currentOffset, forLength: bytesToRespond) else {
-                throw MediaFileHandleError.readAfterEndOfFile
-            }
-            chunks.append(data)
-            currentOffset += data.count
+        guard let data = try fileHandle.readData(withOffset: range.lowerBound, forLength: range.count) else {
+            throw MediaFileHandleError.readAfterEndOfFile
         }
+        return .chunk(data)
+    }
 
-        return (chunks, currentOffset >= requestedLength + requestedOffset)
+    /// Pure bookkeeping for the delivery loop: the next byte range to read for a
+    /// request whose delivery has advanced to `currentOffset`. Returns `nil` when
+    /// the request is fulfilled or no cached byte is available yet, and never spans
+    /// more than `readDataLimit` bytes. Internal so tests can pin the chunk math.
+    static func nextChunkRange(currentOffset: Int, requestedOffset: Int, requestedLength: Int, bytesCached: Int, readDataLimit: Int) -> Range<Int>? {
+        let deliverableEnd = min(requestedOffset + requestedLength, bytesCached)
+        guard currentOffset < deliverableEnd else { return nil }
+        let length = min(deliverableEnd - currentOffset, readDataLimit)
+        guard length > 0 else { return nil }
+        return currentOffset ..< currentOffset + length
     }
 
     /// Validates a read position against locked completion/file state.
@@ -450,32 +520,32 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
     }
 
     private func downloadComplete() {
-        let transition = lock.withLock { () -> (effects: [RequestEffect], contentType: String?, fileSize: Int, expectedSize: Int64, failure: FailureEffect?)? in
+        let claims = lock.withLock { () -> [ClaimedRequest]? in
             guard !terminalStatusReported else { return nil }
             isDownloadComplete = true
-            let fileSize = fileHandle.safeFileSize
-            let expectedSize = storedResponse?.expectedContentLength ?? 0
-            do {
-                let effects = try pendingRequestEffectsLocked()
-                terminalStatusReported = true
-                terminalError = nil
-                return (effects, storedResponse?.mimeType, fileSize, expectedSize, nil)
-            } catch {
+            return claimDeliverableRequestsLocked()
+        }
+        guard let claims else { return }
+        claims.forEach { deliverChunks(for: $0) }
+        let completion = lock.withLock { () -> (contentType: String?, fileSize: Int, expectedSize: Int64)? in
+            guard !terminalStatusReported else {
+                // A delivery (or cancel) raced this completion into a terminal failure.
+                // That path skipped the file cleanup because `isDownloadComplete` was
+                // already set, so clean up here and keep the failure settlement.
                 isDownloadComplete = false
-                return ([], storedResponse?.mimeType, fileSize, expectedSize, transitionToFailureLocked(error: error, notify: true))
+                fileHandle.deleteFile()
+                return nil
             }
+            terminalStatusReported = true
+            terminalError = nil
+            return (storedResponse?.mimeType, fileHandle.safeFileSize, storedResponse?.expectedContentLength ?? 0)
         }
-        guard let transition else { return }
-        if let failure = transition.failure {
-            performFailureEffect(failure)
-            return
-        }
+        guard let completion else { return }
         FileLog.shared.addMessage(
-            "MediaExporterResourceLoaderDelegate: Download completed. File Size:\(transition.fileSize) ExpectedSize:\(transition.expectedSize)"
+            "MediaExporterResourceLoaderDelegate: Download completed. File Size:\(completion.fileSize) ExpectedSize:\(completion.expectedSize)"
         )
-        performRequestEffects(transition.effects)
         callbackQueue.async { [weak self] in
-            self?.callback?(.completed, transition.contentType, Int64(transition.fileSize), Int64(transition.fileSize))
+            self?.callback?(.completed, completion.contentType, Int64(completion.fileSize), Int64(completion.fileSize))
         }
     }
 
@@ -566,8 +636,11 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
         terminalError = error
         let detachedSession = session
         session = nil
-        let requests = pendingRequests
-        pendingRequests.removeAll()
+        // Requests owned by a delivery loop settle themselves: the owner observes
+        // `terminalError` on its next locked step and finishes its own request, so
+        // finishing them here cannot race the owner's respond(with:).
+        let requests = pendingRequests.subtracting(inFlightRequests)
+        pendingRequests.subtract(requests)
         let contentType = storedResponse?.mimeType
         if !isDownloadComplete {
             fileHandle.deleteFile()

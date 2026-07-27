@@ -3,15 +3,13 @@ import PocketCastsUtils
 
 /// Uploads a user's avatar image and maps the mandatory nudity/racy scan verdict
 /// (docs/SocialModeration.md, ADR-0007). Modeled on `TranscriptUploadSender`:
-/// raw image bytes as `application/octet-stream`, Bearer auth (required — an
-/// avatar upload needs a joined, signed-in account), and App Attest assertion
-/// headers signing the exact body bytes (docs/AppAttest.md §1.3). The scan runs
-/// server-side before any CDN publish; this only surfaces the outcome. Ships
-/// dark behind FeatureFlag.socialProfiles.
-///
-/// Slice-1 scaffolding: the happy path + scan-verdict mapping. The richer
-/// attestation-envelope handling (invalid/stale assertion retries) that
-/// `TranscriptUploadSender` performs is deferred until the endpoint is live.
+/// raw image bytes as `application/octet-stream` with Bearer auth (required — an
+/// avatar upload needs a joined, signed-in account). App Attest assertion
+/// headers and attestation-envelope retries (invalid/stale assertions) are
+/// applied centrally by `URLConnection`/`AppAttestService` (docs/AppAttest.md
+/// §1.3), so this type only builds the request. The scan runs server-side
+/// before any CDN publish; this only surfaces the outcome. Ships dark behind
+/// FeatureFlag.socialProfiles.
 public struct SocialAvatarUploadSender: Sendable {
     private let urlConnection: URLConnection
 

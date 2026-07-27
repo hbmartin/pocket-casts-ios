@@ -5,7 +5,9 @@ import SwiftUI
 
 /// The folder grid has a single section; the enum still gives the diffable
 /// snapshot a stable section identity.
-enum FolderGridSection: Hashable {
+// nonisolated: diffable snapshot identifiers must be Sendable, so the Hashable
+// conformance cannot be implicitly MainActor-isolated under default isolation.
+nonisolated enum FolderGridSection: Hashable {
     case podcasts
 }
 

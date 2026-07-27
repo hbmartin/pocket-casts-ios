@@ -1,5 +1,6 @@
 import PhotosUI
 import SwiftUI
+import UIKit
 import PocketCastsServer
 import PocketCastsUtils
 
@@ -25,6 +26,9 @@ struct OwnSocialProfileView: View {
                         }
                         .frame(width: 72, height: 72)
                         .clipShape(Circle())
+                        // Decorative: the display name right below already
+                        // identifies the profile for VoiceOver.
+                        .accessibilityHidden(true)
                     }
                     Text(viewModel.profile.displayName)
                         .font(.title2.bold())
@@ -89,23 +93,31 @@ struct SocialProfileEditView: View {
     @EnvironmentObject var theme: Theme
     @ObservedObject var viewModel: OwnSocialProfileViewModel
     @Environment(\.dismiss) private var dismiss
+    /// Avatar upload exists only when the capability manifest reports it
+    /// (docs/SocialAvatars.md). Fails closed: the section stays hidden until
+    /// the manifest confirms support.
+    @State private var avatarFeatureAvailable = false
 
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text(L10n.settingsChangeAvatar)) {
-                    PhotosPicker(selection: $viewModel.selectedAvatarItem, matching: .images) {
-                        Label(L10n.settingsChangeAvatar, systemImage: "photo")
-                    }
-                    if !viewModel.profile.avatarURL.isEmpty {
-                        Button(role: .destructive) {
-                            Task { await viewModel.removeAvatar() }
-                        } label: {
-                            Label(L10n.remove, systemImage: "trash")
+                if avatarFeatureAvailable {
+                    Section(header: Text(L10n.settingsChangeAvatar)) {
+                        PhotosPicker(selection: $viewModel.selectedAvatarItem, matching: .images) {
+                            Label(L10n.settingsChangeAvatar, systemImage: "photo")
                         }
-                    }
-                    if viewModel.isAvatarUpdating {
-                        ProgressView()
+                        .disabled(viewModel.isAvatarUpdating)
+                        if !viewModel.profile.avatarURL.isEmpty {
+                            Button(role: .destructive) {
+                                Task { await viewModel.removeAvatar() }
+                            } label: {
+                                Label(L10n.remove, systemImage: "trash")
+                            }
+                            .disabled(viewModel.isAvatarUpdating)
+                        }
+                        if viewModel.isAvatarUpdating {
+                            ProgressView()
+                        }
                     }
                 }
                 Section(header: Text(L10n.socialPrivacyDisplayName)) {
@@ -144,6 +156,9 @@ struct SocialProfileEditView: View {
             }
         }
         .onAppear { viewModel.beginEditing() }
+        .task {
+            avatarFeatureAvailable = await ServerCapabilitiesClient.shared.load()?.features.avatar == true
+        }
     }
 }
 
@@ -210,11 +225,12 @@ final class OwnSocialProfileViewModel: ObservableObject {
     }
 
     func removeAvatar() async {
+        guard !isAvatarUpdating else { return }
         isAvatarUpdating = true
         saveError = nil
         defer { isAvatarUpdating = false }
         guard await SocialAvatarUploadSender().remove() else {
-            saveError = "Unable to remove the avatar. Try again later."
+            saveError = L10n.socialProfileAvatarRemoveFailed
             return
         }
         profile.avatarURL = ""
@@ -223,15 +239,23 @@ final class OwnSocialProfileViewModel: ObservableObject {
     }
 
     private func loadSelectedAvatar() {
-        guard let item = selectedAvatarItem else { return }
+        guard let item = selectedAvatarItem, !isAvatarUpdating else { return }
         Task { [weak self, item] in
             guard let self else { return }
             isAvatarUpdating = true
             saveError = nil
             defer { isAvatarUpdating = false }
             do {
-                guard let data = try await item.loadTransferable(type: Data.self), data.count <= 10 * 1024 * 1024 else {
-                    saveError = "Choose a JPEG or PNG smaller than 10 MB."
+                guard let picked = try await item.loadTransferable(type: Data.self) else {
+                    saveError = L10n.socialProfileAvatarReadFailed
+                    return
+                }
+                guard let data = Self.avatarUploadData(from: picked) else {
+                    saveError = L10n.socialProfileAvatarInvalidFormat
+                    return
+                }
+                guard data.count <= Self.avatarMaxBytes else {
+                    saveError = L10n.socialProfileAvatarTooLarge
                     return
                 }
                 switch await SocialAvatarUploadSender().upload(imageData: data) {
@@ -239,15 +263,52 @@ final class OwnSocialProfileViewModel: ObservableObject {
                     profile.avatarURL = avatarURL
                     SocialIdentityStore.cachedProfile = profile
                 case .rejectedScan:
-                    saveError = "That image was rejected by the nudity/racy-content filter."
+                    saveError = L10n.socialProfileAvatarScanRejected
                 case .rejectedFormat:
-                    saveError = "Choose a valid JPEG or PNG image."
+                    saveError = L10n.socialProfileAvatarInvalidFormat
                 case .failed:
-                    saveError = "Unable to update the avatar. Try again later."
+                    saveError = L10n.socialProfileAvatarUploadFailed
                 }
             } catch {
-                saveError = "Unable to read that image."
+                saveError = L10n.socialProfileAvatarReadFailed
             }
+        }
+    }
+
+    // MARK: - Avatar transcoding
+
+    private static let avatarMaxBytes = 10 * 1024 * 1024
+    private static let avatarMaxDimension: CGFloat = 1024
+
+    /// The backend accepts only raw JPEG or PNG bytes with a 10 MiB cap
+    /// (docs/SocialAvatars.md), but PhotosPicker hands back camera photos as
+    /// HEIC. Pass JPEG/PNG bytes through untouched; re-encode anything else as
+    /// JPEG, downscaling very large images first so the result fits the cap.
+    private static func avatarUploadData(from data: Data) -> Data? {
+        if isJPEG(data) || isPNG(data) {
+            return data
+        }
+        guard let image = UIImage(data: data) else { return nil }
+        return downscale(image, toFit: avatarMaxDimension).jpegData(compressionQuality: 0.9)
+    }
+
+    private static func isJPEG(_ data: Data) -> Bool {
+        data.prefix(3).elementsEqual([0xFF, 0xD8, 0xFF])
+    }
+
+    private static func isPNG(_ data: Data) -> Bool {
+        data.prefix(8).elementsEqual([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+    }
+
+    private static func downscale(_ image: UIImage, toFit maxDimension: CGFloat) -> UIImage {
+        let largestSide = max(image.size.width, image.size.height)
+        guard largestSide > maxDimension else { return image }
+        let scale = maxDimension / largestSide
+        let size = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: size, format: format).image { _ in
+            image.draw(in: CGRect(origin: .zero, size: size))
         }
     }
 }

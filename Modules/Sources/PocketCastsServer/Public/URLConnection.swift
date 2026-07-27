@@ -17,16 +17,22 @@ public final class URLConnection: Sendable {
 
     private let handler: RequestHandler
     private let originPolicy: ServerOriginPolicy
-    private let appAttestService: AppAttestService
+
+    /// Resolved lazily at send time, never during init: `AppAttestService.shared`'s
+    /// own initializer constructs a default `URLConnection`, so evaluating `.shared`
+    /// as an init default argument would re-enter that static initialization and
+    /// deadlock the first thread to construct either singleton.
+    private let injectedAppAttestService: AppAttestService?
+    private var appAttestService: AppAttestService { injectedAppAttestService ?? .shared }
 
     public init(
         handler: RequestHandler,
         originPolicy: ServerOriginPolicy = .shared,
-        appAttestService: AppAttestService = .shared
+        appAttestService: AppAttestService? = nil
     ) {
         self.handler = handler
         self.originPolicy = originPolicy
-        self.appAttestService = appAttestService
+        self.injectedAppAttestService = appAttestService
     }
 
     public func sendSynchronousRequest(with request: URLRequest) throws -> (Data?, URLResponse?) {

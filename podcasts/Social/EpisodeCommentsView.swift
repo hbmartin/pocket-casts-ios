@@ -56,6 +56,14 @@ struct EpisodeCommentsView: View {
                 // The cancel role dismisses the confirmation dialog automatically.
             }
         }
+        .alert(L10n.error, isPresented: Binding(
+            get: { viewModel.actionError != nil },
+            set: { if !$0 { viewModel.actionError = nil } }
+        )) {
+            Button(L10n.ok) { viewModel.actionError = nil }
+        } message: {
+            Text(viewModel.actionError ?? L10n.socialCommentDeleteFailed)
+        }
         .task { await viewModel.load() }
     }
 
@@ -242,6 +250,7 @@ struct EpisodeCommentsView: View {
                             .font(.title2)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(L10n.socialSendCta)
                     .disabled(!viewModel.canCompose || viewModel.composeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
@@ -310,6 +319,7 @@ final class EpisodeCommentsViewModel: ObservableObject {
     @Published var showingReportPicker = false
     @Published var reportTarget: SocialComment?
     @Published var scrollTarget: Int64?
+    @Published var actionError: String?
 
     private var replyTarget: SocialComment?
     private var editTarget: SocialComment?
@@ -552,7 +562,11 @@ final class EpisodeCommentsViewModel: ObservableObject {
     }
 
     func delete(_ comment: SocialComment) async {
-        guard await ApiServerHandler.shared.deleteComment(id: comment.id) else { return }
+        actionError = nil
+        guard await ApiServerHandler.shared.deleteComment(id: comment.id) else {
+            actionError = L10n.socialCommentDeleteFailed
+            return
+        }
         Self.invalidateMomentPinsIfNeeded(
             afterMutating: comment,
             episodeUuid: episodeUuid,

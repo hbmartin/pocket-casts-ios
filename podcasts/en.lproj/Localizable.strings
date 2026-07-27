@@ -7745,3 +7745,75 @@
 
 /* Button revealing exactly one reply to a comment. */
 "social_comment_view_replies_singular" = "View 1 reply";
+
+/* Message of the reset-password prompt asking for the administrator-issued one-time code and a new password. The 12–72 byte limits are enforced by the server. */
+"profile_reset_password_prompt_message" = "Enter the one-time reset code from your administrator and a new password between 12 and 72 bytes.";
+
+/* Placeholder for the one-time reset code field in the reset-password prompt. */
+"profile_reset_password_code_placeholder" = "Reset code";
+
+/* Placeholder for the new password field in the reset-password prompt. */
+"profile_reset_password_new_placeholder" = "New password";
+
+/* Error shown when the reset code is empty or the new password is outside the server's 12–72 byte limits. */
+"profile_reset_password_invalid_input" = "Enter a valid reset code and a password between 12 and 72 bytes.";
+
+/* Error shown when the password reset request fails. */
+"profile_reset_password_failed" = "Unable to reset the password. Check the email address and reset code, then try again.";
+
+/* Alert message confirming the password was reset successfully. */
+"profile_reset_password_success" = "Your password has been reset. Sign in with your new password.";
+
+/* Error shown when the picked avatar image is not a JPEG or PNG the server accepts. */
+"social_profile_avatar_invalid_format" = "Choose a valid JPEG or PNG image.";
+
+/* Error shown when the picked avatar image could not be loaded from the photo library. */
+"social_profile_avatar_read_failed" = "Unable to read that image.";
+
+/* Error shown when removing the profile avatar fails. */
+"social_profile_avatar_remove_failed" = "Unable to remove the avatar. Try again later.";
+
+/* Error shown when the server's nudity/racy-content scan rejects the avatar image. */
+"social_profile_avatar_scan_rejected" = "That image was rejected by the nudity/racy-content filter.";
+
+/* Error shown when the avatar image exceeds the 10 MB upload limit. */
+"social_profile_avatar_too_large" = "Choose a JPEG or PNG smaller than 10 MB.";
+
+/* Error shown when the avatar upload fails for a reason other than format or moderation. */
+"social_profile_avatar_upload_failed" = "Unable to update the avatar. Try again later.";
+
+/* Title for the service being checked, in this case, the pinned podcast server origin. */
+"settings_status_origin" = "Podcast server origin";
+
+/* Description for the server origin check. */
+"settings_status_origin_description" = "The build origin is pinned on first launch and cannot change across app updates.";
+
+/* Failure message for the server origin check. */
+"settings_status_origin_failure_message" = "Reinstall is required before this build can use its configured server.";
+
+/* Line on the status page showing the pinned server origin. %1$@ is the origin URL. */
+"settings_status_origin_ready" = "Server origin: %1$@";
+
+/* Line on the status page when the build's server origin is invalid. */
+"settings_status_origin_invalid" = "Invalid server origin";
+
+/* Line on the status page when the app must be reinstalled before it can use its configured server. */
+"settings_status_origin_reinstall_required" = "Reinstall required";
+
+/* Failure message for the Refresh Service check when the backend liveness probe does not answer. */
+"settings_status_liveness_failure_message" = "The configured podcast backend did not answer its liveness check.";
+
+/* Failure message for the Account Service check when the capability manifest cannot be fetched. */
+"settings_status_capabilities_failure_message" = "The attested capability manifest is unavailable.";
+
+/* Failure message for the Discover & Search check when its representative routes fail. */
+"settings_status_discover_failure_message" = "Representative discover or generated-artwork routes failed.";
+
+/* Summary line describing the connected server. %1$@ = server version, %2$@ = App Attest mode, %3$@, %4$@ and %5$@ = localized On/Off for the avatar, folder-suggestion and corpus features. */
+"settings_status_server_details" = "Version %1$@ · App Attest %2$@ · Avatar %3$@ · Folders %4$@ · Corpus %5$@";
+
+/* Accessibility label for the button removing the episode attached to a group post draft. */
+"social_group_detach_episode" = "Remove attached episode";
+
+/* Error alert shown when deleting a comment fails. */
+"social_comment_delete_failed" = "Couldn't delete that comment. Try again.";

@@ -138,9 +138,11 @@ final class TranscriptionDataManagerTests: XCTestCase {
     func testExistingEpisodeUuidsResolvesPodcastAndUserEpisodesAsOneBatch() {
         var podcastEpisode = Episode()
         podcastEpisode.uuid = "podcast-episode"
+        podcastEpisode.addedDate = Date()
         dataManager.save(episode: podcastEpisode)
         var userEpisode = UserEpisode()
         userEpisode.uuid = "user-episode"
+        userEpisode.addedDate = Date()
         dataManager.save(episode: userEpisode)
 
         let existing = dataManager.transcriptions.existingEpisodeUuids([
@@ -162,11 +164,13 @@ final class TranscriptionDataManagerTests: XCTestCase {
         let episodes = (0 ..< episodeCount).map { index -> Episode in
             var episode = Episode()
             episode.uuid = "episode-\(index)"
+            episode.addedDate = Date()
             return episode
         }
         dataManager.bulkSave(episodes: episodes)
         var userEpisode = UserEpisode()
         userEpisode.uuid = "user-episode"
+        userEpisode.addedDate = Date()
         dataManager.save(episode: userEpisode)
 
         let queried = episodes.map(\.uuid) + ["user-episode"] + (0 ..< 100).map { "missing-\($0)" }

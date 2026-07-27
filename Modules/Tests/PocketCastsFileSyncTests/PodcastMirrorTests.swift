@@ -103,7 +103,8 @@ final class PodcastMirrorTests: XCTestCase {
                 localPathResolver: { _ in localURL.path }
             )
 
-            XCTAssertTrue(try await materializer.mirror(episodeUuid: episode.uuid))
+            let mirrored = try await materializer.mirror(episodeUuid: episode.uuid)
+            XCTAssertTrue(mirrored)
         }
 
         let createdPaths = await folder.createdDirectoryPaths()

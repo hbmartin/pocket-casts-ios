@@ -256,7 +256,8 @@ class DatabaseHelper {
         // Transcript contributions (device-local, no sync): the durable queue of
         // pending contribution/sighting uploads drained serially by the app-layer
         // TranscriptContributionManager (docs/TranscriptContributions.md §2).
-        // `kind` is 0 = contribution, 1 = sighting (PendingTranscriptUploadKind);
+        // `kind` is 0 = contribution, 1 = sighting, and (added later, no schema
+        // change) 2 = metadata (PendingTranscriptUploadKind);
         // `payloadJson` carries the kind-specific fields captured at enqueue time;
         // `nextAttemptAt` is NULL when the row is due immediately.
         SchemaMigration(toVersion: 83) { db in

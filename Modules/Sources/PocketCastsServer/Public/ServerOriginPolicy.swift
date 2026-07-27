@@ -29,6 +29,24 @@ public final class ServerOriginPolicy: Sendable {
         return false
     }
 
+    /// True when `url` targets exactly the ready origin (scheme, host and
+    /// effective port). Always false while networking is blocked.
+    public func isSameOrigin(_ url: URL) -> Bool {
+        guard let origin,
+              url.scheme?.lowercased() == origin.scheme?.lowercased(),
+              url.host?.lowercased() == origin.host?.lowercased(),
+              Self.effectivePort(url) == Self.effectivePort(origin)
+        else {
+            return false
+        }
+        return true
+    }
+
+    private static func effectivePort(_ url: URL) -> Int? {
+        if let port = url.port { return port }
+        return url.scheme?.lowercased() == "https" ? 443 : 80
+    }
+
     public var blockingMessage: String? {
         switch state {
         case .ready:
@@ -51,13 +69,22 @@ public final class ServerOriginPolicy: Sendable {
         self.init(
             buildOrigin: environmentOverride ?? Bundle.main.object(forInfoDictionaryKey: Self.infoPlistKey) as? String,
             defaults: .standard,
-            allowInsecureLoopback: environmentOverride != nil
+            allowInsecureLoopback: environmentOverride != nil,
+            // A debug env override is a per-launch choice: it must neither adopt
+            // the persisted pin nor overwrite it, so toggling the override on and
+            // off never bricks networking with a reinstall-required mismatch.
+            pinsOrigin: environmentOverride == nil
         )
     }
 
-    init(buildOrigin: String?, defaults: UserDefaults, allowInsecureLoopback: Bool) {
+    init(buildOrigin: String?, defaults: UserDefaults, allowInsecureLoopback: Bool, pinsOrigin: Bool = true) {
         guard let normalized = Self.normalizedOrigin(buildOrigin, allowInsecureLoopback: allowInsecureLoopback) else {
             state = .invalidBuildOrigin(value: buildOrigin)
+            return
+        }
+
+        guard pinsOrigin else {
+            state = .ready(origin: normalized)
             return
         }
 

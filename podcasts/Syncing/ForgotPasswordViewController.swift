@@ -100,22 +100,25 @@ class ForgotPasswordViewController: PCViewController, UITextFieldDelegate {
 
         let prompt = UIAlertController(
             title: L10n.profileResetPassword,
-            message: "Enter the one-time reset code from your administrator and a new password of at least 12 characters.",
+            message: L10n.profileResetPasswordPromptMessage,
             preferredStyle: .alert
         )
         prompt.addTextField { field in
-            field.placeholder = "Reset code"
+            field.placeholder = L10n.profileResetPasswordCodePlaceholder
             field.autocapitalizationType = .none
             field.autocorrectionType = .no
             field.textContentType = .oneTimeCode
         }
         prompt.addTextField { field in
-            field.placeholder = "New password"
+            field.placeholder = L10n.profileResetPasswordNewPlaceholder
             field.isSecureTextEntry = true
             field.textContentType = .newPassword
         }
         prompt.addAction(UIAlertAction(title: L10n.cancel, style: .cancel))
         prompt.addAction(UIAlertAction(title: L10n.profileResetPassword, style: .default) { [weak self, weak prompt] _ in
+            // The backend contract is byte-based (docs/ServerAPISurface.md:
+            // "a 12–72-byte password"), so validation counts UTF-8 bytes and
+            // the copy above states the same limits.
             guard let self,
                   let code = prompt?.textFields?[0].text?.trimmingCharacters(in: .whitespacesAndNewlines),
                   let password = prompt?.textFields?[1].text,
@@ -123,7 +126,7 @@ class ForgotPasswordViewController: PCViewController, UITextFieldDelegate {
                   password.utf8.count >= 12,
                   password.utf8.count <= 72
             else {
-                self?.showErrorMessage("Enter a valid reset code and a password between 12 and 72 bytes.")
+                self?.showErrorMessage(L10n.profileResetPasswordInvalidInput)
                 return
             }
             self.progressAlert = ShiftyLoadingAlert(title: L10n.profileResetPassword)
@@ -146,7 +149,7 @@ class ForgotPasswordViewController: PCViewController, UITextFieldDelegate {
                     if error != .UNKNOWN, let message = error?.localizedDescription, !message.isEmpty {
                         self.showErrorMessage(message)
                     } else {
-                        self.showErrorMessage("Unable to reset the password. Check the email address and reset code, then try again.")
+                        self.showErrorMessage(L10n.profileResetPasswordFailed)
                     }
 
                     return
@@ -156,7 +159,7 @@ class ForgotPasswordViewController: PCViewController, UITextFieldDelegate {
 
                 guard let delegate = self.delegate else {
                     self.navigationController?.popViewController(animated: true)
-                    SJUIUtils.showAlert(title: L10n.profileResetPassword, message: "Your password has been reset. Sign in with your new password.", from: self)
+                    SJUIUtils.showAlert(title: L10n.profileResetPassword, message: L10n.profileResetPasswordSuccess, from: self)
                     return
                 }
 

@@ -8,8 +8,10 @@ import Testing
 
 /// Wire-layer tests for the transcript contribution tasks
 /// (docs/TranscriptContributions.md §3): gzipped protobuf bodies, optional
-/// Bearer auth, App Attest assertion headers, and the response-to-
-/// `ContributionSendResult` mapping the upload queue consumes.
+/// Bearer auth, and the response-to-`ContributionSendResult` mapping the
+/// upload queue consumes. App Attest signing belongs to the central transport
+/// (`URLConnection` → `AppAttestService`), never to the sender itself; its
+/// `AppAttestTransportError` surfaces as `.attestationRejected`.
 @Suite("TranscriptUploadTasks")
 struct TranscriptUploadTaskTests {
     // MARK: - Fixtures
@@ -40,6 +42,25 @@ struct TranscriptUploadTaskTests {
         )
     }
 
+    private static func metadataAttachment() -> CorpusMetadataAttachment {
+        CorpusMetadataAttachment(
+            candidateID: "cand-1",
+            attachmentToken: "token-1",
+            summary: "A factual summary.",
+            chapters: [CorpusMetadataAttachment.Chapter(title: "Intro", timestamp: "00:00", startTime: 0)]
+        )
+    }
+
+    /// Serialized `Api_TranscriptContributionResponse` receipt bytes, as the
+    /// contribution endpoint returns them on a 2xx.
+    private static func receiptBody() throws -> Data {
+        var receipt = Api_TranscriptContributionResponse()
+        receipt.candidateID = "cand-1"
+        receipt.sha256 = "sha-1"
+        receipt.attachmentToken = "token-1"
+        return try receipt.serializedData()
+    }
+
     private static func httpResponse(status: Int, headers: [String: String]? = nil) -> HTTPURLResponse {
         HTTPURLResponse(url: URL(string: "https://api.pocketcasts.com/transcripts/contribute")!,
                         statusCode: status,
@@ -48,25 +69,20 @@ struct TranscriptUploadTaskTests {
     }
 
     /// A sender whose transport captures the outgoing request and answers with a
-    /// canned status; token and assertion providers are injectable stubs.
+    /// canned status; the token provider is an injectable stub.
     private static func makeSender(status: Int = 202,
                                    responseHeaders: [String: String]? = nil,
+                                   responseBody: Data = Data(),
                                    token: String? = nil,
                                    tokenInvalidator: @escaping TranscriptUploadSender.TokenInvalidator = {},
-                                   assertionHeaders: [String: String] = [:],
-                                   capturedRequest: UncheckedSendableBox<URLRequest?> = .init(nil),
-                                   assertionBody: UncheckedSendableBox<Data?> = .init(nil)) -> TranscriptUploadSender {
+                                   capturedRequest: UncheckedSendableBox<URLRequest?> = .init(nil)) -> TranscriptUploadSender {
         let connection = URLConnection(mockHandler: { request in
             capturedRequest.value = request
-            return (Data(), Self.httpResponse(status: status, headers: responseHeaders))
+            return (responseBody, Self.httpResponse(status: status, headers: responseHeaders))
         })
         return TranscriptUploadSender(urlConnection: connection,
                                       tokenProvider: { token },
-                                      tokenInvalidator: tokenInvalidator,
-                                      assertionHeaders: { body in
-                                          assertionBody.value = body
-                                          return assertionHeaders
-                                      })
+                                      tokenInvalidator: tokenInvalidator)
     }
 
     // MARK: - Body encoding
@@ -149,12 +165,11 @@ struct TranscriptUploadTaskTests {
         #expect(request.value(forHTTPHeaderField: "Authorization") == nil)
     }
 
-    @Test("a rejected bearer is invalidated and retried once anonymously with a fresh assertion")
+    @Test("a rejected bearer is invalidated and retried once anonymously, with no sender-attached attest headers")
     func rejectedBearerRetriesAnonymously() async throws {
         let requests = Mutex<[URLRequest]>([])
         let statuses = Mutex([401, 202])
         let invalidated = Mutex(false)
-        let assertionCalls = Mutex(0)
         let connection = URLConnection(mockHandler: { request in
             requests.withLock { $0.append(request) }
             let status = statuses.withLock { values in values.removeFirst() }
@@ -163,14 +178,7 @@ struct TranscriptUploadTaskTests {
         let sender = TranscriptUploadSender(
             urlConnection: connection,
             tokenProvider: { "stale-token" },
-            tokenInvalidator: { invalidated.withLock { $0 = true } },
-            assertionHeaders: { _ in
-                let call = assertionCalls.withLock { value -> Int in
-                    value += 1
-                    return value
-                }
-                return [AppAttestService.HeaderNames.assertion: "assertion-\(call)"]
-            }
+            tokenInvalidator: { invalidated.withLock { $0 = true } }
         )
 
         let result = await TranscriptSightingTask(sender: sender).send(Self.sighting())
@@ -181,29 +189,52 @@ struct TranscriptUploadTaskTests {
         #expect(captured.count == 2)
         #expect(captured[0].value(forHTTPHeaderField: "Authorization") == "Bearer stale-token")
         #expect(captured[1].value(forHTTPHeaderField: "Authorization") == nil)
-        #expect(captured[0].value(forHTTPHeaderField: AppAttestService.HeaderNames.assertion) == "assertion-1")
-        #expect(captured[1].value(forHTTPHeaderField: AppAttestService.HeaderNames.assertion) == "assertion-2")
+        // App Attest signing happens in the central transport, downstream of the
+        // sender: neither attempt may carry sender-attached attest headers.
+        for request in captured {
+            #expect(request.value(forHTTPHeaderField: AppAttestService.HeaderNames.keyId) == nil)
+            #expect(request.value(forHTTPHeaderField: AppAttestService.HeaderNames.assertion) == nil)
+        }
     }
 
-    @Test("assertion headers are merged and sign the exact gzipped body bytes")
-    func assertionHeadersMerged() async throws {
-        let captured = UncheckedSendableBox<URLRequest?>(nil)
-        let signedBody = UncheckedSendableBox<Data?>(nil)
-        let sender = Self.makeSender(token: "token-abc",
-                                     assertionHeaders: ["X-Attest-Key-Id": "key-1", "X-Attest-Assertion": "assertion-1"],
-                                     capturedRequest: captured,
-                                     assertionBody: signedBody)
-        let task = TranscriptContributeTask(sender: sender)
+    @Test("App Attest transport errors surface as attestationRejected so the queue parks with backoff")
+    func attestTransportErrorMapsToAttestationRejected() async {
+        // AppAttestService.send has already retried a stale counter / invalid
+        // assertion once by the time it throws; the sender must park, not loop.
+        let connection = URLConnection(mockHandler: { _ in
+            throw AppAttestTransportError.invalidAssertion
+        })
+        let sender = TranscriptUploadSender(urlConnection: connection, tokenProvider: { nil })
 
-        _ = await task.send(Self.contribution())
+        let result = await TranscriptContributeTask(sender: sender).send(Self.contribution())
 
-        let request = try #require(captured.value)
-        #expect(request.value(forHTTPHeaderField: "X-Attest-Key-Id") == "key-1")
-        #expect(request.value(forHTTPHeaderField: "X-Attest-Assertion") == "assertion-1")
-        // Bearer and assertion are independent layers; both are present.
-        #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer token-abc")
-        // The signed payload is the body as sent (post-gzip), per docs/AppAttest.md §1.3.
-        #expect(signedBody.value == request.httpBody)
+        #expect(result == .attestationRejected)
+    }
+
+    // MARK: - Contribution receipt
+
+    @Test("a contribution 2xx with a receipt body maps to acceptedContribution")
+    func contributionReceiptParsed() async throws {
+        let receiptBody = try Self.receiptBody()
+
+        let result = await TranscriptContributeTask(sender: Self.makeSender(responseBody: receiptBody))
+            .send(Self.contribution())
+
+        #expect(result == .acceptedContribution(TranscriptContributionReceipt(
+            candidateID: "cand-1",
+            sha256: "sha-1",
+            attachmentToken: "token-1"
+        )))
+    }
+
+    @Test("a sighting 2xx never parses a contribution receipt, even from receipt-shaped bytes")
+    func sightingIgnoresReceiptShapedBody() async throws {
+        let receiptBody = try Self.receiptBody()
+
+        let result = await TranscriptSightingTask(sender: Self.makeSender(responseBody: receiptBody))
+            .send(Self.sighting())
+
+        #expect(result == .accepted, "Only the contribution endpoint returns a receipt; a sighting row must not enter the metadata pipeline")
     }
 
     // MARK: - Response mapping
@@ -291,13 +322,72 @@ struct TranscriptUploadTaskTests {
             throw URLError(.notConnectedToInternet)
         })
         let sender = TranscriptUploadSender(urlConnection: connection,
-                                            tokenProvider: { nil },
-                                            assertionHeaders: { _ in [:] })
+                                            tokenProvider: { nil })
         let task = TranscriptContributeTask(sender: sender)
 
         let result = await task.send(Self.contribution())
 
         #expect(result == .retryAfter(TranscriptUploadSender.defaultTransientRetryDelay))
+    }
+
+    // MARK: - Metadata attachment
+
+    @Test("metadata attachment 2xx maps to accepted", arguments: [200, 204])
+    func metadataAttachAccepted(status: Int) async {
+        let connection = URLConnection(mockHandler: { _ in (Data(), Self.httpResponse(status: status)) })
+
+        let result = await CorpusMetadataAttachmentClient.attachResult(Self.metadataAttachment(), connection: connection)
+
+        #expect(result == .accepted)
+    }
+
+    @Test("a consumed/expired one-time attachment token is permanent", arguments: [400, 403, 404, 409, 410, 422])
+    func metadataPermanent4xx(status: Int) async {
+        let connection = URLConnection(mockHandler: { _ in
+            (Data("token consumed".utf8), Self.httpResponse(status: status))
+        })
+
+        let result = await CorpusMetadataAttachmentClient.attachResult(Self.metadataAttachment(), connection: connection)
+
+        guard case .permanentFailure(let reason) = result else {
+            Issue.record("expected permanentFailure, got \(result)")
+            return
+        }
+        #expect(reason.contains("\(status)"))
+    }
+
+    @Test("metadata auth, timeout and rate-limit responses stay transient", arguments: [401, 408, 429])
+    func metadataTransientStatuses(status: Int) async {
+        let connection = URLConnection(mockHandler: { _ in (Data(), Self.httpResponse(status: status)) })
+
+        let result = await CorpusMetadataAttachmentClient.attachResult(Self.metadataAttachment(), connection: connection)
+
+        guard case .retryAfter = result else {
+            Issue.record("expected retryAfter, got \(result)")
+            return
+        }
+    }
+
+    @Test("metadata 401 invalid_attestation and App Attest transport errors both reject the attestation")
+    func metadataAttestationRejection() async {
+        let envelope = URLConnection(mockHandler: { _ in
+            (Data(#"{"errorMessageId":"invalid_attestation"}"#.utf8), Self.httpResponse(status: 401))
+        })
+        #expect(await CorpusMetadataAttachmentClient.attachResult(Self.metadataAttachment(), connection: envelope) == .attestationRejected)
+
+        let transport = URLConnection(mockHandler: { _ in
+            throw AppAttestTransportError.staleCounter
+        })
+        #expect(await CorpusMetadataAttachmentClient.attachResult(Self.metadataAttachment(), connection: transport) == .attestationRejected)
+    }
+
+    @Test("metadata 503 parks the queue for the default pause")
+    func metadataPauseQueue() async {
+        let connection = URLConnection(mockHandler: { _ in (Data(), Self.httpResponse(status: 503)) })
+
+        let result = await CorpusMetadataAttachmentClient.attachResult(Self.metadataAttachment(), connection: connection)
+
+        #expect(result == .pauseQueue(TranscriptUploadSender.defaultPauseDelay))
     }
 
     // MARK: - Gzip coder

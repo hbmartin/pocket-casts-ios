@@ -1945,6 +1945,17 @@
 			path = Fingerprint;
 			sourceTree = "<group>";
 		};
+		D1FFAB1E0A11ED2026072700 /* Diffable */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Diffable;
+			sourceTree = "<group>";
+		};
 		BB66DEC0DE2F680002000B66 /* People */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -3878,6 +3889,7 @@
 			isa = PBXGroup;
 			children = (
 				371E0318452B7C751D0C5611 /* Fingerprint */,
+				D1FFAB1E0A11ED2026072700 /* Diffable */,
 				BB66DEC0DE2F680002000B66 /* People */,
 				50C1A15EC0DE2F68000000CA /* Social */,
 				AA55C0DE2F6800010000A5A5 /* Spotlight */,
@@ -4875,6 +4887,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				371E0318452B7C751D0C5611 /* Fingerprint */,
+				D1FFAB1E0A11ED2026072700 /* Diffable */,
 				BB66DEC0DE2F680002000B66 /* People */,
 				50C1A15EC0DE2F68000000CA /* Social */,
 				AA55C0DE2F6800010000A5A5 /* Spotlight */,

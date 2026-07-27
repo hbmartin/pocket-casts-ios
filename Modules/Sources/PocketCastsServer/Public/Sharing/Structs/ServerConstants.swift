@@ -18,9 +18,14 @@ public enum ServerConstants {
         }
 
         private static var currentEndpoints: Endpoints {
+            // When the origin policy refuses to supply an origin, fail dead rather
+            // than falling back to the hosted upstream endpoints: URLConnection
+            // blocks its own traffic in that state, but URLs built here also reach
+            // transports that never consult the policy (image loaders, web views),
+            // and none of that traffic should silently target upstream servers.
             resolvedEndpoints(
                 production: production(),
-                localBaseURL: ServerOriginPolicy.shared.origin?.absoluteString
+                localBaseURL: ServerOriginPolicy.shared.origin?.absoluteString ?? "https://origin-blocked.invalid/"
             )
         }
 
