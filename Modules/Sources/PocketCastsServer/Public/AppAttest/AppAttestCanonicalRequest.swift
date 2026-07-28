@@ -35,10 +35,13 @@ enum AppAttestRoutePolicy {
         }
 
 
+        // Bare "/podcast/" and "/episode/" are deliberately absent: every public
+        // catalogue read uses "/mobile/..." paths, while native API routes such as
+        // "/podcast/suggest_folders" must stay attested even when sent anonymously.
         let publicPrefixes = [
             "/discover/", "/podcasts/search", "/podcasts/show", "/mobile/",
             "/search/", "/autocomplete/", "/episode/search", "/podcast/rating/",
-            "/share/", "/u/", "/profile/", "/podcast/", "/episode/", "/images/"
+            "/share/", "/u/", "/profile/", "/images/"
         ]
         if publicPrefixes.contains(where: { url.path.hasPrefix($0) }) {
             return url.path == "/discover/recommend_episodes"

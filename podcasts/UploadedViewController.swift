@@ -7,12 +7,15 @@ import UIKit
 
 /// Section identity for the Files table: the root group hosts the storage
 /// header and is always present; named sync subfolders follow A-Z.
-enum UploadedFilesSection: Hashable {
+// nonisolated: diffable snapshot identifiers must be Sendable, so the Hashable
+// conformance cannot be implicitly MainActor-isolated under default isolation.
+nonisolated enum UploadedFilesSection: Hashable {
     case root
     case group(String)
 }
 
 class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
+    private let episodesDataManager = EpisodesDataManager()
     private var cancellables = Set<AnyCancellable>()
 
     private lazy var reloadQueue: OperationQueue = {

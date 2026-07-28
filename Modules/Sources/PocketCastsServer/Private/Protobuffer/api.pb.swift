@@ -9536,9 +9536,10 @@ nonisolated struct Api_UserResetPasswordRequest: Sendable {
 
   var scope: String = String()
 
-  var email: String = String()
-
+  /// Fork-added fields use tags >= 1001 so upstream can never collide with them.
   var device: String = String()
+
+  var email: String = String()
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -23787,7 +23788,7 @@ nonisolated extension Api_UserPlaylistEpisodesRequest: SwiftProtobuf.Message, Sw
 
 nonisolated extension Api_UserResetPasswordRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".UserResetPasswordRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}reset_password_token\0\u{1}password\0\u{1}scope\0\u{1}email\0\u{2}e\u{f}device\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}reset_password_token\0\u{1}password\0\u{1}scope\0\u{2}f\u{f}device\0\u{1}email\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -23798,8 +23799,8 @@ nonisolated extension Api_UserResetPasswordRequest: SwiftProtobuf.Message, Swift
       case 1: try { try decoder.decodeSingularStringField(value: &self.resetPasswordToken) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.password) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.scope) }()
-      case 4: try { try decoder.decodeSingularStringField(value: &self.email) }()
       case 1001: try { try decoder.decodeSingularStringField(value: &self.device) }()
+      case 1002: try { try decoder.decodeSingularStringField(value: &self.email) }()
       default: break
       }
     }
@@ -23815,11 +23816,11 @@ nonisolated extension Api_UserResetPasswordRequest: SwiftProtobuf.Message, Swift
     if !self.scope.isEmpty {
       try visitor.visitSingularStringField(value: self.scope, fieldNumber: 3)
     }
-    if !self.email.isEmpty {
-      try visitor.visitSingularStringField(value: self.email, fieldNumber: 4)
-    }
     if !self.device.isEmpty {
       try visitor.visitSingularStringField(value: self.device, fieldNumber: 1001)
+    }
+    if !self.email.isEmpty {
+      try visitor.visitSingularStringField(value: self.email, fieldNumber: 1002)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -23828,8 +23829,8 @@ nonisolated extension Api_UserResetPasswordRequest: SwiftProtobuf.Message, Swift
     if lhs.resetPasswordToken != rhs.resetPasswordToken {return false}
     if lhs.password != rhs.password {return false}
     if lhs.scope != rhs.scope {return false}
-    if lhs.email != rhs.email {return false}
     if lhs.device != rhs.device {return false}
+    if lhs.email != rhs.email {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

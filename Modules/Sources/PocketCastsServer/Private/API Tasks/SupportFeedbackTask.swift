@@ -9,7 +9,6 @@ class SupportFeedbackTask: ApiBaseTask, @unchecked Sendable {
     private let report: FeedbackReport
 
     init(report: FeedbackReport,
-         attestService _: AppAttestService = .shared,
          urlConnection: URLConnection = URLConnection(handler: URLSession.shared),
          completion: @escaping (Bool) -> Void) {
         self.report = report

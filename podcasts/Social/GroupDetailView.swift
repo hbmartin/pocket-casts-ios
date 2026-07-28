@@ -225,6 +225,7 @@ struct GroupDetailView: View {
                             .font(.caption)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(L10n.socialGroupDetachEpisode)
                 }
                 .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
             }
@@ -252,6 +253,7 @@ struct GroupDetailView: View {
                             .font(.title2)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(L10n.socialSendCta)
                     .disabled(viewModel.composeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
@@ -604,6 +606,11 @@ final class GroupDetailViewModel: ObservableObject {
         if let page = await service.fetchPosts(groupId, 0) {
             topLevel = page.posts
             group = page.group
+        } else if let group {
+            // The join itself succeeded; when the follow-up refresh fails,
+            // reflect the membership locally so the composer replaces the
+            // join bar instead of silently staying stale.
+            self.group = Self.updating(group, yourRole: .member)
         }
     }
 
@@ -636,6 +643,10 @@ final class GroupDetailViewModel: ObservableObject {
         Analytics.track(.socialGroupAlertChanged)
         if let page = await service.fetchPosts(groupId, 0) {
             self.group = page.group
+        } else {
+            // The toggle succeeded server-side; keep the bell truthful even
+            // when the refresh fails.
+            self.group = Self.updating(group, notifyPosts: enable)
         }
     }
 
@@ -650,5 +661,23 @@ final class GroupDetailViewModel: ObservableObject {
 
     private func failAction() {
         actionError = L10n.socialGroupActionFailed
+    }
+
+    /// Rebuilds the immutable `SocialGroup` with a changed role/alert flag so
+    /// a successful server action still updates the UI when the follow-up
+    /// posts refresh returns nil.
+    private static func updating(_ group: SocialGroup, yourRole: GroupRole? = nil, notifyPosts: Bool? = nil) -> SocialGroup {
+        SocialGroup(id: group.id,
+                    ownerHandle: group.ownerHandle,
+                    ownerDisplayName: group.ownerDisplayName,
+                    title: group.title,
+                    description: group.description,
+                    visibility: group.visibility,
+                    podcastUuid: group.podcastUuid,
+                    podcastTitle: group.podcastTitle,
+                    memberCount: group.memberCount,
+                    yourRole: yourRole ?? group.yourRole,
+                    notifyPosts: notifyPosts ?? group.notifyPosts,
+                    createdAt: group.createdAt)
     }
 }

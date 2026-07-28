@@ -13,13 +13,18 @@ import PocketCastsUtils
 /// downloaded audio, fingerprint it through `ReferenceFingerprintEncoder`
 /// (cached on disk next to the VTT artifact so retries never re-decode the
 /// audio), gzip the VTT artifact and upload; sightings just replay the URL
-/// metadata captured at enqueue time. Rows have **no terminal give-up** — a
-/// row persists until the server accepts it, rejects it as permanently
-/// invalid, or its transcription is deleted locally (tombstone check before
-/// every send). Failed attempts back off exponentially (capped at 6 h) and a
-/// server `pauseQueue` parks the whole queue behind a persisted date. The
-/// Contribution fingerprinting obeys the same battery policy as transcription
-/// jobs; lightweight sightings remain network-only and are not power-gated.
+/// metadata captured at enqueue time. An accepted contribution leaves behind a
+/// compact Metadata row that generates the on-device summary/chapters and
+/// attaches them with the receipt's one-time token. Contribution and sighting
+/// rows have **no terminal give-up** — a row persists until the server accepts
+/// it, rejects it as permanently invalid, or its transcription is deleted
+/// locally (tombstone check before every send); metadata rows additionally
+/// give up after `maxMetadataAttempts` failed attempts because their one-time
+/// attachment token is candidate-scoped. Failed attempts back off
+/// exponentially (capped at 6 h) and a server `pauseQueue` parks the whole
+/// queue behind a persisted date. Contribution fingerprinting and metadata
+/// generation obey the same battery policy as transcription jobs; lightweight
+/// sightings remain network-only and are not power-gated.
 actor TranscriptContributionManager {
     static let shared = TranscriptContributionManager()
 
@@ -29,6 +34,16 @@ actor TranscriptContributionManager {
     /// Retries never wait longer than this, whatever the attempt count or
     /// server-provided Retry-After.
     static let maxRetryInterval: TimeInterval = 6 * 60 * 60
+
+    /// Cadence for retrying a blocked metadata job (model unavailable,
+    /// transient attach failure): weekly, in addition to lifecycle kicks once
+    /// the row is due (docs/TranscriptContributions.md).
+    static let metadataRetryInterval: TimeInterval = 7 * 24 * 60 * 60
+
+    /// A metadata job that keeps failing (e.g. generation output stays outside
+    /// the 150–250-word / 3–8-chapter contract) is dropped after this many
+    /// attempts instead of re-running the map/reduce weekly forever.
+    static let maxMetadataAttempts: Int32 = 26
 
     // MARK: - Payload JSON
 
@@ -68,7 +83,7 @@ actor TranscriptContributionManager {
     private let sendContribution: @Sendable (TranscriptContributionPayload) async -> ContributionSendResult
     private let sendSighting: @Sendable (TranscriptSightingPayload) async -> ContributionSendResult
     private let generateMetadata: @Sendable (String, String, MetadataInfo) async -> CorpusMetadataAttachment?
-    private let sendMetadata: @Sendable (CorpusMetadataAttachment) async -> Bool
+    private let sendMetadata: @Sendable (CorpusMetadataAttachment) async -> ContributionSendResult
     private let powerState: @Sendable () async -> TranscriptionPowerState
     private let batteryPolicy: @Sendable () -> TranscriptionBatteryPolicy
     private let handleAttestationRejection: @Sendable () async -> Void
@@ -105,7 +120,7 @@ actor TranscriptContributionManager {
                  attachmentToken: info.attachmentToken
              )
          },
-         sendMetadata: @escaping @Sendable (CorpusMetadataAttachment) async -> Bool = { await CorpusMetadataAttachmentClient().attach($0) },
+         sendMetadata: @escaping @Sendable (CorpusMetadataAttachment) async -> ContributionSendResult = { await CorpusMetadataAttachmentClient.attachResult($0) },
          powerState: @escaping @Sendable () async -> TranscriptionPowerState = { await TranscriptionPowerState.current() },
          batteryPolicy: @escaping @Sendable () -> TranscriptionBatteryPolicy = { Settings.transcriptionBatteryPolicy() },
          handleAttestationRejection: @escaping @Sendable () async -> Void = { await AppAttestService.shared.handleAttestationRejection() },
@@ -253,7 +268,7 @@ actor TranscriptContributionManager {
             }
         }
 
-        var lastProcessed: (id: Int64, attempts: Int32)?
+        var lastProcessed: (id: Int64, kind: Int32, attempts: Int32)?
         while true {
             let currentDate = now()
             if let pausedUntil = loadPausedUntil(), currentDate < pausedUntil {
@@ -263,23 +278,37 @@ actor TranscriptContributionManager {
                 break
             }
 
-            // Transcript bytes are uploaded immediately. Fingerprints are
-            // optional, so contribution delivery never waits for power state,
-            // audio re-decoding or metadata-model availability.
-            let row = dataManager.pendingTranscriptUploads.nextDue(at: currentDate)
+            let contributionDeferred = TranscriptionPowerState.isDeferred(policy: batteryPolicy(), state: await powerState())
+            let row: PendingTranscriptUploadRecord?
+            if contributionDeferred {
+                // Sightings are tiny network-only reports. Keep draining them even
+                // when an older contribution (audio fingerprint decode) or metadata
+                // job (on-device map/reduce generation) is waiting for
+                // battery-friendly power conditions (including App Store builds
+                // where battery monitoring is intentionally not initialized).
+                row = dataManager.pendingTranscriptUploads.nextDue(at: currentDate, kind: .sighting)
+                if row == nil, dataManager.pendingTranscriptUploads.nextDue(at: currentDate) != nil {
+                    FileLog.shared.addMessage("[TranscriptContribution] contribution drain deferred by battery policy")
+                }
+            } else {
+                row = dataManager.pendingTranscriptUploads.nextDue(at: currentDate)
+            }
             guard let row, let rowId = row.id else {
-                if let retryDate = dataManager.pendingTranscriptUploads.nextScheduledAttempt(after: currentDate) {
+                let scheduledKind: PendingTranscriptUploadKind? = contributionDeferred ? .sighting : nil
+                if let retryDate = dataManager.pendingTranscriptUploads.nextScheduledAttempt(after: currentDate, kind: scheduledKind) {
                     scheduleWake(at: retryDate)
                 }
                 break
             }
-            if let lastProcessed, rowId == lastProcessed.id, row.attempts == lastProcessed.attempts {
+            if let lastProcessed, rowId == lastProcessed.id, row.kind == lastProcessed.kind, row.attempts == lastProcessed.attempts {
                 // The previous pass failed to advance this row (e.g. a retry-state
-                // write failed): stop rather than hammer the server in a tight loop.
+                // write failed): stop rather than hammer the server in a tight
+                // loop. A kind change (an accepted contribution transitioning to
+                // its metadata job resets attempts 0 → 0) counts as progress.
                 FileLog.shared.addMessage("[TranscriptContribution] drain stalled on row \(lastProcessed.id); stopping until the next kick")
                 break
             }
-            lastProcessed = (rowId, row.attempts)
+            lastProcessed = (rowId, row.kind, row.attempts)
             await process(row)
         }
     }
@@ -299,7 +328,7 @@ actor TranscriptContributionManager {
         case .metadata:
             result = await processMetadata(row)
         }
-        guard let result else { return } // Row already removed (tombstone/undecodable).
+        guard let result else { return } // Row already handled (tombstoned, dropped or rescheduled).
 
         switch result {
         case .accepted:
@@ -309,18 +338,25 @@ actor TranscriptContributionManager {
             }
             FileLog.shared.addMessage("[TranscriptContribution] accepted \(row.uploadKind) for \(row.episodeUuid)")
         case .acceptedContribution(let receipt):
-            guard row.uploadKind == .contribution,
-                  let payload = Self.encodePayload(MetadataInfo(
-                      candidateID: receipt.candidateID,
-                      attachmentToken: receipt.attachmentToken
-                  )),
-                  dataManager.pendingTranscriptUploads.transitionToMetadata(id: rowId, payloadJson: payload)
-            else {
-                scheduleRetry(row: row, rowId: rowId, minimumDelay: 60)
-                return
+            if row.uploadKind == .contribution,
+               let payload = Self.encodePayload(MetadataInfo(
+                   candidateID: receipt.candidateID,
+                   attachmentToken: receipt.attachmentToken
+               )),
+               dataManager.pendingTranscriptUploads.transitionToMetadata(id: rowId, payloadJson: payload) {
+                artifactStore.deleteFingerprint(episodeUuid: row.episodeUuid)
+                FileLog.shared.addMessage("[TranscriptContribution] transcript accepted; metadata job retained for \(row.episodeUuid)")
+            } else {
+                // The payload IS accepted server-side; retrying would re-upload
+                // an already-accepted payload, potentially forever. A receipt on
+                // a non-contribution row or a failed transition is
+                // success-with-cleanup — only the metadata follow-up is lost.
+                FileLog.shared.addMessage("[TranscriptContribution] accepted \(row.uploadKind) for \(row.episodeUuid); metadata follow-up not retained")
+                dataManager.pendingTranscriptUploads.delete(id: rowId)
+                if row.uploadKind == .contribution {
+                    artifactStore.deleteFingerprint(episodeUuid: row.episodeUuid)
+                }
             }
-            artifactStore.deleteFingerprint(episodeUuid: row.episodeUuid)
-            FileLog.shared.addMessage("[TranscriptContribution] transcript accepted; metadata job retained for \(row.episodeUuid)")
         case .retryAfter(let interval):
             scheduleRetry(row: row, rowId: rowId, minimumDelay: interval)
         case .pauseQueue(let interval):
@@ -369,9 +405,33 @@ actor TranscriptContributionManager {
             return nil
         }
 
-        // Include a previously generated fingerprint when available, but never
-        // compute one on the critical upload path.
-        let gzippedFingerprint = artifactStore.readFingerprint(episodeUuid: row.episodeUuid) ?? Data()
+        // Fingerprint, with disk cache: retries and relaunches must not
+        // re-decode the whole audio file.
+        let gzippedFingerprint: Data
+        if let cached = artifactStore.readFingerprint(episodeUuid: row.episodeUuid) {
+            gzippedFingerprint = cached
+        } else {
+            guard let audioURL = audioFileURL(row.episodeUuid) else {
+                // The downloaded audio is gone. A re-download may be a different
+                // ad stitch, so a fingerprint computed later could mismatch the
+                // transcript — this contribution is unrecoverable.
+                FileLog.shared.addMessage("[TranscriptContribution] dropping contribution for \(row.episodeUuid): audio no longer downloaded")
+                removeContributionRow(id: rowId, episodeUuid: row.episodeUuid)
+                return nil
+            }
+            do {
+                let json = try await fingerprint(audioURL)
+                gzippedFingerprint = try gzip(json)
+                try artifactStore.writeFingerprint(gzippedFingerprint, episodeUuid: row.episodeUuid)
+            } catch {
+                // Fingerprinting failures are deterministic for the same file
+                // (unreadable/empty audio) — treat as unrecoverable rather than
+                // retrying a CPU-heavy decode forever.
+                FileLog.shared.addMessage("[TranscriptContribution] dropping contribution for \(row.episodeUuid): fingerprint failed: \(error)")
+                removeContributionRow(id: rowId, episodeUuid: row.episodeUuid)
+                return nil
+            }
+        }
 
         let gzippedVtt: Data
         do {
@@ -412,28 +472,53 @@ actor TranscriptContributionManager {
         return await sendSighting(payload)
     }
 
+    /// nil = the row was handled internally (dropped or rescheduled) and the
+    /// generic result handling must not touch it again.
     private func processMetadata(_ row: PendingTranscriptUploadRecord) async -> ContributionSendResult? {
-        guard let rowId = row.id,
-              let info: MetadataInfo = Self.decodePayload(row.payloadJson)
-        else { return nil }
+        guard let rowId = row.id else { return nil }
+        guard let info: MetadataInfo = Self.decodePayload(row.payloadJson) else {
+            FileLog.shared.addMessage("[TranscriptContribution] dropping metadata job for \(row.episodeUuid): undecodable payload")
+            dataManager.pendingTranscriptUploads.delete(id: rowId)
+            return nil
+        }
+        guard artifactStore.read(episodeUuid: row.episodeUuid) != nil else {
+            // The VTT artifact is the generation input; without it this job can
+            // never produce its metadata (mirrors the contribution tombstone).
+            FileLog.shared.addMessage("[TranscriptContribution] dropping metadata job for \(row.episodeUuid): VTT artifact missing")
+            dataManager.pendingTranscriptUploads.delete(id: rowId)
+            return nil
+        }
         guard let metadata = await generateMetadata(row.episodeUuid, row.podcastUuid, info) else {
             // Model assets/lifecycle can be unavailable for long periods. Keep
-            // the compact job and retry weekly in addition to lifecycle kicks.
+            // the compact job and retry weekly — bounded by maxMetadataAttempts —
+            // in addition to lifecycle kicks.
             scheduleMetadataRetry(row: row, rowId: rowId)
             return nil
         }
-        if await sendMetadata(metadata) {
-            return .accepted
+        let result = await sendMetadata(metadata)
+        if case .retryAfter = result {
+            // Weekly cadence instead of the send backoff: every retry re-runs
+            // the expensive map/reduce, and the attempt budget still applies.
+            scheduleMetadataRetry(row: row, rowId: rowId)
+            return nil
         }
-        scheduleMetadataRetry(row: row, rowId: rowId)
-        return nil
+        // accepted deletes the row; permanentFailure (the one-time token is
+        // consumed/expired) tombstones it; pause/attestation results use the
+        // shared queue handling.
+        return result
     }
 
     private func scheduleMetadataRetry(row: PendingTranscriptUploadRecord, rowId: Int64) {
-        let retryDate = now().addingTimeInterval(7 * 24 * 60 * 60)
+        let attempts = row.attempts + 1
+        guard attempts < Self.maxMetadataAttempts else {
+            FileLog.shared.addMessage("[TranscriptContribution] dropping metadata job for \(row.episodeUuid): giving up after \(attempts) attempts")
+            dataManager.pendingTranscriptUploads.delete(id: rowId)
+            return
+        }
+        let retryDate = now().addingTimeInterval(Self.metadataRetryInterval)
         if dataManager.pendingTranscriptUploads.setRetryState(
             id: rowId,
-            attempts: row.attempts + 1,
+            attempts: attempts,
             nextAttemptAt: retryDate
         ) {
             scheduleWake(at: retryDate)

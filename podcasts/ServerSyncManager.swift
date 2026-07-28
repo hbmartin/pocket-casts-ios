@@ -154,4 +154,15 @@ nonisolated final class ServerSyncManager: ServerSyncDelegate, Sendable {
             return true
         #endif
     }
+
+    func apnsProduction() -> Bool {
+        // Xcode-run debug builds carry the development aps-environment
+        // entitlement regardless of server flavor; TestFlight/App Store
+        // builds are Release and register production tokens.
+        #if DEBUG
+            return false
+        #else
+            return true
+        #endif
+    }
 }

@@ -132,7 +132,7 @@ final class PersonDirectoryModelTests: XCTestCase {
         let loaded = expectation(description: "episode rows loaded")
         var cancellables = Set<AnyCancellable>()
         let model = PersonDetailModel(
-            entry: personEntry,
+            entry: Self.personEntry,
             episodesProvider: { _ in
                 await probe.record()
                 return [Self.episodeRow]
@@ -164,10 +164,10 @@ final class PersonDirectoryModelTests: XCTestCase {
         stalePublished.isInverted = true
         let analytics = PeopleAnalyticsRecorder()
         var cancellables = Set<AnyCancellable>()
-        let newest = display(episodeUuid: "newest")
-        let stale = display(episodeUuid: "stale")
+        let newest = Self.display(episodeUuid: "newest")
+        let stale = Self.display(episodeUuid: "stale")
         let model = PersonDetailModel(
-            entry: personEntry,
+            entry: Self.personEntry,
             searchProvider: { term, _ in await gate.value(for: term) },
             searchTracker: { analytics.trackSearch(count: $0) }
         )
@@ -202,7 +202,8 @@ final class PersonDirectoryModelTests: XCTestCase {
         appearances: [PersonAppearance(episodeUuid: "ep-1", podcastUuid: "pod-1", canonicalSpeaker: "Speaker 1")]
     )
 
-    private static let episodeRow = PersonDetailModel.EpisodeRow(
+    // nonisolated: read from the nonisolated episodesProvider closure.
+    nonisolated private static let episodeRow = PersonDetailModel.EpisodeRow(
         uuid: "ep-1",
         podcastUuid: "pod-1",
         title: "Episode",

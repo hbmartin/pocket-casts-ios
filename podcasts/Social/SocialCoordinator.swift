@@ -146,7 +146,7 @@ enum SocialCoordinator {
     /// timeout, or cancellation result.
     static func waitForRefreshCallback(
         timeout: Duration,
-        start: (@escaping () -> Void) -> Void
+        start: (@escaping @Sendable () -> Void) -> Void
     ) async -> RefreshWaitResult {
         let pair = AsyncStream<Void>.makeStream(bufferingPolicy: .bufferingNewest(1))
         start {

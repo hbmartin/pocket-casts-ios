@@ -243,7 +243,6 @@ class NowPlayingPlayerItemViewController: PlayerItemViewController {
         view.addGestureRecognizer(upNextPan)
 
         routePicker.delegate = self
-
     }
 
     override func viewDidAppear(_ animated: Bool) {

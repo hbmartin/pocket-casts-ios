@@ -1,84 +1,90 @@
 {
-  "configurations" : [
+  "configurations": [
     {
-      "id" : "1D72E1CC-98F4-4EA9-AA22-10C848A77156",
-      "name" : "Configuration 1",
-      "options" : {
-        "targetForVariableExpansion" : {
-          "containerPath" : "container:podcasts.xcodeproj",
-          "identifier" : "BDBD53EB17019B2A0048C8C5",
-          "name" : "podcasts"
+      "id": "1D72E1CC-98F4-4EA9-AA22-10C848A77156",
+      "name": "Configuration 1",
+      "options": {
+        "targetForVariableExpansion": {
+          "containerPath": "container:podcasts.xcodeproj",
+          "identifier": "BDBD53EB17019B2A0048C8C5",
+          "name": "podcasts"
         }
       }
     }
   ],
-  "defaultOptions" : {
-    "testTimeoutsEnabled" : true
+  "defaultOptions": {
+    "testTimeoutsEnabled": true,
+    "environmentVariableEntries": [
+      {
+        "key": "POCKET_CASTS_SERVER_BASE_URL",
+        "value": "http://127.0.0.1:8000"
+      }
+    ]
   },
-  "testTargets" : [
+  "testTargets": [
     {
-      "target" : {
-        "containerPath" : "container:podcasts.xcodeproj",
-        "identifier" : "45ECEF7A27E910E300C65030",
-        "name" : "PocketCastsTests"
+      "target": {
+        "containerPath": "container:podcasts.xcodeproj",
+        "identifier": "45ECEF7A27E910E300C65030",
+        "name": "PocketCastsTests"
       }
     },
     {
-      "skippedTests" : [
+      "skippedTests": [
         "AutoAddCandidatesDataManagerTests/testNewQueryPerformance()",
         "AutoAddCandidatesDataManagerTests/testSyncableUpNextSetting()"
       ],
-      "target" : {
-        "containerPath" : "container:Modules",
-        "identifier" : "PocketCastsDataModelTests",
-        "name" : "PocketCastsDataModelTests"
+      "target": {
+        "containerPath": "container:Modules",
+        "identifier": "PocketCastsDataModelTests",
+        "name": "PocketCastsDataModelTests"
       }
     },
     {
-      "skippedTests" : [
+      "skippedTests": [
         "SocialLocalBackendE2ETests"
       ],
-      "target" : {
-        "containerPath" : "container:Modules",
-        "identifier" : "PocketCastsServerTests",
-        "name" : "PocketCastsServerTests"
+      "target": {
+        "containerPath": "container:Modules",
+        "identifier": "PocketCastsServerTests",
+        "name": "PocketCastsServerTests"
       }
     },
     {
-      "target" : {
-        "containerPath" : "container:Modules",
-        "identifier" : "PocketCastsFileSyncTests",
-        "name" : "PocketCastsFileSyncTests"
+      "target": {
+        "containerPath": "container:Modules",
+        "identifier": "PocketCastsFileSyncTests",
+        "name": "PocketCastsFileSyncTests"
       }
     },
     {
-      "target" : {
-        "containerPath" : "container:Modules",
-        "identifier" : "PocketCastsUtilsTests",
-        "name" : "PocketCastsUtilsTests"
+      "target": {
+        "containerPath": "container:Modules",
+        "identifier": "PocketCastsUtilsTests",
+        "name": "PocketCastsUtilsTests"
       }
     },
     {
-      "target" : {
-        "containerPath" : "container:Modules",
-        "identifier" : "ModulesTests",
-        "name" : "ModulesTests"
+      "target": {
+        "containerPath": "container:Modules",
+        "identifier": "ModulesTests",
+        "name": "ModulesTests"
       }
     },
     {
-      "target" : {
-        "containerPath" : "container:Modules",
-        "identifier" : "SnapshotTests",
-        "name" : "SnapshotTests"
+      "target": {
+        "containerPath": "container:Modules",
+        "identifier": "SnapshotTests",
+        "name": "SnapshotTests"
       }
     },
     {
-      "target" : {
-        "containerPath" : "container:Modules",
-        "identifier" : "PocketCastsTranscriptionTests",
-        "name" : "PocketCastsTranscriptionTests"
+      "target": {
+        "containerPath": "container:Modules",
+        "identifier": "PocketCastsTranscriptionTests",
+        "name": "PocketCastsTranscriptionTests"
       }
     }
   ],
-  "version" : 1
+  "version": 1
 }

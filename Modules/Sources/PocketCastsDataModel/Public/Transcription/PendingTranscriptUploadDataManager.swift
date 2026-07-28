@@ -150,12 +150,15 @@ public struct PendingTranscriptUploadDataManager: Sendable {
 
     /// Atomically advances an accepted transcript contribution into its compact
     /// blocked metadata-generation job without exposing the attachment token to
-    /// logs or a second table.
+    /// logs or a second table. Returns true only when exactly one contribution
+    /// row was transitioned — a missing row or a non-contribution kind reports
+    /// failure so the caller never assumes a metadata job was retained.
     @discardableResult
     public func transitionToMetadata(id: Int64, payloadJson: String) -> Bool {
-        let success = dbQueue.write { db in
-            _ = try PendingTranscriptUploadRecord
+        let updatedCount: Int? = dbQueue.write { db in
+            try PendingTranscriptUploadRecord
                 .filter(PendingTranscriptUploadRecord.Columns.id == id)
+                .filter(PendingTranscriptUploadRecord.Columns.kind == PendingTranscriptUploadKind.contribution.rawValue)
                 .updateAll(
                     db,
                     PendingTranscriptUploadRecord.Columns.kind.set(to: PendingTranscriptUploadKind.metadata.rawValue),
@@ -164,6 +167,7 @@ public struct PendingTranscriptUploadDataManager: Sendable {
                     PendingTranscriptUploadRecord.Columns.nextAttemptAt.set(to: nil)
                 )
         }
+        let success = updatedCount == 1
         if !success { FileLog.shared.addMessage("PendingTranscriptUploadDataManager.transitionToMetadata failed") }
         return success
     }

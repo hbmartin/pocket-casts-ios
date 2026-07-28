@@ -227,12 +227,14 @@ extension AppDelegate {
                     return
                 }
 
-                MainServerHandler.shared.podcastSearch(searchTerm: searchTerm) { response in
+                MainServerHandler.shared.podcastSearch(searchTerm: searchTerm) { [weak self] response in
                     guard let uuid = response?.result?.podcast?.uuid else {
                         // Signed out and the catalog can't resolve it: ingest the feed on
                         // device so any valid feed URL still opens.
                         if !SyncManager.isUserLoggedIn() {
-                            self?.ingestFeedLocally(searchTerm: searchTerm)
+                            DispatchQueue.main.async {
+                                self?.ingestFeedLocally(searchTerm: searchTerm)
+                            }
                             return
                         }
 

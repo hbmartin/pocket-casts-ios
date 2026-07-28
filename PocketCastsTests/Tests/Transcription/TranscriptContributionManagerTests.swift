@@ -65,6 +65,8 @@ final class TranscriptContributionManagerTests: XCTestCase {
                              powerDeferred: Bool = false,
                              fingerprintData: Data = Data("fingerprint-json".utf8),
                              resultScript: [ContributionSendResult]? = nil,
+                             generateMetadata: @escaping @Sendable (String, String, TranscriptContributionManager.MetadataInfo) async -> CorpusMetadataAttachment? = { _, _, _ in nil },
+                             sendMetadata: @escaping @Sendable (CorpusMetadataAttachment) async -> ContributionSendResult = { _ in .accepted },
                              now: @escaping @Sendable () -> Date = { Date() },
                              scheduledSleep: @escaping @Sendable (TimeInterval) async throws -> Void = { _ in throw CancellationError() }) -> TranscriptContributionManager {
         let audioURL = audioURL
@@ -94,6 +96,8 @@ final class TranscriptContributionManagerTests: XCTestCase {
                 recorder.sightings.withLock { $0.append(payload) }
                 return nextResult()
             },
+            generateMetadata: generateMetadata,
+            sendMetadata: sendMetadata,
             powerState: {
                 TranscriptionPowerState(batteryLevel: 1,
                                         isCharging: !powerDeferred,
@@ -158,6 +162,32 @@ final class TranscriptContributionManagerTests: XCTestCase {
         row.podcastUuid = podcastUuid
         row.uploadKind = .sighting
         row.payloadJson = try String(decoding: JSONEncoder().encode(info), as: UTF8.self)
+        XCTAssertTrue(dataManager.pendingTranscriptUploads.insert(row))
+        return try XCTUnwrap(dataManager.pendingTranscriptUploads.allRecords().last?.id)
+    }
+
+    /// A pending metadata row (accepted contribution awaiting on-device
+    /// generation + one-time token attachment), optionally with its VTT artifact.
+    @discardableResult
+    private func seedMetadata(episodeUuid: String = "ep-1",
+                              podcastUuid: String = "pod-1",
+                              payloadJson: String? = nil,
+                              withArtifact: Bool = true,
+                              attempts: Int32 = 0) throws -> Int64 {
+        if withArtifact {
+            try Self.vttBody.write(to: artifactStore.fileURL(forEpisodeUuid: episodeUuid), atomically: true, encoding: .utf8)
+        }
+        var row = PendingTranscriptUploadRecord()
+        row.episodeUuid = episodeUuid
+        row.podcastUuid = podcastUuid
+        row.uploadKind = .metadata
+        if let payloadJson {
+            row.payloadJson = payloadJson
+        } else {
+            let info = TranscriptContributionManager.MetadataInfo(candidateID: "cand-1", attachmentToken: "token-1")
+            row.payloadJson = try String(decoding: JSONEncoder().encode(info), as: UTF8.self)
+        }
+        row.attempts = attempts
         XCTAssertTrue(dataManager.pendingTranscriptUploads.insert(row))
         return try XCTUnwrap(dataManager.pendingTranscriptUploads.allRecords().last?.id)
     }
@@ -408,6 +438,161 @@ final class TranscriptContributionManagerTests: XCTestCase {
                        "Network-only sightings must drain without battery monitoring")
         let remaining = dataManager.pendingTranscriptUploads.allRecords()
         XCTAssertEqual(remaining.map(\.uploadKind), [.contribution])
+    }
+
+    // MARK: - Metadata jobs
+
+    func testAcceptedContributionTransitionsToMetadataAndCompletesInOneDrain() async throws {
+        try seedContribution()
+        let receipt = TranscriptContributionReceipt(candidateID: "cand-1", sha256: "sha-1", attachmentToken: "token-1")
+        let recorder = Recorder()
+        let generated = Mutex<[String]>([])
+        let attached = Mutex<[CorpusMetadataAttachment]>([])
+        let manager = makeManager(
+            recorder: recorder,
+            result: .acceptedContribution(receipt),
+            generateMetadata: { episodeUuid, _, info in
+                generated.withLock { $0.append(episodeUuid) }
+                return CorpusMetadataAttachment(candidateID: info.candidateID,
+                                                attachmentToken: info.attachmentToken,
+                                                summary: "summary",
+                                                chapters: [])
+            },
+            sendMetadata: { metadata in
+                attached.withLock { $0.append(metadata) }
+                return .accepted
+            }
+        )
+
+        await drain(manager)
+
+        // The transition resets attempts 0 → 0 on the same rowId; only the kind
+        // changes, which the stall guard must count as progress so the metadata
+        // job runs in the SAME drain pass instead of being deferred.
+        XCTAssertEqual(recorder.contributions.withLock { $0.count }, 1)
+        XCTAssertEqual(generated.withLock { $0 }, ["ep-1"])
+        XCTAssertEqual(attached.withLock { $0.first?.candidateId }, "cand-1")
+        XCTAssertEqual(attached.withLock { $0.first?.attachmentToken }, "token-1")
+        XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 0)
+        XCTAssertNil(artifactStore.readFingerprint(episodeUuid: "ep-1"))
+    }
+
+    func testReceiptOnSightingRowCleansUpInsteadOfRetrying() async throws {
+        try seedSighting()
+        let receipt = TranscriptContributionReceipt(candidateID: "cand-9", sha256: "sha-9", attachmentToken: "token-9")
+        let recorder = Recorder()
+        let manager = makeManager(recorder: recorder, result: .acceptedContribution(receipt))
+
+        await drain(manager)
+
+        XCTAssertEqual(recorder.sightings.withLock { $0.count }, 1)
+        XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 0,
+                       "An accepted-but-untransitionable row is success-with-cleanup; retrying would re-upload an accepted payload")
+    }
+
+    func testMetadataPermanentSendFailureDeletesRow() async throws {
+        try seedMetadata()
+        let recorder = Recorder()
+        let manager = makeManager(recorder: recorder,
+                                  result: .accepted,
+                                  generateMetadata: { _, _, info in
+                                      CorpusMetadataAttachment(candidateID: info.candidateID,
+                                                               attachmentToken: info.attachmentToken,
+                                                               summary: "summary",
+                                                               chapters: [])
+                                  },
+                                  sendMetadata: { _ in .permanentFailure("attachment token consumed") })
+
+        await drain(manager)
+
+        XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 0,
+                       "A consumed one-time token can never succeed; the row must not retry weekly forever")
+    }
+
+    func testMetadataTransientSendFailureRetainsRowOnWeeklyCadence() async throws {
+        try seedMetadata()
+        let recorder = Recorder()
+        let before = Date()
+        let manager = makeManager(recorder: recorder,
+                                  result: .accepted,
+                                  generateMetadata: { _, _, info in
+                                      CorpusMetadataAttachment(candidateID: info.candidateID,
+                                                               attachmentToken: info.attachmentToken,
+                                                               summary: "summary",
+                                                               chapters: [])
+                                  },
+                                  sendMetadata: { _ in .retryAfter(60) })
+
+        await drain(manager)
+
+        let row = try XCTUnwrap(dataManager.pendingTranscriptUploads.allRecords().first)
+        XCTAssertEqual(row.attempts, 1)
+        let nextAttemptAt = try XCTUnwrap(row.nextAttemptAt)
+        XCTAssertEqual(nextAttemptAt,
+                       before.timeIntervalSince1970 + TranscriptContributionManager.metadataRetryInterval,
+                       accuracy: 10)
+    }
+
+    func testMetadataGenerationFailureGivesUpAtAttemptCap() async throws {
+        try seedMetadata(attempts: TranscriptContributionManager.maxMetadataAttempts - 1)
+        let recorder = Recorder()
+        let manager = makeManager(recorder: recorder, result: .accepted) // generateMetadata defaults to nil.
+
+        await drain(manager)
+
+        XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 0,
+                       "Out-of-contract generation output must not re-run the map/reduce weekly forever")
+    }
+
+    func testMetadataMissingArtifactDeletesRowWithoutGenerating() async throws {
+        try seedMetadata(withArtifact: false)
+        let generated = Mutex(false)
+        let recorder = Recorder()
+        let manager = makeManager(recorder: recorder,
+                                  result: .accepted,
+                                  generateMetadata: { _, _, _ in
+                                      generated.withLock { $0 = true }
+                                      return nil
+                                  })
+
+        await drain(manager)
+
+        XCTAssertFalse(generated.withLock { $0 }, "A deleted VTT artifact leaves nothing to generate from")
+        XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 0)
+    }
+
+    func testUndecodableMetadataPayloadIsDeleted() async throws {
+        try seedMetadata(payloadJson: "not json")
+        let recorder = Recorder()
+        let manager = makeManager(recorder: recorder, result: .accepted)
+
+        await drain(manager)
+
+        XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 0,
+                       "An undecodable metadata payload must not sit due-immediately at the queue head forever")
+    }
+
+    func testTransitionToMetadataOnlyTransitionsContributionRows() throws {
+        let sightingId = try seedSighting()
+        XCTAssertFalse(dataManager.pendingTranscriptUploads.transitionToMetadata(id: sightingId, payloadJson: "{}"),
+                       "A non-contribution row must not be transitioned")
+        XCTAssertEqual(dataManager.pendingTranscriptUploads.allRecords().first?.uploadKind, .sighting)
+
+        try seedContribution(episodeUuid: "ep-c")
+        let contributionId = try XCTUnwrap(dataManager.pendingTranscriptUploads.allRecords()
+            .first { $0.uploadKind == .contribution }?.id)
+        XCTAssertTrue(dataManager.pendingTranscriptUploads.setRetryState(id: contributionId,
+                                                                         attempts: 3,
+                                                                         nextAttemptAt: Date(timeIntervalSinceNow: 60)))
+        XCTAssertTrue(dataManager.pendingTranscriptUploads.transitionToMetadata(id: contributionId,
+                                                                                payloadJson: #"{"candidateID":"c","attachmentToken":"t"}"#))
+        let row = try XCTUnwrap(dataManager.pendingTranscriptUploads.allRecords().first { $0.id == contributionId })
+        XCTAssertEqual(row.uploadKind, .metadata)
+        XCTAssertEqual(row.attempts, 0)
+        XCTAssertNil(row.nextAttemptAt)
+
+        XCTAssertFalse(dataManager.pendingTranscriptUploads.transitionToMetadata(id: 9_999, payloadJson: "{}"),
+                       "Zero updated rows must not report success")
     }
 
     // MARK: - Backoff

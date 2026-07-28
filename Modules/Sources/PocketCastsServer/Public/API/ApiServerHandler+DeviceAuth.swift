@@ -38,7 +38,7 @@ public extension ApiServerHandler {
                 completion(.failure(APIError.UNKNOWN))
                 return
             }
-            URLSession.shared.dataTask(with: request) { data, response, error in
+            urlConnection.send(request: request) { data, response, error in
                 guard let responseData = data, error == nil, (response as? HTTPURLResponse)?.statusCode == ServerConstants.HttpConstants.ok else {
                     let errorResponse = ApiServerHandler.extractErrorResponse(data: data, response: response)
                     completion(.failure(errorResponse ?? APIError.UNKNOWN))
@@ -52,7 +52,7 @@ public extension ApiServerHandler {
                 } catch {
                     completion(.failure(APIError.UNKNOWN))
                 }
-            }.resume()
+            }
         } catch {
             FileLog.shared.addMessage("Device Authorization Request failed \(error.localizedDescription)")
             completion(.failure(APIError.UNKNOWN))
@@ -77,6 +77,8 @@ public extension ApiServerHandler {
         data.grantType = "urn:ietf:params:oauth:grant-type:device_code"
         data.scope = scope.rawValue
         data.deviceCode = deviceCode
+        // Device-code grants must bind their refresh tokens like every other grant.
+        data.device = ServerConfig.shared.syncDelegate?.uniqueAppId() ?? ""
 
         return ServerHelper.createProtoRequest(url: url, data: try! data.serializedData())
     }

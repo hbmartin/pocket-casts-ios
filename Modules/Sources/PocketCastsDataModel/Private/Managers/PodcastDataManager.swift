@@ -816,8 +816,8 @@ class PodcastDataManager {
     // SQL deliberately: SQLite's JSON functions surgically patch
     // one key while preserving any fields the client doesn't model, which a Swift decode/re-encode
     // round trip would drop, and GRDB's query interface has no nullif/json_set equivalents for
-    // the empty-payload seeding. They are residue kept when the grdbQueryInterface flag was deleted
-    // deletion's allowlist.
+    // the empty-payload seeding. They are the residue deliberately kept on the allowlist when the
+    // grdbQueryInterface flag was deleted.
     func setOnAllPodcasts<Value: Codable & Equatable>(value: Value, settingName: String, subscribedOnly: Bool, dbQueue: GRDBQueue) {
         dbQueue.write { db in
             do {

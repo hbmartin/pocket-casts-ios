@@ -3465,6 +3465,18 @@ nonisolated internal enum L10n {
   }
   /// Prompt to allow the user to reset their account password.
   internal static var profileResetPassword: String { return L10n.tr("Localizable", "profile_reset_password", fallback: "Reset Password") }
+  /// Placeholder for the one-time reset code field in the reset-password prompt.
+  internal static var profileResetPasswordCodePlaceholder: String { return L10n.tr("Localizable", "profile_reset_password_code_placeholder", fallback: "Reset code") }
+  /// Error shown when the password reset request fails.
+  internal static var profileResetPasswordFailed: String { return L10n.tr("Localizable", "profile_reset_password_failed", fallback: "Unable to reset the password. Check the email address and reset code, then try again.") }
+  /// Error shown when the reset code is empty or the new password is outside the server's 12–72 byte limits.
+  internal static var profileResetPasswordInvalidInput: String { return L10n.tr("Localizable", "profile_reset_password_invalid_input", fallback: "Enter a valid reset code and a password between 12 and 72 bytes.") }
+  /// Placeholder for the new password field in the reset-password prompt.
+  internal static var profileResetPasswordNewPlaceholder: String { return L10n.tr("Localizable", "profile_reset_password_new_placeholder", fallback: "New password") }
+  /// Message of the reset-password prompt asking for the administrator-issued one-time code and a new password. The 12–72 byte limits are enforced by the server.
+  internal static var profileResetPasswordPromptMessage: String { return L10n.tr("Localizable", "profile_reset_password_prompt_message", fallback: "Enter the one-time reset code from your administrator and a new password between 12 and 72 bytes.") }
+  /// Alert message confirming the password was reset successfully.
+  internal static var profileResetPasswordSuccess: String { return L10n.tr("Localizable", "profile_reset_password_success", fallback: "Your password has been reset. Sign in with your new password.") }
   /// Notice informing the user that the email to reset their password is being prepared to be sent.
   internal static var profileSendingResetEmail: String { return L10n.tr("Localizable", "profile_sending_reset_email", fallback: "Sending Reset Email") }
   /// Notice informing the user that the email to reset their password has been successfully sent. This serves as the message body for an alert accompanied with a title. ':)' is meant to be ASCII art for a happy face.
@@ -4159,12 +4171,16 @@ nonisolated internal enum L10n {
   internal static var settingsStatusAccountService: String { return L10n.tr("Localizable", "settings_status_account_service", fallback: "Account Service") }
   /// Description for the Account Service check.
   internal static var settingsStatusAccountServiceDescription: String { return L10n.tr("Localizable", "settings_status_account_service_description", fallback: "The service used to store episode progress, subscriptions, filters, etc.") }
+  /// Failure message for the Account Service check when the capability manifest cannot be fetched.
+  internal static var settingsStatusCapabilitiesFailureMessage: String { return L10n.tr("Localizable", "settings_status_capabilities_failure_message", fallback: "The attested capability manifest is unavailable.") }
   /// Label explaining the purpose of the Status Page
   internal static var settingsStatusDescription: String { return L10n.tr("Localizable", "settings_status_description", fallback: "Check your connection with important services. This helps diagnose issues with your network, proxies, VPN, ad-blocking and security apps.") }
   /// Title for the service being checked, in this case, the Pocket Cast's Discover & Search.
   internal static var settingsStatusDiscover: String { return L10n.tr("Localizable", "settings_status_discover", fallback: "Discover & Search") }
   /// Description for the Discover & Search check.
   internal static var settingsStatusDiscoverDescription: String { return L10n.tr("Localizable", "settings_status_discover_description", fallback: "The discover section of the app, including podcast search.") }
+  /// Failure message for the Discover & Search check when its representative routes fail.
+  internal static var settingsStatusDiscoverFailureMessage: String { return L10n.tr("Localizable", "settings_status_discover_failure_message", fallback: "Representative discover or generated-artwork routes failed.") }
   /// Title for the service being checked, in this case, whether the network is considered expensive.
   internal static var settingsStatusExpensiveNetwork: String { return L10n.tr("Localizable", "settings_status_expensive_network", fallback: "Unmetered Wifi") }
   /// Description for the expensive network check.
@@ -4183,12 +4199,32 @@ nonisolated internal enum L10n {
   internal static var settingsStatusInternetDescription: String { return L10n.tr("Localizable", "settings_status_internet_description", fallback: "Check the status of your network.") }
   /// Failure message for the Internet check.
   internal static var settingsStatusInternetFailureMessage: String { return L10n.tr("Localizable", "settings_status_internet_failure_message", fallback: "Unable to connect to the internet. Try connecting on a different network (e.g. mobile data).") }
+  /// Failure message for the Refresh Service check when the backend liveness probe does not answer.
+  internal static var settingsStatusLivenessFailureMessage: String { return L10n.tr("Localizable", "settings_status_liveness_failure_message", fallback: "The configured podcast backend did not answer its liveness check.") }
+  /// Title for the service being checked, in this case, the pinned podcast server origin.
+  internal static var settingsStatusOrigin: String { return L10n.tr("Localizable", "settings_status_origin", fallback: "Podcast server origin") }
+  /// Description for the server origin check.
+  internal static var settingsStatusOriginDescription: String { return L10n.tr("Localizable", "settings_status_origin_description", fallback: "The build origin is pinned on first launch and cannot change across app updates.") }
+  /// Failure message for the server origin check.
+  internal static var settingsStatusOriginFailureMessage: String { return L10n.tr("Localizable", "settings_status_origin_failure_message", fallback: "Reinstall is required before this build can use its configured server.") }
+  /// Line on the status page when the build's server origin is invalid.
+  internal static var settingsStatusOriginInvalid: String { return L10n.tr("Localizable", "settings_status_origin_invalid", fallback: "Invalid server origin") }
+  /// Line on the status page showing the pinned server origin. %1$@ is the origin URL.
+  internal static func settingsStatusOriginReady(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "settings_status_origin_ready", String(describing: p1), fallback: "Server origin: %1$@")
+  }
+  /// Line on the status page when the app must be reinstalled before it can use its configured server.
+  internal static var settingsStatusOriginReinstallRequired: String { return L10n.tr("Localizable", "settings_status_origin_reinstall_required", fallback: "Reinstall required") }
   /// Title for the service being checked, in this case, the Pocket Cast's Refresh Service.
   internal static var settingsStatusRefreshService: String { return L10n.tr("Localizable", "settings_status_refresh_service", fallback: "Refresh Service") }
   /// Description for the Refresh Service check.
   internal static var settingsStatusRefreshServiceDescription: String { return L10n.tr("Localizable", "settings_status_refresh_service_description", fallback: "The service used to find new episodes.") }
   /// Button that starts the diagnostic in the Status Page
   internal static var settingsStatusRun: String { return L10n.tr("Localizable", "settings_status_run", fallback: "Run now") }
+  /// Summary line describing the connected server. %1$@ = server version, %2$@ = App Attest mode, %3$@, %4$@ and %5$@ = localized On/Off for the avatar, folder-suggestion and corpus features.
+  internal static func settingsStatusServerDetails(_ p1: Any, _ p2: Any, _ p3: Any, _ p4: Any, _ p5: Any) -> String {
+    return L10n.tr("Localizable", "settings_status_server_details", String(describing: p1), String(describing: p2), String(describing: p3), String(describing: p4), String(describing: p5), fallback: "Version %1$@ · App Attest %2$@ · Avatar %3$@ · Folders %4$@ · Corpus %5$@")
+  }
   /// Failure message for a service check.
   internal static func settingsStatusServiceAdBlockerHelpSingular(_ p1: Any) -> String {
     return L10n.tr("Localizable", "settings_status_service_ad_blocker_help_singular", String(describing: p1), fallback: "The most common cause is that you have an ad-blocker configured on your phone or network. You’ll need to unblock the domain %1$@")
@@ -4513,6 +4549,8 @@ nonisolated internal enum L10n {
   internal static var socialClaimHandle: String { return L10n.tr("Localizable", "social_claim_handle", fallback: "Claim your @handle") }
   /// Accessibility label for the attach-playback-timestamp toggle in the composer
   internal static var socialCommentAttachTimestamp: String { return L10n.tr("Localizable", "social_comment_attach_timestamp", fallback: "Attach current playback time") }
+  /// Error alert shown when deleting a comment fails.
+  internal static var socialCommentDeleteFailed: String { return L10n.tr("Localizable", "social_comment_delete_failed", fallback: "Couldn't delete that comment. Try again.") }
   /// Error when a comment edit is rejected (window closed or filter)
   internal static var socialCommentEditFailed: String { return L10n.tr("Localizable", "social_comment_edit_failed", fallback: "Couldn't save the edit. The edit window may have closed.") }
   /// Marker on a comment edited during the grace window
@@ -4687,6 +4725,8 @@ nonisolated internal enum L10n {
   internal static var socialGroupCreateTitle: String { return L10n.tr("Localizable", "social_group_create_title", fallback: "New Group") }
   /// Placeholder for the optional group description field
   internal static var socialGroupDescriptionPlaceholder: String { return L10n.tr("Localizable", "social_group_description_placeholder", fallback: "Description (optional)") }
+  /// Accessibility label for the button removing the episode attached to a group post draft.
+  internal static var socialGroupDetachEpisode: String { return L10n.tr("Localizable", "social_group_detach_episode", fallback: "Remove attached episode") }
   /// Attribution line on a group invite. %1$@ is the inviter's @handle
   internal static func socialGroupInviteFrom(_ p1: Any) -> String {
     return L10n.tr("Localizable", "social_group_invite_from", String(describing: p1), fallback: "Invited by %1$@")
@@ -4707,10 +4747,10 @@ nonisolated internal enum L10n {
   internal static var socialGroupMemberCountSingular: String { return L10n.tr("Localizable", "social_group_member_count_singular", fallback: "1 member") }
   /// Title of the group members sheet
   internal static var socialGroupMembersTitle: String { return L10n.tr("Localizable", "social_group_members_title", fallback: "Members") }
-  /// Placeholder for the group post composer
-  internal static var socialGroupPostPlaceholder: String { return L10n.tr("Localizable", "social_group_post_placeholder", fallback: "Post to the group") }
   /// Inline error shown when sending a group post fails
   internal static var socialGroupPostFailed: String { return L10n.tr("Localizable", "social_group_post_failed", fallback: "Couldn’t post to this group. Try again.") }
+  /// Placeholder for the group post composer
+  internal static var socialGroupPostPlaceholder: String { return L10n.tr("Localizable", "social_group_post_placeholder", fallback: "Post to the group") }
   /// Empty state of a group's post feed
   internal static var socialGroupPostsEmpty: String { return L10n.tr("Localizable", "social_group_posts_empty", fallback: "No posts yet. Share an episode or start a conversation.") }
   /// Footer explaining a private group's lifecycle. Shown in the create sheet
@@ -4933,6 +4973,18 @@ nonisolated internal enum L10n {
   internal static var socialPrivacyTitle: String { return L10n.tr("Localizable", "social_privacy_title", fallback: "Profile Privacy") }
   /// Privacy screen row label for top podcasts
   internal static var socialPrivacyTopPodcasts: String { return L10n.tr("Localizable", "social_privacy_top_podcasts", fallback: "Top podcasts") }
+  /// Error shown when the picked avatar image is not a JPEG or PNG the server accepts.
+  internal static var socialProfileAvatarInvalidFormat: String { return L10n.tr("Localizable", "social_profile_avatar_invalid_format", fallback: "Choose a valid JPEG or PNG image.") }
+  /// Error shown when the picked avatar image could not be loaded from the photo library.
+  internal static var socialProfileAvatarReadFailed: String { return L10n.tr("Localizable", "social_profile_avatar_read_failed", fallback: "Unable to read that image.") }
+  /// Error shown when removing the profile avatar fails.
+  internal static var socialProfileAvatarRemoveFailed: String { return L10n.tr("Localizable", "social_profile_avatar_remove_failed", fallback: "Unable to remove the avatar. Try again later.") }
+  /// Error shown when the server's nudity/racy-content scan rejects the avatar image.
+  internal static var socialProfileAvatarScanRejected: String { return L10n.tr("Localizable", "social_profile_avatar_scan_rejected", fallback: "That image was rejected by the nudity/racy-content filter.") }
+  /// Error shown when the avatar image exceeds the 10 MB upload limit.
+  internal static var socialProfileAvatarTooLarge: String { return L10n.tr("Localizable", "social_profile_avatar_too_large", fallback: "Choose a JPEG or PNG smaller than 10 MB.") }
+  /// Error shown when the avatar upload fails for a reason other than format or moderation.
+  internal static var socialProfileAvatarUploadFailed: String { return L10n.tr("Localizable", "social_profile_avatar_upload_failed", fallback: "Unable to update the avatar. Try again later.") }
   /// Button opening the profile edit sheet
   internal static var socialProfileEdit: String { return L10n.tr("Localizable", "social_profile_edit", fallback: "Edit Profile") }
   /// Shown when a profile does not exist or is unavailable to the viewer
@@ -5833,3 +5885,4 @@ nonisolated extension L10n {
     return String(format: format, locale: Locale.current, arguments: args)
   }
 }
+

@@ -16,8 +16,10 @@ map/reduce. Maps produce factual segment summaries and chapter candidates; the
 reducer produces a 150–250-word factual summary and three to eight ordered
 chapters within the episode duration. If the model is unavailable, a compact
 durable job retains the candidate reference and attachment token and retries on
-lifecycle opportunities and weekly until success or candidate removal. There is
-no server-side Gemini summary generation.
+lifecycle opportunities and weekly, terminating on success, a bounded number of
+failed attempts, a permanent server rejection (the one-time token is consumed
+or expired), or local deletion of the transcript. There is no server-side
+Gemini summary generation.
 
 All writes require App Attest. Bearer authentication is optional and controls
 attribution. Bodies are capped before decoding: 3 MiB compressed request, 2 MiB

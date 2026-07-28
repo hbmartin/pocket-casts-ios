@@ -10,7 +10,15 @@ final class ProtectedDataMigrationRetryObserver {
     private let notificationCenter: NotificationCenter
     private let notificationName: Notification.Name
     private let handler: @MainActor @Sendable () -> Void
-    private var token: NSObjectProtocol?
+
+    /// @unchecked Sendable: NotificationCenter's opaque token is only retained
+    /// and handed back to removeObserver; it is never messaged directly. The
+    /// wrapper lets the nonisolated deinit read it without a Sendable violation.
+    nonisolated private struct ObserverToken: @unchecked Sendable {
+        let value: NSObjectProtocol
+    }
+
+    private var token: ObserverToken?
 
     init(
         notificationCenter: NotificationCenter = .default,
@@ -24,18 +32,18 @@ final class ProtectedDataMigrationRetryObserver {
 
     func start() {
         guard token == nil else { return }
-        token = notificationCenter.addObserver(forName: notificationName, object: nil, queue: .main) { [weak self] _ in
+        token = ObserverToken(value: notificationCenter.addObserver(forName: notificationName, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.handler()
             }
-        }
+        })
     }
 
     deinit {
         // Block-based observations persist until removed, so dropping the token
         // without this would leave the handler registered in the center forever.
         if let token {
-            notificationCenter.removeObserver(token)
+            notificationCenter.removeObserver(token.value)
         }
     }
 }

@@ -104,8 +104,12 @@ actor ShowInfoCoordinator: ShowInfoCoordinating {
                    episodeUUID: episodeUuid,
                    acceptLanguage: Locale.preferredLanguages.joined(separator: ",")
                ) {
-                pocketCastsTranscripts = manifest.transcripts.map {
-                    Episode.Metadata.Transcript(url: $0.url.absoluteString, type: $0.mediaType, language: $0.language)
+                pocketCastsTranscripts = manifest.transcripts.compactMap {
+                    // A manifest URL must stay on the pinned backend origin: a
+                    // compromised manifest must not be able to point transcript
+                    // rendering at an arbitrary external host.
+                    guard ServerOriginPolicy.shared.isSameOrigin($0.url) else { return nil }
+                    return Episode.Metadata.Transcript(url: $0.url.absoluteString, type: $0.mediaType, language: $0.language)
                 }
             }
 

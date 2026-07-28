@@ -298,7 +298,11 @@ final class TokenHelper: Sendable {
             loginRequest.email = email
             loginRequest.password = password
             loginRequest.scope = ServerConstants.Values.apiScope
-            loginRequest.device = ServerConfig.shared.syncDelegate?.uniqueAppId() ?? ""
+            let deviceId = ServerConfig.shared.syncDelegate?.uniqueAppId() ?? ""
+            if deviceId.isEmpty {
+                FileLog.shared.addMessage("TokenHelper: no uniqueAppId available at login; tokens will be issued without device binding")
+            }
+            loginRequest.device = deviceId
             let data = try loginRequest.serializedData()
             request.httpBody = data
 

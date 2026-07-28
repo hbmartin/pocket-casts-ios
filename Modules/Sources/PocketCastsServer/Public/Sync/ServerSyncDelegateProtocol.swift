@@ -33,4 +33,16 @@ public protocol ServerSyncDelegate: Sendable {
     func privateUserAgent() -> String
     func minTimeBetweenProgressSaves() -> Double
     func production() -> Bool
+
+    /// Whether this build registers device tokens with the production APNs
+    /// environment. Distinct from `production()`: the APNs environment follows
+    /// the `aps-environment` entitlement (development for Xcode-run debug
+    /// builds of any flavor), not the server flavor.
+    func apnsProduction() -> Bool
+}
+
+public extension ServerSyncDelegate {
+    func apnsProduction() -> Bool {
+        production()
+    }
 }

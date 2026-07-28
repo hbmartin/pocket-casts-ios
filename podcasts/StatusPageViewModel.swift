@@ -11,9 +11,9 @@ class StatusPageViewModel: ObservableObject {
 
     var originDescription: String {
         switch ServerOriginPolicy.shared.state {
-        case let .ready(origin): "Server origin: \(origin)"
-        case .invalidBuildOrigin: ServerOriginPolicy.shared.blockingMessage ?? "Invalid server origin"
-        case .reinstallRequired: ServerOriginPolicy.shared.blockingMessage ?? "Reinstall required"
+        case let .ready(origin): L10n.settingsStatusOriginReady(origin)
+        case .invalidBuildOrigin: ServerOriginPolicy.shared.blockingMessage ?? L10n.settingsStatusOriginInvalid
+        case .reinstallRequired: ServerOriginPolicy.shared.blockingMessage ?? L10n.settingsStatusOriginReinstallRequired
         }
     }
 
@@ -25,7 +25,9 @@ class StatusPageViewModel: ObservableObject {
         let customTest: (() async -> Bool)?
         var status: Result = .idle
 
-        init(title: String, description: String, failureMessage: String, urls: [String] = [], customTest: (() async -> Bool)? = nil) {
+        // No default arguments: every call site passes all parameters, and isolated
+        // default-argument expressions trip Swift 6.3's dual-isolation diagnostic here.
+        init(title: String, description: String, failureMessage: String, urls: [String], customTest: (() async -> Bool)?) {
             self.title = title
             self.description = description
             self.failureMessage = failureMessage
@@ -38,7 +40,13 @@ class StatusPageViewModel: ObservableObject {
         }
     }
 
-    lazy var checks = [
+    // Built by a function, not a stored-property initializer: the lazy-var
+    // initializer context modeled the actor-hopping customTest closures as
+    // default-argument expressions and rejected them as dual-isolated.
+    let checks = StatusPageViewModel.makeChecks()
+
+    private static func makeChecks() -> [Service] {
+        [
         Service(
             title: L10n.settingsStatusInternet,
             description: L10n.settingsStatusInternetDescription,
@@ -56,35 +64,36 @@ class StatusPageViewModel: ObservableObject {
             }
         ),
         Service(
-            title: "Podcast server origin",
-            description: "The build origin is pinned on first launch and cannot change across app updates.",
-            failureMessage: "Reinstall is required before this build can use its configured server.",
+            title: L10n.settingsStatusOrigin,
+            description: L10n.settingsStatusOriginDescription,
+            failureMessage: L10n.settingsStatusOriginFailureMessage,
             urls: [],
             customTest: { ServerOriginPolicy.shared.isNetworkAllowed }
         ),
         Service(
             title: L10n.settingsStatusRefreshService,
             description: L10n.settingsStatusRefreshServiceDescription,
-            failureMessage: "The configured podcast backend did not answer its liveness check.",
+            failureMessage: L10n.settingsStatusLivenessFailureMessage,
             urls: [ServerConstants.Urls.main() + "livez"],
             customTest: nil
         ),
         Service(
             title: L10n.settingsStatusAccountService,
             description: L10n.settingsStatusAccountServiceDescription,
-            failureMessage: "The attested capability manifest is unavailable.",
+            failureMessage: L10n.settingsStatusCapabilitiesFailureMessage,
             urls: [],
             customTest: { await ServerCapabilitiesClient.shared.load(force: true) != nil }
         ),
         Service(
             title: L10n.settingsStatusDiscover,
             description: L10n.settingsStatusDiscoverDescription,
-            failureMessage: "Representative discover or generated-artwork routes failed.",
+            failureMessage: L10n.settingsStatusDiscoverFailureMessage,
             urls: [ServerConstants.Urls.discover() + "ios/content_v3.json",
                    ServerConstants.Urls.discover() + "images/artwork/light/280/1.png"],
             customTest: nil
         )
-    ]
+        ]
+    }
 
     private lazy var networkUtils = NetworkUtils.shared
 
@@ -109,7 +118,13 @@ class StatusPageViewModel: ObservableObject {
             running = false
             hasRun = true
             if let capabilities = await ServerCapabilitiesClient.shared.load() {
-                serverDetails = "Version \(capabilities.serverVersion) · App Attest \(capabilities.appAttestMode) · Avatar \(capabilities.features.avatar ? "on" : "off") · Folders \(capabilities.features.folderSuggestions ? "on" : "off") · Corpus \(capabilities.features.corpus ? "on" : "off")"
+                serverDetails = L10n.settingsStatusServerDetails(
+                    capabilities.serverVersion,
+                    capabilities.appAttestMode,
+                    capabilities.features.avatar ? L10n.on : L10n.off,
+                    capabilities.features.folderSuggestions ? L10n.on : L10n.off,
+                    capabilities.features.corpus ? L10n.on : L10n.off
+                )
             }
         }
     }

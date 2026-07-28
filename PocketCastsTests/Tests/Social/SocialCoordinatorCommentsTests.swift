@@ -52,6 +52,7 @@ final class SocialCoordinatorCommentsTests: DBTestCase {
 
                 var episode = Episode()
                 episode.uuid = episodeUuid
+                episode.addedDate = Date()
                 episode.podcastUuid = podcastUuid
                 episode.podcast_id = savedPodcast.id
                 episode.title = "Resolved Episode"

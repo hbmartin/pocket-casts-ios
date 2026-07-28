@@ -26,9 +26,14 @@ extension URLConnection {
     /// A convenient initializer to pass a block which returns data, response, and error for a given URLRequest.
     /// - Parameter mockHandler: The handler block (URLRequest) throws -> (Data, URLResponse?)
     convenience init(mockHandler: @escaping MockRequestHandler.Handler) {
-        let suite = "MockURLHandler.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suite) ?? .standard
-        let policy = ServerOriginPolicy(buildOrigin: "https://tests.invalid", defaults: defaults, allowInsecureLoopback: false)
+        // pinsOrigin: false keeps test policies stateless — no UserDefaults suite
+        // is created or accumulated per test, and runs can never cross-contaminate.
+        let policy = ServerOriginPolicy(
+            buildOrigin: "https://tests.invalid",
+            defaults: UserDefaults(suiteName: "MockURLHandler.ephemeral") ?? .standard,
+            allowInsecureLoopback: false,
+            pinsOrigin: false
+        )
         self.init(handler: MockRequestHandler(handler: mockHandler), originPolicy: policy)
     }
 }

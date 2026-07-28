@@ -26,7 +26,8 @@ nonisolated extension ThreadSafeDictionary: DownloadManagerStreamAndDownloadCach
 }
 
 /// First-settlement signal for stream-and-download exporters.
-final class ExportCompletionSignal: Sendable {
+/// nonisolated: settled from the exporter's delegate queues, never the main actor.
+nonisolated final class ExportCompletionSignal: Sendable {
     enum Settlement: Equatable, Sendable {
         case success
         case failure(String)

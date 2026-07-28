@@ -1,4 +1,4 @@
-import PocketCastsServer
+@testable import PocketCastsServer
 import XCTest
 
 @testable import podcasts

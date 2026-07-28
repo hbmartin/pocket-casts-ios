@@ -132,9 +132,15 @@ public final class PodcastSearchTask: Sendable {
 
     private func search(term: String) async throws -> PodcastsSearchEnvelope {
         let url = ServerHelper.asUrl(ServerConstants.Urls.main() + "podcasts/search")
-        let request = ServerHelper.createJsonRequest(url: url, params: MainServerHandler.shared.podcastSearchQuery(searchTerm: term)!, timeout: 10, cachePolicy: .reloadIgnoringCacheData)
+        // No force-unwraps: the query is nil until ServerConfig is configured with
+        // a sync delegate, and a search must fail as an error, not a crash.
+        guard let query = MainServerHandler.shared.podcastSearchQuery(searchTerm: term),
+              let request = ServerHelper.createJsonRequest(url: url, params: query, timeout: 10, cachePolicy: .reloadIgnoringCacheData)
+        else {
+            throw URLError(.badURL)
+        }
 
-        let (data, _) = try await session.data(for: request!)
+        let (data, _) = try await session.data(for: request)
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         let envelope = try decoder.decode(PodcastsSearchEnvelope.self, from: data)

@@ -144,10 +144,12 @@ final class NowPlayingLiveActivityManager {
     /// Ends every activity of our type — used at launch to clean up leftovers
     /// from a previous process (the `activity` reference does not survive relaunch).
     private func endAllActivities() {
-        let staleActivities = Activity<NowPlayingActivityAttributes>.activities
+        // Boxed like endActivity() above: Activity is not Sendable and end(_:dismissalPolicy:)
+        // is @concurrent, so each reference crosses out of the main actor via the box.
+        let staleActivities = Activity<NowPlayingActivityAttributes>.activities.map { UncheckedSendable($0) }
         Task {
-            for activity in staleActivities {
-                await activity.end(nil, dismissalPolicy: .immediate)
+            for boxed in staleActivities {
+                await boxed.value.end(nil, dismissalPolicy: .immediate)
             }
         }
     }

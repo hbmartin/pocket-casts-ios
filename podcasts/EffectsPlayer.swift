@@ -272,27 +272,34 @@ nonisolated final class EffectsPlayer: PlaybackProtocol, Hashable, @unchecked Se
     func seekTo(_ time: TimeInterval, completion: (() -> Void)?) {
         guard let readOperation = audioReadTask else { return }
 
-        let boxed = PocketCastsUtils.UncheckedSendable((readOperation, completion))
+        // Boxed separately, with the body in a named method: boxing the
+        // (operation, completion) pair as one tuple and destructuring it
+        // trips a SILGenCleanup compiler crash in Swift 6.3.3.
+        let boxedOperation = PocketCastsUtils.UncheckedSendable(readOperation)
+        let boxedCompletion = PocketCastsUtils.UncheckedSendable(completion)
         serialSeekQueue.async { [weak self] in
-            guard let self else { return }
-
-            let (readOperation, completion) = boxed.value
-            seekState.withLock {
-                $0.lastSeekTime = max(0.1, time)
-                $0.isSeeking = true
-            }
-            readOperation.seekTo(time, completion: { [weak self] seekedToEnd in
-                if !seekedToEnd {
-                    completion?()
-                } else if !(self?.playBufferManager?.haveNotifiedPlayer.value ?? false) {
-                    self?.playBufferManager?.haveNotifiedPlayer.value = true
-                    FileLog.shared.addMessage("EffectsPlayer seeked passed end of episode, calling finished playing")
-                    Task { @MainActor in PlaybackManager.shared.playerDidFinishPlayingEpisode() }
-                }
-
-                self?.seekState.withLock { $0.isSeeking = false }
-            })
+            self?.performQueuedSeek(to: time, operation: boxedOperation, boxedCompletion: boxedCompletion)
         }
+    }
+
+    private func performQueuedSeek(to time: TimeInterval, operation: PocketCastsUtils.UncheckedSendable<AudioReadTask>, boxedCompletion: PocketCastsUtils.UncheckedSendable<(() -> Void)?>) {
+        let readOperation = operation.value
+        let completion = boxedCompletion.value
+        seekState.withLock {
+            $0.lastSeekTime = max(0.1, time)
+            $0.isSeeking = true
+        }
+        readOperation.seekTo(time, completion: { [weak self] seekedToEnd in
+            if !seekedToEnd {
+                completion?()
+            } else if !(self?.playBufferManager?.haveNotifiedPlayer.value ?? false) {
+                self?.playBufferManager?.haveNotifiedPlayer.value = true
+                FileLog.shared.addMessage("EffectsPlayer seeked passed end of episode, calling finished playing")
+                Task { @MainActor in PlaybackManager.shared.playerDidFinishPlayingEpisode() }
+            }
+
+            self?.seekState.withLock { $0.isSeeking = false }
+        })
     }
 
     func currentTime() -> TimeInterval {
