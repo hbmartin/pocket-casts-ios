@@ -39,8 +39,8 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
     /// titles cover the search/sort/rule boundaries; one archived row pins the
     /// shared `archived = 0` handling.
     private func seedFixtures() throws {
-        let podcastA = createTestPodcast(uuid: "podcast-a", title: "Alpha Show", subscribed: 1, dataManager: dataManager)
-        let podcastB = createTestPodcast(uuid: "podcast-b", title: "Beta Show", subscribed: 0, dataManager: dataManager)
+        let podcastA = createTestPodcast(uuid: "podcast-a", title: "Alpha Show", subscribed: 1, dataManager: DataManager.sharedManager)
+        let podcastB = createTestPodcast(uuid: "podcast-b", title: "Beta Show", subscribed: 0, dataManager: DataManager.sharedManager)
 
         seed(uuid: "ep-a1", podcast: podcastA, title: "Deep Interview", duration: 3600, addedOffset: -1)
         seed(uuid: "ep-a2", podcast: podcastA, title: "Quick News", duration: 300, addedOffset: -2)
@@ -59,7 +59,7 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
         episode.archived = archived
         episode.publishedDate = Date(timeIntervalSince1970: 1_700_000_000 + addedOffset)
         episode.addedDate = Date(timeIntervalSince1970: 1_700_000_000 + addedOffset)
-        _ = dataManager.save(episode: episode)
+        _ = DataManager.sharedManager.save(episode: episode)
     }
 
     private func makeCustomPlaylist(envelopeJSON: String?, sortType: PlaylistSort = .newestToOldest) -> EpisodeFilter {
@@ -69,7 +69,7 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
         playlist.manual = false
         playlist.sortType = sortType.rawValue
         playlist.customQuery = envelopeJSON
-        return dataManager.save(playlist: playlist)
+        return DataManager.sharedManager.save(playlist: playlist)
     }
 
     private func durationOver1800Playlist(sortType: PlaylistSort = .newestToOldest) throws -> EpisodeFilter {
@@ -82,7 +82,7 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
     func testEpisodesClauseMatchesBuilderEnvelopeAcrossSubscriptionStates() throws {
         let playlist = try durationOver1800Playlist()
 
-        let episodes = dataManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist))
+        let episodes = DataManager.sharedManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist))
 
         // ep-b1 belongs to an unsubscribed podcast and must still match; the
         // archived long episode must not.
@@ -92,17 +92,17 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
     func testEpisodeCountClause() throws {
         let playlist = try durationOver1800Playlist()
 
-        let count = dataManager.count(matching: PlaylistQueryBuilder.countRequest(.episodeCount, for: playlist))
+        let count = DataManager.sharedManager.count(matching: PlaylistQueryBuilder.countRequest(.episodeCount, for: playlist))
         XCTAssertEqual(count, 2)
     }
 
     func testAllEpisodeCountClauseIncludesArchivedWhenAsked() throws {
         let playlist = try durationOver1800Playlist()
 
-        let hidden = dataManager.count(matching: PlaylistQueryBuilder.countRequest(.allEpisodeCount, for: playlist, shouldShowArchived: false))
+        let hidden = DataManager.sharedManager.count(matching: PlaylistQueryBuilder.countRequest(.allEpisodeCount, for: playlist, shouldShowArchived: false))
         XCTAssertEqual(hidden, 2)
 
-        let shown = dataManager.count(matching: PlaylistQueryBuilder.countRequest(.allEpisodeCount, for: playlist, shouldShowArchived: true))
+        let shown = DataManager.sharedManager.count(matching: PlaylistQueryBuilder.countRequest(.allEpisodeCount, for: playlist, shouldShowArchived: true))
         XCTAssertEqual(shown, 3, "archived matches count once the archived toggle is on")
     }
 
@@ -111,7 +111,7 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
         let playlist = makeCustomPlaylist(envelopeJSON: try CustomPlaylistQuery(root: root).envelopeJSON(), sortType: .newestToOldest)
 
         let request = PlaylistQueryBuilder.episodesRequest(.firstDistinctEpisodes, for: playlist, limit: 10)
-        let episodes = dataManager.episodes(matching: request)
+        let episodes = DataManager.sharedManager.episodes(matching: request)
 
         XCTAssertEqual(episodes.map(\.uuid), ["ep-a1", "ep-b1"], "newest unarchived episode per podcast")
     }
@@ -122,7 +122,7 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
         let playlist = try durationOver1800Playlist()
 
         let request = PlaylistQueryBuilder.episodesRequest(for: playlist, episodeUuidToAdd: "ep-a2")
-        let episodes = dataManager.episodes(matching: request)
+        let episodes = DataManager.sharedManager.episodes(matching: request)
 
         XCTAssertEqual(Set(episodes.map(\.uuid)), ["ep-a1", "ep-a2", "ep-b1"], "the pinned uuid joins the custom matches")
     }
@@ -131,7 +131,7 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
         let playlist = try durationOver1800Playlist()
 
         let request = PlaylistQueryBuilder.episodesRequest(for: playlist, searchTerm: "beta")
-        let episodes = dataManager.episodes(matching: request)
+        let episodes = DataManager.sharedManager.episodes(matching: request)
 
         XCTAssertEqual(episodes.map(\.uuid), ["ep-b1"], "case-insensitive match on episode or podcast title")
     }
@@ -139,18 +139,18 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
     func testSortTypeOrdersCustomMatches() throws {
         let playlist = try durationOver1800Playlist(sortType: .shortestToLongest)
 
-        let episodes = dataManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist)) // ep-a1 3600s, ep-b1 5400s
+        let episodes = DataManager.sharedManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist)) // ep-a1 3600s, ep-b1 5400s
         XCTAssertEqual(episodes.map(\.uuid), ["ep-a1", "ep-b1"])
 
         let request = PlaylistQueryBuilder.episodesRequest(for: playlist, sortType: .longestToShortest)
-        XCTAssertEqual(dataManager.episodes(matching: request).map(\.uuid), ["ep-b1", "ep-a1"], "explicit sortType overrides the playlist's")
+        XCTAssertEqual(DataManager.sharedManager.episodes(matching: request).map(\.uuid), ["ep-b1", "ep-a1"], "explicit sortType overrides the playlist's")
     }
 
     func testLimitApplies() throws {
         let playlist = try durationOver1800Playlist(sortType: .longestToShortest)
 
         let request = PlaylistQueryBuilder.episodesRequest(for: playlist, limit: 1)
-        XCTAssertEqual(dataManager.episodes(matching: request).map(\.uuid), ["ep-b1"])
+        XCTAssertEqual(DataManager.sharedManager.episodes(matching: request).map(\.uuid), ["ep-b1"])
     }
 
     // MARK: - SQL mode
@@ -159,7 +159,7 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
         let envelope = try CustomPlaylistQuery(sql: "episode.duration > 1800 AND podcast.title LIKE '%Show%'").envelopeJSON()
         let playlist = makeCustomPlaylist(envelopeJSON: envelope)
 
-        let episodes = dataManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist))
+        let episodes = DataManager.sharedManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist))
         XCTAssertEqual(Set(episodes.map(\.uuid)), ["ep-a1", "ep-b1"])
     }
 
@@ -167,7 +167,7 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
         let envelope = try CustomPlaylistQuery(sql: "episode.uuid IN (SELECT uuid FROM SJEpisode WHERE duration > 5000)").envelopeJSON()
         let playlist = makeCustomPlaylist(envelopeJSON: envelope)
 
-        let episodes = dataManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist))
+        let episodes = DataManager.sharedManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist))
         XCTAssertEqual(episodes.map(\.uuid), ["ep-b1"])
     }
 
@@ -175,8 +175,8 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
         let envelope = try CustomPlaylistQuery(sql: "1=1; DROP TABLE SJEpisode").envelopeJSON()
         let playlist = makeCustomPlaylist(envelopeJSON: envelope)
 
-        XCTAssertTrue(dataManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist)).isEmpty)
-        XCTAssertEqual(dataManager.count(matching: PlaylistQueryBuilder.countRequest(.episodeCount, for: playlist)), 0)
+        XCTAssertTrue(DataManager.sharedManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist)).isEmpty)
+        XCTAssertEqual(DataManager.sharedManager.count(matching: PlaylistQueryBuilder.countRequest(.episodeCount, for: playlist)), 0)
     }
 
     func testSQLModeSemicolonInsideStringLiteralExecutes() throws {
@@ -186,7 +186,7 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
         let envelope = try CustomPlaylistQuery(sql: "episode.duration > 1800 AND episode.title != 'Science; Vs'").envelopeJSON()
         let playlist = makeCustomPlaylist(envelopeJSON: envelope)
 
-        let episodes = dataManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist))
+        let episodes = DataManager.sharedManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist))
         XCTAssertEqual(Set(episodes.map(\.uuid)), ["ep-a1", "ep-b1"])
     }
 
@@ -200,7 +200,7 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
             let envelope = try CustomPlaylistQuery(sql: fragment).envelopeJSON()
             let playlist = makeCustomPlaylist(envelopeJSON: envelope)
 
-            let episodes = dataManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist))
+            let episodes = DataManager.sharedManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist))
             XCTAssertEqual(Set(episodes.map(\.uuid)), ["ep-a1", "ep-b1"])
         }
     }
@@ -215,9 +215,9 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
             let envelope = try CustomPlaylistQuery(sql: fragment).envelopeJSON()
             let playlist = makeCustomPlaylist(envelopeJSON: envelope)
 
-            XCTAssertTrue(dataManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist)).isEmpty)
+            XCTAssertTrue(DataManager.sharedManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist)).isEmpty)
             XCTAssertEqual(
-                dataManager.count(matching: PlaylistQueryBuilder.countRequest(.episodeCount, for: playlist)),
+                DataManager.sharedManager.count(matching: PlaylistQueryBuilder.countRequest(.episodeCount, for: playlist)),
                 0
             )
         }
@@ -229,7 +229,7 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
         let root = CustomQueryNode.condition(CustomQueryCondition(field: .publishedDate, op: .inLastDays, value: .date(.relativeDays(2000))))
         let playlist = makeCustomPlaylist(envelopeJSON: try CustomPlaylistQuery(root: root).envelopeJSON())
 
-        let episodes = dataManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist))
+        let episodes = DataManager.sharedManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist))
         XCTAssertEqual(Set(episodes.map(\.uuid)), ["ep-a1", "ep-a2", "ep-b1", "ep-b2"])
     }
 
@@ -239,23 +239,23 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
         let playlist = try durationOver1800Playlist()
         featureFlagMock.set(.customPlaylists, value: false)
 
-        XCTAssertTrue(dataManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist)).isEmpty)
-        XCTAssertTrue(dataManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(.firstDistinctEpisodes, for: playlist, limit: 10)).isEmpty)
-        XCTAssertEqual(dataManager.count(matching: PlaylistQueryBuilder.countRequest(.episodeCount, for: playlist)), 0)
-        XCTAssertEqual(dataManager.count(matching: PlaylistQueryBuilder.countRequest(.allEpisodeCount, for: playlist)), 0)
+        XCTAssertTrue(DataManager.sharedManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist)).isEmpty)
+        XCTAssertTrue(DataManager.sharedManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(.firstDistinctEpisodes, for: playlist, limit: 10)).isEmpty)
+        XCTAssertEqual(DataManager.sharedManager.count(matching: PlaylistQueryBuilder.countRequest(.episodeCount, for: playlist)), 0)
+        XCTAssertEqual(DataManager.sharedManager.count(matching: PlaylistQueryBuilder.countRequest(.allEpisodeCount, for: playlist)), 0)
     }
 
     func testUndecodableEnvelopeRendersEmptyNotCrashing() {
         let playlist = makeCustomPlaylist(envelopeJSON: "{ definitely not an envelope")
 
-        XCTAssertTrue(dataManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist)).isEmpty)
-        XCTAssertEqual(dataManager.count(matching: PlaylistQueryBuilder.countRequest(.episodeCount, for: playlist)), 0)
+        XCTAssertTrue(DataManager.sharedManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist)).isEmpty)
+        XCTAssertEqual(DataManager.sharedManager.count(matching: PlaylistQueryBuilder.countRequest(.episodeCount, for: playlist)), 0)
     }
 
     func testFutureVersionEnvelopeRendersEmpty() {
         let playlist = makeCustomPlaylist(envelopeJSON: #"{"version":99,"mode":"sql","sql":"1 = 1"}"#)
 
-        XCTAssertTrue(dataManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist)).isEmpty)
+        XCTAssertTrue(DataManager.sharedManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist)).isEmpty)
     }
 
     func testCompilerRejectedASTRendersEmpty() throws {
@@ -263,7 +263,7 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
         let root = CustomQueryNode.condition(CustomQueryCondition(field: .duration, op: .contains, value: .string("x")))
         let playlist = makeCustomPlaylist(envelopeJSON: try CustomPlaylistQuery(root: root).envelopeJSON())
 
-        XCTAssertTrue(dataManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist)).isEmpty)
+        XCTAssertTrue(DataManager.sharedManager.episodes(matching: PlaylistQueryBuilder.episodesRequest(for: playlist)).isEmpty)
     }
 
     // MARK: - Legacy routing
@@ -275,7 +275,7 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
         let playlist = makeCustomPlaylist(envelopeJSON: envelope)
 
         let request = PlaylistQueryBuilder.filterEpisodesRequest(for: playlist, episodeUuidToAdd: nil, limit: 10)
-        XCTAssertEqual(dataManager.episodes(matching: request).map(\.uuid), ["ep-a1"])
+        XCTAssertEqual(DataManager.sharedManager.episodes(matching: request).map(\.uuid), ["ep-a1"])
     }
 
     // MARK: - Seeding helper
@@ -317,7 +317,7 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
 
         // "Start from current rules" seeds directly into the SQL editor, so the
         // seeded text must always clear the save-time validation pipeline.
-        let result = dataManager.validateCustomQueryFragment(fragment)
+        let result = DataManager.sharedManager.validateCustomQueryFragment(fragment)
         XCTAssertNoThrow(try result.get())
     }
 
@@ -338,9 +338,9 @@ final class PlaylistQueryBuilderCustomTests: DataManagerTestCase {
         let playlist = try durationOver1800Playlist()
 
         let query = PlaylistQueryBuilder.query(clause: .episode, for: playlist)
-        XCTAssertTrue(dataManager.findPlaylistEpisodesWhere(query: query.sql, arguments: query.arguments).isEmpty)
+        XCTAssertTrue(DataManager.sharedManager.findPlaylistEpisodesWhere(query: query.sql, arguments: query.arguments).isEmpty)
 
         let fragment = PlaylistQueryBuilder.queryFor(filter: playlist, episodeUuidToAdd: nil, limit: 0)
-        XCTAssertTrue(dataManager.findEpisodesWhere(customWhere: fragment.sql, arguments: fragment.arguments).isEmpty)
+        XCTAssertTrue(DataManager.sharedManager.findEpisodesWhere(customWhere: fragment.sql, arguments: fragment.arguments).isEmpty)
     }
 }

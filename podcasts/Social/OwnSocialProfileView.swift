@@ -1,3 +1,4 @@
+import PhotosUI
 import SwiftUI
 import PocketCastsServer
 import PocketCastsUtils
@@ -16,6 +17,15 @@ struct OwnSocialProfileView: View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: 6) {
+                    if let avatarURL = URL(string: viewModel.profile.avatarURL), !viewModel.profile.avatarURL.isEmpty {
+                        AsyncImage(url: avatarURL) { image in
+                            image.resizable().scaledToFill()
+                        } placeholder: {
+                            ProgressView()
+                        }
+                        .frame(width: 72, height: 72)
+                        .clipShape(Circle())
+                    }
                     Text(viewModel.profile.displayName)
                         .font(.title2.bold())
                     Text("@" + viewModel.profile.handle)
@@ -83,6 +93,21 @@ struct SocialProfileEditView: View {
     var body: some View {
         NavigationView {
             Form {
+                Section(header: Text(L10n.settingsChangeAvatar)) {
+                    PhotosPicker(selection: $viewModel.selectedAvatarItem, matching: .images) {
+                        Label(L10n.settingsChangeAvatar, systemImage: "photo")
+                    }
+                    if !viewModel.profile.avatarURL.isEmpty {
+                        Button(role: .destructive) {
+                            Task { await viewModel.removeAvatar() }
+                        } label: {
+                            Label(L10n.remove, systemImage: "trash")
+                        }
+                    }
+                    if viewModel.isAvatarUpdating {
+                        ProgressView()
+                    }
+                }
                 Section(header: Text(L10n.socialPrivacyDisplayName)) {
                     TextField(L10n.socialDisplayNamePlaceholder, text: $viewModel.editedDisplayName)
                 }
@@ -128,7 +153,11 @@ final class OwnSocialProfileViewModel: ObservableObject {
     @Published var editedDisplayName = ""
     @Published var editedBio = ""
     @Published private(set) var isSaving = false
+    @Published private(set) var isAvatarUpdating = false
     @Published private(set) var saveError: String?
+    @Published var selectedAvatarItem: PhotosPickerItem? {
+        didSet { loadSelectedAvatar() }
+    }
 
     /// Presents the system share sheet; injected so the view stays testable.
     var onShare: ((URL) -> Void)?
@@ -178,5 +207,47 @@ final class OwnSocialProfileViewModel: ObservableObject {
         profile = saved
         SocialIdentityStore.cachedProfile = saved
         return true
+    }
+
+    func removeAvatar() async {
+        isAvatarUpdating = true
+        saveError = nil
+        defer { isAvatarUpdating = false }
+        guard await SocialAvatarUploadSender().remove() else {
+            saveError = "Unable to remove the avatar. Try again later."
+            return
+        }
+        profile.avatarURL = ""
+        SocialIdentityStore.cachedProfile = profile
+        selectedAvatarItem = nil
+    }
+
+    private func loadSelectedAvatar() {
+        guard let item = selectedAvatarItem else { return }
+        Task { [weak self, item] in
+            guard let self else { return }
+            isAvatarUpdating = true
+            saveError = nil
+            defer { isAvatarUpdating = false }
+            do {
+                guard let data = try await item.loadTransferable(type: Data.self), data.count <= 10 * 1024 * 1024 else {
+                    saveError = "Choose a JPEG or PNG smaller than 10 MB."
+                    return
+                }
+                switch await SocialAvatarUploadSender().upload(imageData: data) {
+                case let .accepted(avatarURL):
+                    profile.avatarURL = avatarURL
+                    SocialIdentityStore.cachedProfile = profile
+                case .rejectedScan:
+                    saveError = "That image was rejected by the nudity/racy-content filter."
+                case .rejectedFormat:
+                    saveError = "Choose a valid JPEG or PNG image."
+                case .failed:
+                    saveError = "Unable to update the avatar. Try again later."
+                }
+            } catch {
+                saveError = "Unable to read that image."
+            }
+        }
     }
 }

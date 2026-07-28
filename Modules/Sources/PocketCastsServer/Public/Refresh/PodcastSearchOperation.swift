@@ -6,6 +6,7 @@ import Synchronization
 class PodcastSearchOperation: Operation, @unchecked Sendable {
     private let completion: @Sendable (PodcastSearchResponse?) -> Void
     private let searchQuery: MainServerHandler.PodcastSearchQuery
+    private let urlConnection: URLConnection
     private let state = PodcastSearchState()
 
     private let dispatchGroup: DispatchGroup = {
@@ -14,9 +15,10 @@ class PodcastSearchOperation: Operation, @unchecked Sendable {
         return dispatchGroup
     }()
 
-    init(searchQuery: MainServerHandler.PodcastSearchQuery, completionHandler: @escaping @Sendable (PodcastSearchResponse?) -> Void) {
+    init(searchQuery: MainServerHandler.PodcastSearchQuery, urlConnection: URLConnection, completionHandler: @escaping @Sendable (PodcastSearchResponse?) -> Void) {
         completion = completionHandler
         self.searchQuery = searchQuery
+        self.urlConnection = urlConnection
         super.init()
     }
 
@@ -58,7 +60,7 @@ class PodcastSearchOperation: Operation, @unchecked Sendable {
         }
 
         dispatchGroup.enter()
-        let task = URLSession.shared.dataTask(with: request) { data, _, error in
+        urlConnection.send(request: request) { data, _, error in
             defer { self.dispatchGroup.leave() }
 
             guard let data, error == nil else {
@@ -83,11 +85,9 @@ class PodcastSearchOperation: Operation, @unchecked Sendable {
                 }
             }
         }
-        task.resume()
 
         let waitResult = dispatchGroup.wait(timeout: .now() + 15.seconds)
         guard waitResult == .success else {
-            task.cancel()
             state.setShouldRetry(false)
             state.complete {
                 completion(PodcastSearchResponse.failedResponse())

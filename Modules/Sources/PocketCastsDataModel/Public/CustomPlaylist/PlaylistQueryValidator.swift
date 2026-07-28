@@ -45,14 +45,12 @@ enum PlaylistQueryValidator {
             return .failure(.containsPlaceholders)
         }
 
-        // The exact `.episodeCount` shape custom playlists execute at runtime
-        // (smart count fragment with the rule group swapped for the user fragment).
-        // The newline before the closing paren terminates a trailing `--` comment
-        // so it cannot swallow the paren; the runtime wrap does the same.
+        // The exact `.episodeCount` shape custom playlists execute at runtime,
+        // including both the SQL-mode rule wrapper and combined WHERE wrapper.
         let countLiteral = PlaylistQueryBuilder.smartCountFragment(
             shouldShowArchived: false,
             allEpisodesCount: false,
-            whereFragment: " AND (\(sql: trimmed)\n)"
+            whereFragment: PlaylistQueryBuilder.sqlModeWhereFragment(trimmed)
         )
 
         do {

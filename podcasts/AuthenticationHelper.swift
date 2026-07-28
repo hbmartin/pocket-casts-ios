@@ -91,7 +91,7 @@ class AuthenticationHelper {
         return refreshTokenPersisted
     }
 
-    private static func handleSuccessfulSignIn(
+    static func handleSuccessfulSignIn(
         _ response: AuthenticationResponse,
         requireRefreshTokenPersistence: Bool = false
     ) throws {
@@ -103,6 +103,8 @@ class AuthenticationHelper {
             // Never report a renewable password-auth session when the replacement
             // refresh token could not be committed to the Keychain.
             SyncManager.clearTokensFromKeyChain()
+            ServerSettings.userId = nil
+            ServerSettings.setTokenExpiry(expiresIn: nil)
             throw APIError.TOKEN_DEAUTH
         }
 

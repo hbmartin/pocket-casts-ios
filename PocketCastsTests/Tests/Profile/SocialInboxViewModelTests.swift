@@ -62,17 +62,16 @@ final class SocialInboxViewModelTests: XCTestCase {
 
     func testBadgeChangePostsUpdateMessage() async {
         let previousValue = SocialInboxBadge.unreadCount
+        defer { SocialInboxBadge.unreadCount = previousValue }
         let newValue = previousValue == Int.max ? previousValue - 1 : previousValue + 1
         let updated = expectation(description: "badge update posted")
         let token = NotificationCenter.default.addObserver(for: SocialInboxBadgeUpdated.self) { _ in
             updated.fulfill()
         }
+        defer { NotificationCenter.default.removeObserver(token) }
 
         SocialInboxBadge.unreadCount = newValue
         await fulfillment(of: [updated], timeout: 1)
-
-        NotificationCenter.default.removeObserver(token)
-        SocialInboxBadge.unreadCount = previousValue
     }
 
     private func makeItem(id: Int64) -> SharedItem {

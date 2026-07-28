@@ -154,7 +154,7 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
     func testChaptersReturnsCachedSuccessWithoutConsultingModel() async {
         let (store, directory) = temporaryStore()
         defer { try? FileManager.default.removeItem(at: directory) }
-        store.save(.chapters([
+        await store.save(.chapters([
             GeneratedChapter(title: "Cached", timestamp: "0:00", startTime: 0)
         ]), episodeUuid: "cached")
         let intelligence = CountingChapterIntelligence()
@@ -188,7 +188,7 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
         XCTAssertTrue(second.isEmpty)
         XCTAssertEqual(intelligence.callCounts.availability, 0)
         XCTAssertEqual(intelligence.callCounts.responses, 0)
-        guard case .noChapters? = store.load(episodeUuid: "thin") else {
+        guard case .noChapters? = await store.load(episodeUuid: "thin") else {
             XCTFail("The completed no-chapters outcome should be distinct from a cache miss")
             return
         }
@@ -209,7 +209,7 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
         XCTAssertTrue(second.isEmpty)
         XCTAssertEqual(intelligence.callCounts.availability, 1)
         XCTAssertEqual(intelligence.callCounts.responses, 0)
-        guard case .noChapters? = store.load(episodeUuid: "unavailable") else {
+        guard case .noChapters? = await store.load(episodeUuid: "unavailable") else {
             XCTFail("Permanent model unavailability should persist the no-chapters outcome")
             return
         }
@@ -231,7 +231,8 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
         XCTAssertEqual(intelligence.callCounts.availability, 2,
                        "Still-downloading assets must be re-checked on the next presentation")
         XCTAssertEqual(intelligence.callCounts.responses, 0)
-        XCTAssertNil(store.load(episodeUuid: "not-ready"),
+        let cachedResult = await store.load(episodeUuid: "not-ready")
+        XCTAssertNil(cachedResult,
                      "Assets still downloading must not burn the per-episode no-chapters sentinel")
     }
 
@@ -250,7 +251,7 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
         XCTAssertTrue(second.isEmpty)
         XCTAssertEqual(intelligence.callCounts.availability, 1)
         XCTAssertEqual(intelligence.callCounts.responses, 1)
-        guard case .noChapters? = store.load(episodeUuid: "error") else {
+        guard case .noChapters? = await store.load(episodeUuid: "error") else {
             XCTFail("A definitive generation failure should suppress repeated model work")
             return
         }
@@ -276,7 +277,8 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
 
             XCTAssertTrue(first.isEmpty)
             XCTAssertTrue(second.isEmpty)
-            XCTAssertNil(store.load(episodeUuid: "transient"),
+            let cachedResult = await store.load(episodeUuid: "transient")
+            XCTAssertNil(cachedResult,
                          "\(transientError) must stay unattempted, not cached as a permanent no-chapters outcome")
             XCTAssertEqual(intelligence.callCounts.responses, 2,
                            "\(transientError) must not suppress a retry on the next presentation")
@@ -297,7 +299,7 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
         XCTAssertTrue(first.isEmpty)
         XCTAssertTrue(second.isEmpty)
         XCTAssertEqual(intelligence.callCounts.responses, 1)
-        guard case .noChapters? = store.load(episodeUuid: "empty") else {
+        guard case .noChapters? = await store.load(episodeUuid: "empty") else {
             XCTFail("Empty validated output should suppress repeated model work")
             return
         }
@@ -313,7 +315,8 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
         let cancelledResult = await TranscriptChapterGenerator(intelligence: cancelled, store: store)
             .chapters(episodeUuid: "cancelled", cues: productionCues, duration: 700)
         XCTAssertTrue(cancelledResult.isEmpty)
-        XCTAssertNil(store.load(episodeUuid: "cancelled"))
+        let cachedCancelledResult = await store.load(episodeUuid: "cancelled")
+        XCTAssertNil(cachedCancelledResult)
 
         let succeeding = CountingChapterIntelligence(response: {
             GeneratedChapterList(chapters: [
@@ -329,31 +332,33 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
         XCTAssertEqual(succeeding.callCounts.responses, 1)
     }
 
-    func testStoreRoundTripsChapters() throws {
+    func testStoreRoundTripsChapters() async throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("chapter-store-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: directory) }
         let store = OnDeviceChapterStore(directoryURL: directory)
 
-        XCTAssertNil(store.load(episodeUuid: "ep-1"))
+        let initialResult = await store.load(episodeUuid: "ep-1")
+        XCTAssertNil(initialResult)
 
         let chapters = [
             GeneratedChapter(title: "Intro", timestamp: "0:00", startTime: 0),
             GeneratedChapter(title: "Topic", timestamp: "15:00", startTime: 900)
         ]
-        store.save(.chapters(chapters), episodeUuid: "ep-1")
+        await store.save(.chapters(chapters), episodeUuid: "ep-1")
 
-        guard case .chapters(let loaded)? = store.load(episodeUuid: "ep-1") else {
+        guard case .chapters(let loaded)? = await store.load(episodeUuid: "ep-1") else {
             XCTFail("Expected a cached chapter list")
             return
         }
         XCTAssertEqual(loaded.map(\.title), ["Intro", "Topic"])
         XCTAssertEqual(loaded.map(\.startTime), [0, 900])
         XCTAssertEqual(loaded.map(\.timestamp), ["0:00", "15:00"], "Timestamps regenerate from start times")
-        XCTAssertNil(store.load(episodeUuid: "ep-other"))
+        let otherResult = await store.load(episodeUuid: "ep-other")
+        XCTAssertNil(otherResult)
     }
 
-    func testStoreIgnoresLegacySchemaEntries() throws {
+    func testStoreIgnoresLegacySchemaEntries() async throws {
         // v1 entries can carry reference-timeline, head-only chapter lists
         // (P2-18/P2-19); the schema bump must orphan them so they regenerate.
         let directory = FileManager.default.temporaryDirectory
@@ -363,35 +368,39 @@ final class TranscriptChapterGeneratorTests: XCTestCase {
 
         let legacyPayload = Data(#"[{"title":"Stale","startTime":5}]"#.utf8)
         try legacyPayload.write(to: directory.appendingPathComponent("ep-1.json"))
-        try legacyPayload.write(to: directory.appendingPathComponent("ep-1.v2.json"))
+        let previousSchemaVersion = OnDeviceChapterStore.schemaVersion - 1
+        try legacyPayload.write(to: directory.appendingPathComponent("ep-1.v\(previousSchemaVersion).json"))
 
         let store = OnDeviceChapterStore(directoryURL: directory)
-        XCTAssertNil(store.load(episodeUuid: "ep-1"), "Legacy v1/v2 cache entries must not be served")
+        let legacyResult = await store.load(episodeUuid: "ep-1")
+        XCTAssertNil(legacyResult, "Legacy cache entries must not be served")
 
-        store.save(.chapters([
+        await store.save(.chapters([
             GeneratedChapter(title: "Fresh", timestamp: "0:05", startTime: 5)
         ]), episodeUuid: "ep-1")
         let versionedFile = directory.appendingPathComponent("ep-1.v\(OnDeviceChapterStore.schemaVersion).json")
         XCTAssertTrue(FileManager.default.fileExists(atPath: versionedFile.path))
-        guard case .chapters(let loaded)? = store.load(episodeUuid: "ep-1") else {
+        guard case .chapters(let loaded)? = await store.load(episodeUuid: "ep-1") else {
             XCTFail("Expected the versioned chapter list")
             return
         }
         XCTAssertEqual(loaded.map(\.title), ["Fresh"])
     }
 
-    func testStoreRoundTripsNoChaptersDistinctFromMiss() {
+    func testStoreRoundTripsNoChaptersDistinctFromMiss() async {
         let (store, directory) = temporaryStore()
         defer { try? FileManager.default.removeItem(at: directory) }
 
-        XCTAssertNil(store.load(episodeUuid: "ep-none"))
-        store.save(.noChapters, episodeUuid: "ep-none")
+        let initialResult = await store.load(episodeUuid: "ep-none")
+        XCTAssertNil(initialResult)
+        await store.save(.noChapters, episodeUuid: "ep-none")
 
-        guard case .noChapters? = store.load(episodeUuid: "ep-none") else {
+        guard case .noChapters? = await store.load(episodeUuid: "ep-none") else {
             XCTFail("Expected a persisted no-chapters sentinel")
             return
         }
-        XCTAssertNil(store.load(episodeUuid: "ep-unattempted"))
+        let unattemptedResult = await store.load(episodeUuid: "ep-unattempted")
+        XCTAssertNil(unattemptedResult)
     }
 
     private func temporaryStore() -> (OnDeviceChapterStore, URL) {

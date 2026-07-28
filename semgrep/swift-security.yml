@@ -5554,6 +5554,10 @@ rules:
         - "**/semgrep/tests/swift-security-pr-feedback.swift"
     patterns:
       - pattern: BuildEnvironment.current != .appStore
+      - pattern-not-inside: |
+          #if DEBUG
+          ...
+          #endif
 
   - id: pocketcasts.closedrange-upper-bound-minus-one
     severity: ERROR

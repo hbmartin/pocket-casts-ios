@@ -141,7 +141,7 @@ extension SocialGroup {
                   ownerDisplayName: api.ownerDisplayName,
                   title: api.title,
                   description: api.description_p,
-                  visibility: SocialVisibility(rawValue: api.visibility.rawValue) ?? .private,
+                  visibility: SocialVisibility(api.visibility),
                   podcastUuid: api.podcastUuid,
                   podcastTitle: api.podcastTitle,
                   memberCount: Int(api.memberCount),

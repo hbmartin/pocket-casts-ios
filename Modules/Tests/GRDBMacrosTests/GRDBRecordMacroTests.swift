@@ -981,21 +981,29 @@ final class GRDBRecordCodableStructTests: GRDBMacroTestCase {
             @GRDBRecord(table: "TestTable")
             public struct TestModel {
                 public var count = 0
+                public var negativeCount = -1
+                public var positiveCount = +1
             }
             """
         } expansion: {
             """
             public struct TestModel {
                 public var count = 0
+                public var negativeCount = -1
+                public var positiveCount = +1
 
                 public static let databaseTableName = "TestTable"
 
                 enum CodingKeys: String, CodingKey {
                     case count
+                        case negativeCount
+                        case positiveCount
                 }
 
                 public enum Columns {
                     public static let count = Column(CodingKeys.count)
+                        public static let negativeCount = Column(CodingKeys.negativeCount)
+                        public static let positiveCount = Column(CodingKeys.positiveCount)
                 }
             }
 
@@ -1003,10 +1011,14 @@ final class GRDBRecordCodableStructTests: GRDBMacroTestCase {
                 public init(from decoder: Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
                     count = try container.decodeIfPresent(Int.self, forKey: .count) ?? 0
+                        negativeCount = try container.decodeIfPresent(Int.self, forKey: .negativeCount) ?? -1
+                        positiveCount = try container.decodeIfPresent(Int.self, forKey: .positiveCount) ?? +1
                 }
 
                 public func encode(to container: inout PersistenceContainer) {
                     container["count"] = count
+                        container["negativeCount"] = negativeCount
+                        container["positiveCount"] = positiveCount
                 }
             }
             """
@@ -1032,6 +1044,7 @@ final class GRDBRecordEdgeCaseTests: GRDBMacroTestCase {
             public class TestModel: NSObject {
                 @objc public var inferredInteger = 0
                 @objc public var inferredNegativeInteger = -1
+                @objc public var inferredPositiveInteger = +1
                 @objc public var inferredDouble = 1.5
                 @objc public var inferredBool = false
                 @objc public var explicitInteger: Int64 = 2
@@ -1043,6 +1056,7 @@ final class GRDBRecordEdgeCaseTests: GRDBMacroTestCase {
             public class TestModel: NSObject {
                 @objc public var inferredInteger = 0
                 @objc public var inferredNegativeInteger = -1
+                @objc public var inferredPositiveInteger = +1
                 @objc public var inferredDouble = 1.5
                 @objc public var inferredBool = false
                 @objc public var explicitInteger: Int64 = 2
@@ -1053,6 +1067,7 @@ final class GRDBRecordEdgeCaseTests: GRDBMacroTestCase {
                 enum CodingKeys: String, CodingKey {
                     case inferredInteger
                         case inferredNegativeInteger
+                        case inferredPositiveInteger
                         case inferredDouble
                         case inferredBool
                         case explicitInteger
@@ -1064,6 +1079,7 @@ final class GRDBRecordEdgeCaseTests: GRDBMacroTestCase {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
                     inferredInteger = try container.decodeIfPresent(Int.self, forKey: .inferredInteger) ?? 0
                         inferredNegativeInteger = try container.decodeIfPresent(Int.self, forKey: .inferredNegativeInteger) ?? -1
+                        inferredPositiveInteger = try container.decodeIfPresent(Int.self, forKey: .inferredPositiveInteger) ?? +1
                         inferredDouble = try container.decodeIfPresent(Double.self, forKey: .inferredDouble) ?? 1.5
                         inferredBool = try container.decodeIfPresent(Bool.self, forKey: .inferredBool) ?? false
                         explicitInteger = try container.decodeIfPresent(Int64.self, forKey: .explicitInteger) ?? 2
@@ -1073,6 +1089,7 @@ final class GRDBRecordEdgeCaseTests: GRDBMacroTestCase {
                 public func encode(to container: inout PersistenceContainer) {
                     container["inferredInteger"] = inferredInteger
                         container["inferredNegativeInteger"] = inferredNegativeInteger
+                        container["inferredPositiveInteger"] = inferredPositiveInteger
                         container["inferredDouble"] = inferredDouble
                         container["inferredBool"] = inferredBool
                         container["explicitInteger"] = explicitInteger
@@ -1082,6 +1099,7 @@ final class GRDBRecordEdgeCaseTests: GRDBMacroTestCase {
                 public enum Columns {
                     public static let inferredInteger = Column(CodingKeys.inferredInteger)
                         public static let inferredNegativeInteger = Column(CodingKeys.inferredNegativeInteger)
+                        public static let inferredPositiveInteger = Column(CodingKeys.inferredPositiveInteger)
                         public static let inferredDouble = Column(CodingKeys.inferredDouble)
                         public static let inferredBool = Column(CodingKeys.inferredBool)
                         public static let explicitInteger = Column(CodingKeys.explicitInteger)

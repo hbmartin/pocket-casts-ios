@@ -391,7 +391,7 @@ class ChapterManager {
         // starts makes chapters, seek and smart-skip drift. The flag is only
         // valid after `loadTranscript()` completes.
         if chapters.isEmpty, FeatureFlag.onDeviceChapters.enabled {
-            switch onDeviceChapterStore.load(episodeUuid: episodeUuid) {
+            switch await onDeviceChapterStore.load(episodeUuid: episodeUuid) {
             case .chapters(let cached):
                 if lastEpisodeUuid == episode.uuid {
                     chapters = chapterParser.parseGeneratedChapters(cached, episodeDuration: duration)

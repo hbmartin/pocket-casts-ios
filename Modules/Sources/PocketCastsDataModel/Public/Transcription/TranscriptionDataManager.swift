@@ -101,7 +101,7 @@ public struct TranscriptionDataManager: Sendable {
         let uuids = Array(Set(uuids))
         guard !uuids.isEmpty else { return [] }
 
-        return dbQueue.read { db in
+        let result = dbQueue.read { db in
             var existing = Set<String>()
             for chunkStart in stride(from: 0, to: uuids.count, by: Self.episodeUuidLookupChunkSize) {
                 let chunk = Array(uuids[chunkStart ..< min(chunkStart + Self.episodeUuidLookupChunkSize, uuids.count)])
@@ -117,7 +117,13 @@ public struct TranscriptionDataManager: Sendable {
                 existing.formUnion(userEpisodeUuids)
             }
             return existing
-        } ?? []
+        }
+        if result == nil {
+            FileLog.shared.addMessage(
+                "TranscriptionDataManager.existingEpisodeUuids failed while resolving \(uuids.count) identifiers"
+            )
+        }
+        return result ?? []
     }
 
     /// Number of episodes with a completed transcription.

@@ -8,11 +8,13 @@ import GRDB
 /// non-read-only) maps to its `CustomQueryValidationError` case.
 final class PlaylistQueryValidatorTests: DataManagerTestCase {
 
-    private var dataManager: DataManager!
+    private var dataManager: DataManager { DataManager.sharedManager }
+    private var originalSharedManager: DataManager!
 
     override func setUpWithError() throws {
         try super.setUpWithError()
-        dataManager = DataManager.newTestDataManager()
+        originalSharedManager = DataManager.sharedManager
+        DataManager.sharedManager = DataManager.newTestDataManager()
 
         let podcast = createTestPodcast(uuid: "podcast-v", title: "Validator Show", dataManager: dataManager)
         var long = createTestEpisode(uuid: "ep-long", podcast: podcast, title: "Long History Special", dataManager: dataManager)
@@ -24,7 +26,8 @@ final class PlaylistQueryValidatorTests: DataManagerTestCase {
     }
 
     override func tearDown() {
-        dataManager = nil
+        DataManager.sharedManager = originalSharedManager
+        originalSharedManager = nil
         super.tearDown()
     }
 
@@ -195,6 +198,48 @@ final class PlaylistQueryValidatorTests: DataManagerTestCase {
 
         // The episode table is intact and still queryable.
         XCTAssertEqual(try dataManager.validateCustomQueryFragment("1 = 1").get(), 2)
+    }
+
+    func testDoubleCloseStatementSmugglingIsRejected() {
+        let result = dataManager.validateCustomQueryFragment("1=1)); SELECT randomblob(1);--")
+        switch result {
+        case .failure(.syntax), .failure(.multipleStatements):
+            break
+        default:
+            XCTFail("Expected double-close smuggling to fail, got \(result)")
+        }
+    }
+
+    func testValidatorCountShapeExactlyMatchesRuntimeSqlModeCountShape() throws {
+        let featureFlags = FeatureFlagOverrideStore()
+        defer { featureFlags.resetOverrides() }
+        try featureFlags.override(FeatureFlag.customPlaylists, withValue: true)
+        let fragment = "episode.duration > 1800"
+        var playlist = EpisodeFilter()
+        playlist.manual = false
+        playlist.customQuery = try CustomPlaylistQuery(sql: fragment).envelopeJSON()
+
+        let runtime = PlaylistQueryBuilder.fragment(
+            clause: .episodeCount,
+            for: playlist,
+            episodeUuidToAdd: nil,
+            searchTerm: nil,
+            limit: 0,
+            shouldShowArchived: false,
+            sortType: nil
+        )
+        let validator = PlaylistQueryBuilder.smartCountFragment(
+            shouldShowArchived: false,
+            allEpisodesCount: false,
+            whereFragment: PlaylistQueryBuilder.sqlModeWhereFragment(fragment)
+        )
+
+        try dataManager.dbQueue.dbPool.read { db in
+            let runtimeBuilt = try runtime.build(db)
+            let validatorBuilt = try validator.build(db)
+            XCTAssertEqual(runtimeBuilt.sql, validatorBuilt.sql)
+            XCTAssertEqual(String(describing: runtimeBuilt.arguments), String(describing: validatorBuilt.arguments))
+        }
     }
 
     func testNonReadOnlyStatementIsRejected() throws {

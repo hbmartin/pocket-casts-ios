@@ -6,6 +6,7 @@
 	<string>production</string>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
+		<string>applinks:$(PODCAST_BACKEND_HOST)</string>
 		<string>webcredentials:www.pocketcasts.com</string>
 		<string>webcredentials:pocketcasts.com</string>
 		<string>webcredentials:play.pocketcasts.com</string>

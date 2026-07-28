@@ -122,6 +122,10 @@ class FeatureFlagTests: XCTestCase {
         XCTAssertFalse(FeatureFlag.sharingListBearerAuth.default)
     }
 
+    func testRefreshTokenForPasswordAuthDefaultsOffUntilServerRolloutIsVerified() {
+        XCTAssertFalse(FeatureFlag.refreshTokenForPasswordAuth.default)
+    }
+
     func testEnabledUsesRemoteConfigValueAfterLocalOverride() throws {
         let flag = FeatureFlag.autoDownloadOnSubscribe
         let remoteKey = try XCTUnwrap(flag.remoteKey)

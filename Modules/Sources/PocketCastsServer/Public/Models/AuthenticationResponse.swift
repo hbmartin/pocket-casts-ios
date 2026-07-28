@@ -26,13 +26,10 @@ public struct AuthenticationResponse: Codable, Sendable {
         token = apiResponse.token.isEmpty ? nil : apiResponse.token
         uuid = apiResponse.uuid.isEmpty ? nil : apiResponse.uuid
         email = apiResponse.email.isEmpty ? nil : apiResponse.email
-        // user/login doesn't issue refresh tokens or expiry yet. Once the M1 server
-        // contract lands and the protobuf stubs are regenerated (`mise run generate:proto`),
-        // map refresh_token/expires_in/token_type here the same way as Api_TokenLoginResponse.
-        refreshToken = nil
+        refreshToken = apiResponse.refreshToken.isEmpty ? nil : apiResponse.refreshToken
         isNewAccount = false
-        expiresIn = nil
-        tokenType = nil
+        expiresIn = apiResponse.expiresIn > 0 ? Int(apiResponse.expiresIn) : nil
+        tokenType = "Bearer"
     }
 
     internal init(from apiResponse: Api_TokenLoginResponse) {
@@ -51,11 +48,9 @@ public struct AuthenticationResponse: Codable, Sendable {
         token = apiResponse.token.isEmpty ? nil : apiResponse.token
         uuid = apiResponse.uuid.isEmpty ? nil : apiResponse.uuid
         email = nil
-        // user/register doesn't issue refresh tokens or expiry yet — see the
-        // Api_UserLoginResponse initializer note about the M1 proto regeneration.
-        refreshToken = nil
+        refreshToken = apiResponse.refreshToken.isEmpty ? nil : apiResponse.refreshToken
         isNewAccount = true
-        expiresIn = nil
-        tokenType = nil
+        expiresIn = apiResponse.expiresIn > 0 ? Int(apiResponse.expiresIn) : nil
+        tokenType = "Bearer"
     }
 }

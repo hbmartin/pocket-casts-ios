@@ -12,7 +12,7 @@ public extension ApiServerHandler {
             return nil
         }
 
-        await withCheckedContinuation { continuation in
+        return await withCheckedContinuation { continuation in
             let operation = SharedListCreateTask(title: title, descriptionText: description,
                                                  visibility: visibility, entries: entries)
             operation.completion = { continuation.resume(returning: $0) }
@@ -37,7 +37,7 @@ public extension ApiServerHandler {
             return nil
         }
 
-        await withCheckedContinuation { continuation in
+        return await withCheckedContinuation { continuation in
             let operation = SharedListEntriesTask(listId: id, limit: validatedLimit, offset: validatedOffset)
             operation.completion = { continuation.resume(returning: $0) }
             apiQueue.addOperation(operation)

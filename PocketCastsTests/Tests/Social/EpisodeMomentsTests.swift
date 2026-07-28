@@ -118,6 +118,61 @@ final class EpisodeMomentsTests: XCTestCase {
         XCTAssertEqual(loaded, [])
     }
 
+    func testFetchAllEpisodeCommentsRejectsChangingTotals() async {
+        var requestCount = 0
+        let loaded = await fetchAllEpisodeComments(pageSize: 1) { _, _ in
+            requestCount += 1
+            return requestCount == 1
+                ? SocialCommentPage(comments: [SocialComment(id: 1)], total: 2)
+                : SocialCommentPage(comments: [SocialComment(id: 2)], total: 3)
+        }
+
+        XCTAssertNil(loaded)
+    }
+
+    func testFetchAllEpisodeCommentsRejectsDuplicateIds() async {
+        let loaded = await fetchAllEpisodeComments(pageSize: 1) { _, offset in
+            SocialCommentPage(comments: [SocialComment(id: offset == 0 ? 1 : 1)], total: 2)
+        }
+
+        XCTAssertNil(loaded)
+    }
+
+    func testFetchAllEpisodeCommentsRejectsListingsOverCommentCap() async {
+        var requestCount = 0
+        let loaded = await fetchAllEpisodeComments { _, _ in
+            requestCount += 1
+            return SocialCommentPage(comments: [], total: 1_001)
+        }
+
+        XCTAssertNil(loaded)
+        XCTAssertEqual(requestCount, 1)
+    }
+
+    func testFetchAllEpisodeCommentsRejectsListingsOverPageCap() async {
+        var requestCount = 0
+        let loaded = await fetchAllEpisodeComments(pageSize: 1) { _, offset in
+            requestCount += 1
+            return SocialCommentPage(comments: [SocialComment(id: Int64(offset))], total: 21)
+        }
+
+        XCTAssertNil(loaded)
+        XCTAssertEqual(requestCount, 20)
+    }
+
+    func testFetchAllEpisodeCommentsReturnsNilWhenCancelled() async {
+        let task = Task { @MainActor in
+            await fetchAllEpisodeComments { _, _ in
+                XCTFail("A cancelled load must not fetch a page")
+                return SocialCommentPage(comments: [], total: 0)
+            }
+        }
+        task.cancel()
+
+        let result = await task.value
+        XCTAssertNil(result)
+    }
+
     func testCommentsRowRecomputesSeedGateWhenOpened() throws {
         var canSeedNow = false
         let model = EpisodeCommentsRowViewModel(
@@ -140,7 +195,7 @@ final class EpisodeMomentsTests: XCTestCase {
     func testTimestampedTopLevelMutationInvalidatesEpisodeMoments() {
         var invalidatedEpisodeUuid: String?
 
-        invalidateMomentPinsIfNeeded(
+        EpisodeCommentsViewModel.invalidateMomentPinsIfNeeded(
             afterMutating: SocialComment(id: 1, timestampSeconds: 30),
             episodeUuid: "episode",
             invalidator: { invalidatedEpisodeUuid = $0 }
@@ -152,12 +207,12 @@ final class EpisodeMomentsTests: XCTestCase {
     func testPlainCommentAndTimestampedReplyDoNotInvalidateEpisodeMoments() {
         var invalidatedEpisodeUuids: [String] = []
 
-        invalidateMomentPinsIfNeeded(
+        EpisodeCommentsViewModel.invalidateMomentPinsIfNeeded(
             afterMutating: SocialComment(id: 1),
             episodeUuid: "plain-comment",
             invalidator: { invalidatedEpisodeUuids.append($0) }
         )
-        invalidateMomentPinsIfNeeded(
+        EpisodeCommentsViewModel.invalidateMomentPinsIfNeeded(
             afterMutating: SocialComment(id: 2, parentId: 1, timestampSeconds: 30),
             episodeUuid: "reply",
             invalidator: { invalidatedEpisodeUuids.append($0) }

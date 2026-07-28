@@ -3614,7 +3614,7 @@
 "widget_playback_control_sleep_timer_display_name" = "Sleep Timer";
 
 /* Description for the WidgetKit Control Center sleep timer control. */
-"widget_playback_control_sleep_timer_description" = "Start a 15 minute sleep timer, or extend the running one.";
+"widget_playback_control_sleep_timer_description" = "Start a 15-minute sleep timer, or extend the running one.";
 
 /* Display name for the WidgetKit Control Center skip back control. */
 "widget_playback_control_skip_back_display_name" = "Skip Back";
@@ -7485,11 +7485,17 @@
 /* Placeholder for the group post composer */
 "social_group_post_placeholder" = "Post to the group";
 
+/* Inline error shown when sending a group post fails */
+"social_group_post_failed" = "Couldn’t post to this group. Try again.";
+
 /* Accessibility label for attaching the currently playing episode to a group post */
 "social_group_attach_episode" = "Attach current episode";
 
 /* Accessibility label for the per-group new-post notification toggle */
 "social_group_alert_toggle" = "New post alerts";
+
+/* Generic alert shown when a group action such as join, leave, moderation, or notification changes fails */
+"social_group_action_failed" = "That action couldn’t be completed. Try again.";
 
 /* Title of the group members sheet */
 "social_group_members_title" = "Members";
@@ -7699,7 +7705,7 @@
 "social_find_contacts_consent_cta" = "Match my contacts";
 
 /* Body of the contacts consent alert — honest about the mechanics */
-"social_find_contacts_consent_body" = "Your contacts' email addresses and phone numbers are scrambled (hashed) on this device and compared once — nothing is stored, and no one is notified. Only members who allow discovery can match.";
+"social_find_contacts_consent_body" = "Your contacts' email addresses and phone numbers are scrambled (hashed) on this device. Email hashes are compared once; phone hashes are currently ignored. Nothing is stored, and no one is notified. Only members who allow discovery can match.";
 
 /* Row sharing the owner's Profile Link to invite a friend */
 "social_find_invite" = "Invite a friend";

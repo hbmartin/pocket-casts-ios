@@ -17,8 +17,8 @@ struct PlaylistEpisodeRow: Equatable, Sendable {
     var title = ""
     var podcastUuid = ""
 
-    init(playlistEpisode: PlaylistEpisode) {
-        id = playlistEpisode.id
+    init(playlistEpisode: PlaylistEpisode, generatedId: Int64? = nil) {
+        id = generatedId ?? playlistEpisode.id
         episodePosition = playlistEpisode.episodePosition
         episodeUuid = playlistEpisode.episodeUuid
         playlistId = Int64(UpNextDataManager.upNextPlaylistId)
@@ -27,13 +27,13 @@ struct PlaylistEpisodeRow: Equatable, Sendable {
     }
 
     func asPlaylistEpisode() -> PlaylistEpisode {
-        let episode = PlaylistEpisode()
-        episode.id = id
-        episode.episodePosition = episodePosition
-        episode.episodeUuid = episodeUuid
-        episode.title = title
-        episode.podcastUuid = podcastUuid
-        return episode
+        PlaylistEpisode(
+            id: id,
+            episodePosition: episodePosition,
+            episodeUuid: episodeUuid,
+            title: title,
+            podcastUuid: podcastUuid
+        )
     }
 }
 
@@ -124,8 +124,10 @@ class UpNextDataManager {
                 .updateAll(db, PlaylistEpisodeRow.Columns.episodePosition.set(to: PlaylistEpisodeRow.Columns.episodePosition + 1))
 
             if playlistEpisode.id == 0 {
-                playlistEpisode.id = DBUtils.generateUniqueId()
-                try PlaylistEpisodeRow(playlistEpisode: playlistEpisode).insert(db)
+                try PlaylistEpisodeRow(
+                    playlistEpisode: playlistEpisode,
+                    generatedId: DBUtils.generateUniqueId()
+                ).insert(db)
             } else {
                 // catch recordNotFound: the legacy UPDATE ... WHERE id silently no-ops on a missing row
                 try? PlaylistEpisodeRow(playlistEpisode: playlistEpisode).update(db)
@@ -150,8 +152,10 @@ class UpNextDataManager {
 
             for playlistEpisode in playlistEpisodes {
                 if playlistEpisode.id == 0 {
-                    playlistEpisode.id = DBUtils.generateUniqueId()
-                    try PlaylistEpisodeRow(playlistEpisode: playlistEpisode).insert(db)
+                    try PlaylistEpisodeRow(
+                        playlistEpisode: playlistEpisode,
+                        generatedId: DBUtils.generateUniqueId()
+                    ).insert(db)
                 } else {
                     // catch recordNotFound: the legacy UPDATE ... WHERE id silently no-ops on a missing row
                     try? PlaylistEpisodeRow(playlistEpisode: playlistEpisode).update(db)
@@ -280,14 +284,12 @@ class UpNextDataManager {
     // MARK: - Conversion
 
     private func createEpisodeFrom(resultSet rs: PCDBResultSet) -> PlaylistEpisode {
-        let episode = PlaylistEpisode()
-
-        episode.id = rs.longLongInt(forColumn: "id")
-        episode.episodePosition = rs.int(forColumn: "episodePosition")
-        episode.episodeUuid = DBUtils.nonNilStringFromColumn(resultSet: rs, columnName: "episodeUuid")
-        episode.title = DBUtils.nonNilStringFromColumn(resultSet: rs, columnName: "title")
-        episode.podcastUuid = DBUtils.nonNilStringFromColumn(resultSet: rs, columnName: "podcastUuid")
-
-        return episode
+        PlaylistEpisode(
+            id: rs.longLongInt(forColumn: "id"),
+            episodePosition: rs.int(forColumn: "episodePosition"),
+            episodeUuid: DBUtils.nonNilStringFromColumn(resultSet: rs, columnName: "episodeUuid"),
+            title: DBUtils.nonNilStringFromColumn(resultSet: rs, columnName: "title"),
+            podcastUuid: DBUtils.nonNilStringFromColumn(resultSet: rs, columnName: "podcastUuid")
+        )
     }
 }

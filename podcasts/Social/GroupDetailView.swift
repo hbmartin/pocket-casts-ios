@@ -74,6 +74,7 @@ struct GroupDetailView: View {
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }
+                .accessibilityLabel(L10n.accessibilityMoreActions)
             }
         }
         .confirmationDialog(L10n.socialReportTitle, isPresented: $viewModel.showingReportPicker, titleVisibility: .visible) {
@@ -91,6 +92,14 @@ struct GroupDetailView: View {
         .task { await viewModel.load() }
         .onChange(of: viewModel.departed) { _, departed in
             if departed { dismiss() }
+        }
+        .alert(L10n.error, isPresented: Binding(
+            get: { viewModel.actionError != nil },
+            set: { if !$0 { viewModel.actionError = nil } }
+        )) {
+            Button(L10n.ok) { viewModel.actionError = nil }
+        } message: {
+            Text(viewModel.actionError ?? L10n.socialGroupActionFailed)
         }
     }
 
@@ -189,6 +198,11 @@ struct GroupDetailView: View {
 
     private var composer: some View {
         VStack(alignment: .leading, spacing: 6) {
+            if let error = viewModel.postError {
+                Text(error)
+                    .font(.caption)
+                    .foregroundColor(AppTheme.color(for: .support05, theme: theme))
+            }
             if let banner = viewModel.composerBanner {
                 HStack {
                     Text(banner)
@@ -295,12 +309,21 @@ struct GroupMembersView: View {
                     } label: {
                         Image(systemName: "ellipsis.circle")
                     }
+                    .accessibilityLabel(L10n.accessibilityMoreActions)
                 }
             }
         }
         .navigationTitle(L10n.socialGroupMembersTitle)
         .navigationBarTitleDisplayMode(.inline)
         .task { await viewModel.loadMembers() }
+        .alert(L10n.error, isPresented: Binding(
+            get: { viewModel.actionError != nil },
+            set: { if !$0 { viewModel.actionError = nil } }
+        )) {
+            Button(L10n.ok) { viewModel.actionError = nil }
+        } message: {
+            Text(viewModel.actionError ?? L10n.socialGroupActionFailed)
+        }
     }
 }
 
@@ -310,6 +333,53 @@ struct GroupPostNode: Identifiable {
     let depth: Int
 
     var id: Int64 { post.id }
+}
+
+struct GroupPostSubmission: Sendable {
+    let groupId: Int64
+    let parentId: Int64
+    let text: String
+    let episodeUuid: String
+    let podcastUuid: String
+    let episodeTitle: String
+}
+
+/// Internal async seam for deterministic group mutation tests.
+struct GroupDetailService: Sendable {
+    let fetchPosts: @Sendable (Int64, Int64) async -> GroupPostsPage?
+    let fetchMembers: @Sendable (Int64) async -> [GroupMemberInfo]?
+    let submitPost: @Sendable (GroupPostSubmission) async -> GroupPost?
+    let deletePost: @Sendable (Int64) async -> Bool
+    let reportUser: @Sendable (String, SocialReportReason, String) async -> Bool
+    let join: @Sendable (Int64) async -> Bool
+    let leave: @Sendable (Int64) async -> Bool
+    let deleteGroup: @Sendable (Int64) async -> Bool
+    let setAlert: @Sendable (Int64, Bool) async -> Bool
+    let kick: @Sendable (Int64, String, Bool) async -> Bool
+
+    static let live = GroupDetailService(
+        fetchPosts: { groupId, parentId in
+            await ApiServerHandler.shared.fetchGroupPosts(groupId: groupId, parentId: parentId)
+        },
+        fetchMembers: { await ApiServerHandler.shared.fetchGroupMembers(groupId: $0) },
+        submitPost: { submission in
+            await ApiServerHandler.shared.submitGroupPost(
+                groupId: submission.groupId,
+                parentId: submission.parentId,
+                text: submission.text,
+                episodeUuid: submission.episodeUuid,
+                podcastUuid: submission.podcastUuid,
+                episodeTitle: submission.episodeTitle
+            )
+        },
+        deletePost: { await ApiServerHandler.shared.deleteGroupPost(id: $0) },
+        reportUser: { await ApiServerHandler.shared.reportUser(targetUserId: $0, reason: $1, context: $2) },
+        join: { await ApiServerHandler.shared.joinGroup(id: $0) },
+        leave: { await ApiServerHandler.shared.leaveGroup(id: $0) },
+        deleteGroup: { await ApiServerHandler.shared.deleteGroup(id: $0) },
+        setAlert: { await ApiServerHandler.shared.setGroupAlert(id: $0, enabled: $1) },
+        kick: { await ApiServerHandler.shared.kickFromGroup(id: $0, handle: $1, ban: $2) }
+    )
 }
 
 @MainActor
@@ -324,22 +394,39 @@ final class GroupDetailViewModel: ObservableObject {
     @Published private(set) var isLoading = true
     @Published var composeText = ""
     @Published private(set) var isSending = false
+    @Published private(set) var postError: String?
     @Published private(set) var attachedEpisodeTitle: String?
     @Published var showingReportPicker = false
     @Published private(set) var departed = false
     @Published var reportTarget: GroupPost?
+    @Published var actionError: String?
 
     private var replyTarget: GroupPost?
     private var attachedEpisodeUuid = ""
     private var attachedPodcastUuid = ""
     private var fixtureLoaded = false
+    private let service: GroupDetailService
+    private let onJoined: (Int64) -> Void
 
-    init(groupId: Int64) {
+    init(
+        groupId: Int64,
+        service: GroupDetailService = .live,
+        onJoined: @escaping (Int64) -> Void = { _ in }
+    ) {
         self.groupId = groupId
+        self.service = service
+        self.onJoined = onJoined
     }
 
     /// Fixture initializer for snapshots/previews; load() then no-ops.
-    init(fixture: [GroupPost], group: SocialGroup, children: [Int64: [GroupPost]] = [:], expanded: Set<Int64> = []) {
+    init(
+        fixture: [GroupPost],
+        group: SocialGroup,
+        children: [Int64: [GroupPost]] = [:],
+        expanded: Set<Int64> = [],
+        service: GroupDetailService = .live,
+        onJoined: @escaping (Int64) -> Void = { _ in }
+    ) {
         groupId = group.id
         self.group = group
         topLevel = fixture
@@ -347,6 +434,8 @@ final class GroupDetailViewModel: ObservableObject {
         self.expanded = expanded
         isLoading = false
         fixtureLoaded = true
+        self.service = service
+        self.onJoined = onJoined
     }
 
     var isMember: Bool {
@@ -376,7 +465,7 @@ final class GroupDetailViewModel: ObservableObject {
     func load() async {
         guard !fixtureLoaded else { return }
         Analytics.track(.socialGroupOpened)
-        if let page = await ApiServerHandler.shared.fetchGroupPosts(groupId: groupId) {
+        if let page = await service.fetchPosts(groupId, 0) {
             topLevel = page.posts
             group = page.group
         }
@@ -385,7 +474,7 @@ final class GroupDetailViewModel: ObservableObject {
 
     func expand(_ id: Int64) async {
         if childrenByParent[id] == nil {
-            guard let page = await ApiServerHandler.shared.fetchGroupPosts(groupId: groupId, parentId: id) else { return }
+            guard let page = await service.fetchPosts(groupId, id) else { return }
             childrenByParent[id] = page.posts
         }
         expanded.insert(id)
@@ -393,7 +482,7 @@ final class GroupDetailViewModel: ObservableObject {
 
     func loadMembers() async {
         guard !fixtureLoaded else { return }
-        members = await ApiServerHandler.shared.fetchGroupMembers(groupId: groupId) ?? []
+        members = await service.fetchMembers(groupId) ?? []
     }
 
     // MARK: - Composing
@@ -414,6 +503,7 @@ final class GroupDetailViewModel: ObservableObject {
     func cancelCompose() {
         replyTarget = nil
         composeText = ""
+        postError = nil
         detachEpisode()
     }
 
@@ -434,25 +524,31 @@ final class GroupDetailViewModel: ObservableObject {
         let text = composeText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         isSending = true
+        postError = nil
+        defer { isSending = false }
         let parentId = replyTarget?.id ?? 0
-        let submitted = await ApiServerHandler.shared.submitGroupPost(
-            groupId: groupId, parentId: parentId, text: text,
+        let submitted = await service.submitPost(GroupPostSubmission(
+            groupId: groupId,
+            parentId: parentId,
+            text: text,
             episodeUuid: parentId == 0 ? attachedEpisodeUuid : "",
             podcastUuid: parentId == 0 ? attachedPodcastUuid : "",
-            episodeTitle: parentId == 0 ? (attachedEpisodeTitle ?? "") : "")
+            episodeTitle: parentId == 0 ? (attachedEpisodeTitle ?? "") : ""
+        ))
         if submitted != nil {
             Analytics.track(.socialGroupPosted)
             if let replyTarget {
                 childrenByParent[replyTarget.id] = nil
                 await expand(replyTarget.id)
             }
-            if let page = await ApiServerHandler.shared.fetchGroupPosts(groupId: groupId) {
+            if let page = await service.fetchPosts(groupId, 0) {
                 topLevel = page.posts
                 group = page.group
             }
             cancelCompose()
+        } else {
+            postError = L10n.socialGroupPostFailed
         }
-        isSending = false
     }
 
     // MARK: - Actions
@@ -467,8 +563,12 @@ final class GroupDetailViewModel: ObservableObject {
     }
 
     func delete(_ post: GroupPost) async {
-        guard await ApiServerHandler.shared.deleteGroupPost(id: post.id) else { return }
-        if let page = await ApiServerHandler.shared.fetchGroupPosts(groupId: groupId) {
+        actionError = nil
+        guard await service.deletePost(post.id) else {
+            failAction()
+            return
+        }
+        if let page = await service.fetchPosts(groupId, 0) {
             topLevel = page.posts
         }
         // Re-fetch the sibling page so an expanded branch stays expanded
@@ -484,44 +584,71 @@ final class GroupDetailViewModel: ObservableObject {
 
     func reportSelected(reason: SocialReportReason) async {
         guard let target = reportTarget else { return }
+        actionError = nil
         Analytics.track(.socialProfileReported)
-        _ = await ApiServerHandler.shared.reportUser(targetUserId: target.userId,
-                                                     reason: reason,
-                                                     context: "group-post:\(target.id)")
+        guard await service.reportUser(target.userId, reason, "group-post:\(target.id)") else {
+            failAction()
+            return
+        }
         reportTarget = nil
     }
 
     func join() async {
-        guard await ApiServerHandler.shared.joinGroup(id: groupId) else { return }
+        actionError = nil
+        guard await service.join(groupId) else {
+            failAction()
+            return
+        }
         Analytics.track(.socialGroupJoined)
-        if let page = await ApiServerHandler.shared.fetchGroupPosts(groupId: groupId) {
+        onJoined(groupId)
+        if let page = await service.fetchPosts(groupId, 0) {
             topLevel = page.posts
             group = page.group
         }
     }
 
     func leave() async {
-        guard await ApiServerHandler.shared.leaveGroup(id: groupId) else { return }
+        actionError = nil
+        guard await service.leave(groupId) else {
+            failAction()
+            return
+        }
         departed = true
     }
 
     func deleteGroup() async {
-        guard await ApiServerHandler.shared.deleteGroup(id: groupId) else { return }
+        actionError = nil
+        guard await service.deleteGroup(groupId) else {
+            failAction()
+            return
+        }
         departed = true
     }
 
     func toggleAlerts() async {
         guard let group else { return }
+        actionError = nil
         let enable = !group.notifyPosts
-        guard await ApiServerHandler.shared.setGroupAlert(id: groupId, enabled: enable) else { return }
+        guard await service.setAlert(groupId, enable) else {
+            failAction()
+            return
+        }
         Analytics.track(.socialGroupAlertChanged)
-        if let page = await ApiServerHandler.shared.fetchGroupPosts(groupId: groupId) {
+        if let page = await service.fetchPosts(groupId, 0) {
             self.group = page.group
         }
     }
 
     func kick(_ member: GroupMemberInfo, ban: Bool) async {
-        guard await ApiServerHandler.shared.kickFromGroup(id: groupId, handle: member.handle, ban: ban) else { return }
+        actionError = nil
+        guard await service.kick(groupId, member.handle, ban) else {
+            failAction()
+            return
+        }
         members.removeAll { $0.handle == member.handle }
+    }
+
+    private func failAction() {
+        actionError = L10n.socialGroupActionFailed
     }
 }

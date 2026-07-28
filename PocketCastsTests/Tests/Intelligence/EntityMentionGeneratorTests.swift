@@ -1,7 +1,41 @@
+import FoundationModels
 import PocketCastsDataModel
+import Synchronization
 import XCTest
 
 @testable import podcasts
+
+nonisolated private final class CountingEntityIntelligence: IntelligenceProviding {
+    private let responseCount = Mutex(0)
+    private let availabilityResult: IntelligenceAvailability
+    private let response: @Sendable () throws -> GeneratedEntityList
+
+    init(
+        availability: IntelligenceAvailability = .available,
+        response: @escaping @Sendable () throws -> GeneratedEntityList
+    ) {
+        availabilityResult = availability
+        self.response = response
+    }
+
+    func availability() -> IntelligenceAvailability {
+        availabilityResult
+    }
+
+    func respond<T: Generable & Sendable>(
+        instructions: String,
+        prompt: String,
+        generating type: T.Type
+    ) async throws -> T {
+        responseCount.withLock { $0 += 1 }
+        guard let result = try response() as? T else {
+            throw IntelligenceError.decodingFailed
+        }
+        return result
+    }
+
+    var responses: Int { responseCount.withLock { $0 } }
+}
 
 private actor EntityChunkResponseProbe {
     nonisolated enum Mode: Sendable {
@@ -94,6 +128,10 @@ final class EntityMentionGeneratorTests: XCTestCase {
 
     private func item(_ name: String, kind: String = "person", seconds: Int = 0) -> GeneratedEntityItem {
         GeneratedEntityItem(name: name, kind: kind, startSeconds: seconds)
+    }
+
+    private var fallbackSegments: [TranscriptSearchSegment] {
+        (0 ..< 10).map { segment($0, "Tim Cook visited Paris with Apple executives.") }
     }
 
     nonisolated private static func startGeneratedItems(
@@ -247,11 +285,89 @@ final class EntityMentionGeneratorTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: directory) }
         let store = OnDeviceEntityStore(directoryURL: directory)
 
-        let mentions = [EntityMention(name: "Alice", kind: .person, startTime: 30)]
-        store.save(mentions, episodeUuid: "ep-1", fingerprint: "generated-10-300")
+        let result = EntityMentionResult(
+            mentions: [EntityMention(name: "Alice", kind: .person, startTime: 30)],
+            method: .naturalLanguageTagger
+        )
+        store.save(result, episodeUuid: "ep-1", fingerprint: "generated-10-300")
 
-        XCTAssertEqual(store.load(episodeUuid: "ep-1", fingerprint: "generated-10-300"), mentions)
+        XCTAssertEqual(store.load(episodeUuid: "ep-1", fingerprint: "generated-10-300"), result)
         XCTAssertNil(store.load(episodeUuid: "ep-1", fingerprint: "generated-12-360"), "a re-indexed transcript reads as a miss")
         XCTAssertNil(store.load(episodeUuid: "ep-other", fingerprint: "generated-10-300"))
+    }
+
+    func testStoreRejectsLegacySchemaWithoutProvenance() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("entity-store-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let legacy = Data(#"{"schemaVersion":1,"fingerprint":"fingerprint","mentions":[{"name":"Alice","kind":"person","startTime":30}]}"#.utf8)
+        try legacy.write(to: directory.appendingPathComponent("ep-1.json"))
+        let store = OnDeviceEntityStore(directoryURL: directory)
+
+        XCTAssertNil(store.load(episodeUuid: "ep-1", fingerprint: "fingerprint"))
+    }
+
+    func testTransientModelFailureReturnsUncachedTaggerResultAndRetries() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("entity-store-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = OnDeviceEntityStore(directoryURL: directory)
+        let transient = CountingEntityIntelligence(response: { throw IntelligenceError.timedOut })
+
+        let fallback = await EntityMentionGenerator(intelligence: transient, store: store)
+            .mentions(episodeUuid: "ep-1", fingerprint: "fingerprint", segments: fallbackSegments)
+
+        XCTAssertEqual(fallback?.method, .naturalLanguageTagger)
+        XCTAssertFalse(fallback?.mentions.isEmpty ?? true)
+        XCTAssertNil(store.load(episodeUuid: "ep-1", fingerprint: "fingerprint"))
+
+        let succeeding = CountingEntityIntelligence(response: {
+            GeneratedEntityList(entities: [GeneratedEntityItem(name: "Alice", kind: "person", startSeconds: 0)])
+        })
+        let retried = await EntityMentionGenerator(intelligence: succeeding, store: store)
+            .mentions(episodeUuid: "ep-1", fingerprint: "fingerprint", segments: fallbackSegments)
+
+        XCTAssertEqual(retried?.method, .foundationModel)
+        XCTAssertEqual(retried?.mentions.map(\.name), ["Alice"])
+        XCTAssertEqual(succeeding.responses, 1)
+    }
+
+    func testTransientModelUnavailabilityReturnsUncachedTaggerResult() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("entity-store-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = OnDeviceEntityStore(directoryURL: directory)
+        let unavailable = CountingEntityIntelligence(
+            availability: .unavailable(reason: "model_not_ready"),
+            response: { GeneratedEntityList(entities: []) }
+        )
+
+        let fallback = await EntityMentionGenerator(intelligence: unavailable, store: store)
+            .mentions(episodeUuid: "ep-1", fingerprint: "fingerprint", segments: fallbackSegments)
+
+        XCTAssertEqual(fallback?.method, .naturalLanguageTagger)
+        XCTAssertNil(store.load(episodeUuid: "ep-1", fingerprint: "fingerprint"))
+    }
+
+    func testPermanentUnavailabilityCachesFallbackProvenance() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("entity-store-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = OnDeviceEntityStore(directoryURL: directory)
+        let unavailable = CountingEntityIntelligence(
+            availability: .unavailable(reason: "device_not_eligible"),
+            response: { GeneratedEntityList(entities: []) }
+        )
+
+        let fallback = await EntityMentionGenerator(intelligence: unavailable, store: store)
+            .mentions(episodeUuid: "ep-1", fingerprint: "fingerprint", segments: fallbackSegments)
+
+        XCTAssertEqual(fallback?.method, .naturalLanguageTagger)
+
+        let available = CountingEntityIntelligence(response: {
+            GeneratedEntityList(entities: [GeneratedEntityItem(name: "Alice", kind: "person", startSeconds: 0)])
+        })
+        let cached = await EntityMentionGenerator(intelligence: available, store: store)
+            .mentions(episodeUuid: "ep-1", fingerprint: "fingerprint", segments: fallbackSegments)
+
+        XCTAssertEqual(cached?.method, .naturalLanguageTagger)
+        XCTAssertEqual(available.responses, 0, "cached fallback provenance must not be inferred from current availability")
     }
 }

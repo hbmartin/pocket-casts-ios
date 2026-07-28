@@ -10,9 +10,11 @@ actor TranscriptsDataRetriever {
     private var dataRequestMap: [URL: Task<Data, Error>] = [:]
 
     private let cache: URLCache
+    private let connection: URLConnection
 
-    public init() {
+    public init(connection: URLConnection = URLConnection(handler: URLSession.shared)) {
         cache = URLCache(memoryCapacity: 1.megabytes, diskCapacity: 100.megabytes, diskPath: "transcripts")
+        self.connection = connection
     }
 
     public func loadTranscript(url: URL) async throws -> String? {
@@ -44,12 +46,13 @@ actor TranscriptsDataRetriever {
                 if let previousResponse {
                     request.setEtagAndLastModifiedHeaders(cachedResponse: previousResponse)
                 }
-                let (data, response) = try await urlSession.data(for: request)
+                let (responseData, response) = try await connection.send(request: request)
+                let data = responseData ?? Data()
                 defer {
                     dataRequestMap[url] = nil
                 }
 
-                guard response.extractStatusCode() == 200 else {
+                guard let response, response.extractStatusCode() == 200 else {
                     FileLog.shared.addMessage("Transcripts Data Retriever: request failed for transcript url \(url).")
                     return data
                 }
@@ -69,8 +72,4 @@ actor TranscriptsDataRetriever {
 
         return try await String(data: task.value, encoding: .utf8)
     }
-
-    private lazy var urlSession: URLSession = {
-        return URLSession(configuration: .ephemeral)
-    }()
 }

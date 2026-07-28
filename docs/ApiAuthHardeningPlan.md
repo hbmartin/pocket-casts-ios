@@ -182,6 +182,8 @@ The endpoint must not require an active Bearer access token: an expired or alrea
 token must not prevent sign-out from revoking the longer-lived credential. This native app is a
 public client, so there is no additional client secret at the transport layer. If the refresh
 family is DPoP-bound, require a proof from that bound key in addition to the token itself.
+That proof omits `ath` when the request omits an access token; the server still validates the
+proof key thumbprint against the refresh family's `jkt`.
 
 ```proto
 message TokenRevokeRequest {
@@ -443,9 +445,11 @@ claims `{htm, htu, iat, jti}`) on `user/login`, `user/register`, and `user/token
   and unbound tokens. Dual-accept is inherent — binding is per-token, not per-endpoint.
 
 **Phase 3 — require proofs on high-value resource endpoints (server + client).**
-Client attaches `DPoP` proofs (adding `ath` = base64url(SHA-256(access token)) per RFC 9449 §4.3)
-on: `user/change_email`, `user/change_password`, `user/delete_account`, `user/token/revoke`,
-`user/exchange_sonos`, and file-upload presign. Server middleware validation order:
+Client attaches `DPoP` proofs on `user/change_email`, `user/change_password`,
+`user/delete_account`, `user/token/revoke`, `user/exchange_sonos`, and file-upload presign.
+Include `ath` = base64url(SHA-256(access token)) per RFC 9449 §4.3 only when the request also
+presents an access token. In particular, the Bearer-free revoke request omits `ath`. Server
+middleware validation order:
 
 1. Parse proof JWT; verify ES256 signature with the **embedded** JWK.
 2. `typ == "dpop+jwt"`; `htm` matches the HTTP method; `htu` matches the canonical *external*
@@ -461,8 +465,11 @@ on: `user/change_email`, `user/change_password`, `user/delete_account`, `user/to
    and TTL = 2× skew window. Validate or hash attacker-controlled key components before composing
    the bounded key. The namespace prevents collisions with other cache users; `jkt` prevents one
    proof key from interfering with another key that happens to use the same `jti`.
-5. `ath` matches the presented access token.
-6. Proof key thumbprint == the token's bound `jkt`.
+5. If an access token is presented, require `ath` to match it and validate that token's `jkt`
+   binding. If no access token is presented, require `ath` to be absent and skip access-token
+   binding.
+6. Independently, for every DPoP-bound refresh family (refresh grant or revoke), require the proof
+   key thumbprint to equal the family's `jkt`.
 7. On failure: `401` + JSON envelope `{"errorMessageId": "invalid_dpop_proof"}` (flows through the
    existing client error path, `ApiServerHandler.extractErrorResponse`). Support
    `use_dpop_nonce` + `DPoP-Nonce` header later only if replay telemetry justifies the extra
@@ -519,8 +526,9 @@ These controls cannot be completed or verified in the iOS repository:
 - **Integration (staging, `api.pocketcasts.net` / `sharing.pocketcasts.net`).** Full password
   login → refresh → rotation → reuse-detection → family revocation; password change revokes other
   device's session; sign-out revoke; share-list create via Bearer on dual-accept, then with legacy
-  disabled. Revoke with an expired/invalid access token (and with no Bearer header) must still
-  revoke the presented refresh family. Exercise DPoP through the real staging proxy: direct
+  disabled. Revoke with an expired/invalid access token must still revoke the presented refresh
+  family, and Bearer-free revoke must succeed with no `ath` while validating the proof key against
+  the family's `jkt`. Exercise DPoP through the real staging proxy: direct
   spoofed forwarding headers fail, the gateway's external HTTPS origin succeeds despite an
   internal HTTP hop, conflicting forwarded hosts fail, and the same `jti` is rejected for one
   `jkt` while remaining independent for a different `jkt`.

@@ -93,26 +93,20 @@ actor ShowInfoCoordinator: ShowInfoCoordinating {
         try await generatedEpisodeMetadataRetriever.loadMetadata(podcastUuid: podcastUuid, episodeUuid: episodeUuid).summary
     }
 
-    private func buildGeneratedTranscript(podcastUuid: String, episodeUuid: String) -> Episode.Metadata.Transcript {
-        let format = TranscriptFormat.vtt
-        let urlString = "\(ServerConstants.Urls.generatedTranscripts)\(podcastUuid)/\(episodeUuid).\(format.fileExtension)"
-        return Episode.Metadata.Transcript(url: urlString, type: format.rawValue, language: nil)
-    }
-
     public func loadTranscriptsMetadata(podcastUuid: String, episodeUuid: String) async throws -> EpisodeTranscriptData {
         let metadata = try await loadShowInfo(podcastUuid: podcastUuid, episodeUuid: episodeUuid)
 
         if FeatureFlag.generatedTranscripts.enabled {
             let externalTranscripts = metadata?.transcripts ?? []
             var pocketCastsTranscripts: [Episode.Metadata.Transcript] = []
-            if let episode = dataManager.findEpisode(uuid: episodeUuid),
-               let hasTranscript = episode.hasGeneratedTranscript {
-                if hasTranscript {
-                    let transcript = buildGeneratedTranscript(podcastUuid: podcastUuid, episodeUuid: episodeUuid)
-                    pocketCastsTranscripts = [transcript]
+            if await ServerCapabilitiesClient.shared.load()?.features.corpus == true,
+               let manifest = try? await CorpusManifestClient.shared.manifest(
+                   episodeUUID: episodeUuid,
+                   acceptLanguage: Locale.preferredLanguages.joined(separator: ",")
+               ) {
+                pocketCastsTranscripts = manifest.transcripts.map {
+                    Episode.Metadata.Transcript(url: $0.url.absoluteString, type: $0.mediaType, language: $0.language)
                 }
-            } else {
-                pocketCastsTranscripts = metadata?.pocketCastsTranscripts ?? []
             }
 
             let isDisplayingGenerated = externalTranscripts.isEmpty && !pocketCastsTranscripts.isEmpty

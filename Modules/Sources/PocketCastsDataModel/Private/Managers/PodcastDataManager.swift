@@ -567,21 +567,10 @@ class PodcastDataManager {
             do {
                 if FeatureFlag.newSettingsStorage.enabled {
                     let modifiedAt = Date()
-                    let enabledJson = try JSONEncoder().encode(
-                        ModifiedDate(wrappedValue: setting != .off, modifiedAt: modifiedAt)
+                    let (enabledJsonString, positionJsonString) = try Self.autoAddJson(
+                        setting: setting,
+                        modifiedAt: modifiedAt
                     )
-                    let positionJson = try JSONEncoder().encode(
-                        ModifiedDate(
-                            wrappedValue: setting == .addFirst ? UpNextPosition.top : UpNextPosition.bottom,
-                            modifiedAt: modifiedAt
-                        )
-                    )
-                    guard let enabledJsonString = String(data: enabledJson, encoding: .utf8) else {
-                        throw JSONError.failedStringConvert("addToUpNext", enabledJson)
-                    }
-                    guard let positionJsonString = String(data: positionJson, encoding: .utf8) else {
-                        throw JSONError.failedStringConvert("addToUpNextPosition", positionJson)
-                    }
 
                     let query = """
                     UPDATE \(DataManager.podcastTableName)
@@ -688,37 +677,97 @@ class PodcastDataManager {
     }
 
     func saveAutoAddToUpNextForAllPodcasts(autoAddToUpNext: Int32, dbQueue: GRDBQueue) {
-        if FeatureFlag.newSettingsStorage.enabled {
-            setOnAllPodcasts(value: autoAddToUpNext, settingName: "addToUpNext", subscribedOnly: true, dbQueue: dbQueue)
+        guard let setting = AutoAddToUpNextSetting(rawValue: autoAddToUpNext) else {
+            FileLog.shared.addMessage("Podcast Data: Failed to create AutoAddToUpNextSetting type for bulk saving")
+            return
         }
-        setOnAllPodcasts(value: autoAddToUpNext, propertyName: "autoAddToUpNext", subscribedOnly: true, dbQueue: dbQueue)
+
+        dbQueue.write { db in
+            do {
+                if FeatureFlag.newSettingsStorage.enabled {
+                    let (enabledJson, positionJson) = try Self.autoAddJson(
+                        setting: setting,
+                        modifiedAt: Date()
+                    )
+                    let query = """
+                    UPDATE \(DataManager.podcastTableName)
+                    SET autoAddToUpNext = ?,
+                        settings = json_set(
+                            coalesce(nullif(settings, ''), json(?)),
+                            '$.addToUpNext',
+                            json(?),
+                            '$.addToUpNextPosition',
+                            json(?)
+                        ),
+                        syncStatus = \(SyncStatus.notSynced.rawValue)
+                    WHERE subscribed = 1
+                    """
+                    // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - atomic json_set settings writer preserves unmodeled payload fields
+                    try db.execute(
+                        sql: query,
+                        arguments: [autoAddToUpNext, Self.defaultSettingsJsonString, enabledJson, positionJson]
+                    )
+                } else {
+                    try Podcast
+                        .filter(Podcast.Columns.subscribed == 1)
+                        .updateAll(
+                            db,
+                            Podcast.Columns.autoAddToUpNext.set(to: autoAddToUpNext),
+                            Podcast.Columns.syncStatus.set(to: SyncStatus.notSynced.rawValue)
+                        )
+                }
+            } catch {
+                FileLog.shared.addMessage("PodcastDataManager.saveAutoAddToUpNextForAllPodcasts error: \(error)")
+            }
+        }
+
+        cachePodcasts(dbQueue: dbQueue)
     }
 
     func updateAutoAddToUpNext(to value: AutoAddToUpNextSetting, for podcasts: [Podcast], in dbQueue: GRDBQueue) {
+        let uuids = podcasts.map(\.uuid)
+        guard !uuids.isEmpty else { return }
+
         dbQueue.write { db in
             do {
-                let uuids = podcasts.map { $0.uuid }
-
                 if FeatureFlag.newSettingsStorage.enabled {
+                    let (enabledJson, positionJson) = try Self.autoAddJson(
+                        setting: value,
+                        modifiedAt: Date()
+                    )
                     let query = """
                     UPDATE \(DataManager.podcastTableName)
-                    SET settings = json_patch(
-                        coalesce(nullif(settings, ''), json(?)),
-                        '{\"addToUpNext\": {\"value\": \(value.rawValue)}}'
-                    ), syncStatus = \(SyncStatus.notSynced.rawValue)
+                    SET autoAddToUpNext = ?,
+                        settings = json_set(
+                            coalesce(nullif(settings, ''), json(?)),
+                            '$.addToUpNext',
+                            json(?),
+                            '$.addToUpNextPosition',
+                            json(?)
+                        ),
+                        syncStatus = \(SyncStatus.notSynced.rawValue)
                     WHERE uuid IN (\(DBUtils.placeholders(amount: uuids.count)))
                     """
-                    try db.executeUpdate(query, values: [Self.defaultSettingsJsonString] + uuids) // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - json_set settings writer; Swift re-encode would drop unmodeled payload fields
+                    var arguments: [(any DatabaseValueConvertible)?] = [
+                        value.rawValue,
+                        Self.defaultSettingsJsonString,
+                        enabledJson,
+                        positionJson,
+                    ]
+                    arguments.append(contentsOf: uuids.map { $0 as (any DatabaseValueConvertible)? })
+                    // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - atomic json_set settings writer preserves unmodeled payload fields
+                    try db.execute(sql: query, arguments: StatementArguments(arguments))
+                } else {
+                    try Podcast
+                        .filter(uuids.contains(Podcast.Columns.uuid))
+                        .updateAll(
+                            db,
+                            Podcast.Columns.autoAddToUpNext.set(to: value.rawValue),
+                            Podcast.Columns.syncStatus.set(to: SyncStatus.notSynced.rawValue)
+                        )
                 }
-
-                let query = """
-                UPDATE \(DataManager.podcastTableName)
-                SET autoAddToUpNext = ?
-                WHERE uuid IN (\(DBUtils.placeholders(amount: uuids.count)))
-                """
-                try db.executeUpdate(query, values: [value.rawValue] + uuids) // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - json_set settings writer; Swift re-encode would drop unmodeled payload fields
             } catch {
-                FileLog.shared.addMessage("PodcastDataManager.setOnAllPodcasts error: \(error)")
+                FileLog.shared.addMessage("PodcastDataManager.updateAutoAddToUpNext error: \(error)")
             }
         }
 
@@ -740,11 +789,33 @@ class PodcastDataManager {
         }
     }
 
-    // NOTE: the json_set/json_patch settings writers below (setOnAllPodcasts(settingName:),
-    // savePushSettingWithNewSettingsStorage, saveSingleSetting, and the settings half of
-    // updateAutoAddToUpNext) stay raw SQL deliberately: SQLite's JSON functions surgically patch
+    private static func autoAddJson(
+        setting: AutoAddToUpNextSetting,
+        modifiedAt: Date
+    ) throws -> (enabled: String, position: String) {
+        let enabledData = try JSONEncoder().encode(
+            ModifiedDate(wrappedValue: setting != .off, modifiedAt: modifiedAt)
+        )
+        let positionData = try JSONEncoder().encode(
+            ModifiedDate(
+                wrappedValue: setting == .addFirst ? UpNextPosition.top : UpNextPosition.bottom,
+                modifiedAt: modifiedAt
+            )
+        )
+        guard let enabled = String(data: enabledData, encoding: .utf8) else {
+            throw JSONError.failedStringConvert("addToUpNext", enabledData)
+        }
+        guard let position = String(data: positionData, encoding: .utf8) else {
+            throw JSONError.failedStringConvert("addToUpNextPosition", positionData)
+        }
+        return (enabled, position)
+    }
+
+    // NOTE: the json_set settings writers below (setOnAllPodcasts(settingName:),
+    // savePushSettingWithNewSettingsStorage, saveSingleSetting, and the auto-add writers) stay raw
+    // SQL deliberately: SQLite's JSON functions surgically patch
     // one key while preserving any fields the client doesn't model, which a Swift decode/re-encode
-    // round trip would drop, and GRDB's query interface has no nullif/json_patch equivalents for
+    // round trip would drop, and GRDB's query interface has no nullif/json_set equivalents for
     // the empty-payload seeding. They are residue kept when the grdbQueryInterface flag was deleted
     // deletion's allowlist.
     func setOnAllPodcasts<Value: Codable & Equatable>(value: Value, settingName: String, subscribedOnly: Bool, dbQueue: GRDBQueue) {
@@ -766,7 +837,7 @@ class PodcastDataManager {
                 ), syncStatus = \(SyncStatus.notSynced.rawValue)
                 """
                 let queryWithWhere = subscribedOnly ? "\(query) WHERE subscribed = 1" : query
-                try db.executeUpdate(queryWithWhere, values: [Self.defaultSettingsJsonString, jsonString]) // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - json_patch settings writer; Swift re-encode would drop unmodeled payload fields
+                try db.executeUpdate(queryWithWhere, values: [Self.defaultSettingsJsonString, jsonString]) // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - json_set settings writer; Swift re-encode would drop unmodeled payload fields
             } catch {
                 FileLog.shared.addMessage("PodcastDataManager.setOnAllPodcasts error: \(error)")
             }
@@ -915,7 +986,7 @@ class PodcastDataManager {
                 ), syncStatus = \(SyncStatus.notSynced.rawValue)
                 WHERE uuid = ?
                 """
-                try db.executeUpdate(query, values: [Self.defaultSettingsJsonString, jsonString, podcastUuid]) // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - json_patch settings writer; Swift re-encode would drop unmodeled payload fields
+                try db.executeUpdate(query, values: [Self.defaultSettingsJsonString, jsonString, podcastUuid]) // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - json_set settings writer; Swift re-encode would drop unmodeled payload fields
             } catch {
                 FileLog.shared.addMessage("PodcastDataManager.saveSingleSetting for \(name) error: \(error)")
             }

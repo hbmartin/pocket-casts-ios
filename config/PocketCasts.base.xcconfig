@@ -37,3 +37,9 @@ PRODUCT_BUNDLE_IDENTIFIER_ROOT = au.com.shiftyjelly.podcasts
 APP_GROUP_IDENTIFIER = group.au.com.shiftyjelly.pocketcasts
 
 DEVELOPMENT_TEAM = PZYM8XX95Q // Automattic, Inc. (Company)
+
+// Coordinated fork backend. Xcconfig treats // as a comment, so the empty
+// expansion keeps the URL separator intact. Override these two values in a
+// private/release overlay when the canonical DNS name changes.
+PODCAST_BACKEND_HOST = podcasts.hbmartin.com
+PODCAST_BACKEND_ORIGIN = https:/$()/$(PODCAST_BACKEND_HOST)

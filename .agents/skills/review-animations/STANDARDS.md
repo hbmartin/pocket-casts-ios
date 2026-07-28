@@ -127,8 +127,12 @@ Slow where the user is deciding, fast where the system responds.
   <motion.div animate={{ transform: "translateX(100px)" }} />  // hardware accelerated
   ```
 
-- **CSS animations beat JS under load** — they run off the main thread; rAF-based animations stutter while the browser loads/scripts/paints. Use CSS for predetermined motion, JS for dynamic/interruptible.
-- **WAAPI** gives JS control with CSS performance (hardware-accelerated, interruptible, no library):
+- **CSS animations can beat JS under load when they are compositor-eligible** (typically
+  `transform` and `opacity`); animations that trigger layout or paint can still run on the main
+  thread. Use CSS for predetermined compositor-friendly motion and JS for dynamic/interruptible
+  behavior.
+- **WAAPI** gives JS control with comparable performance for compositor-eligible properties
+  (hardware-accelerated, interruptible, no library):
 
   ```js
   element.animate([{ clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0 0)' }],

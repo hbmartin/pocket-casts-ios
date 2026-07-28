@@ -7,6 +7,12 @@ import Synchronization
 public final class ApiServerHandler: Sendable {
     public static let shared = ApiServerHandler()
 
+    let urlConnection: URLConnection
+
+    public init(urlConnection: URLConnection = URLConnection(handler: URLSession.shared)) {
+        self.urlConnection = urlConnection
+    }
+
     let apiQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 1

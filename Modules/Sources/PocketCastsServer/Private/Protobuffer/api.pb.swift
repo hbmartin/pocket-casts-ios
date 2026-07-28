@@ -191,7 +191,7 @@ nonisolated enum Api_ReportReason: SwiftProtobuf.Enum, Swift.CaseIterable {
 
 }
 
-/// Result of the mandatory CSAM/nudity scan on an uploaded avatar. This is the
+/// Result of the mandatory nudity/racy SafeSearch scan on an uploaded avatar. This is the
 /// response only — the upload request body is raw image bytes (octet-stream),
 /// not a protobuf message.
 nonisolated enum Api_AvatarUploadStatus: SwiftProtobuf.Enum, Swift.CaseIterable {
@@ -680,6 +680,10 @@ nonisolated struct Api_UserLoginResponse: Sendable {
 
   var email: String = String()
 
+  var refreshToken: String = String()
+
+  var expiresIn: Int32 = 0
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
@@ -695,6 +699,8 @@ nonisolated struct Api_RegisterRequest: Sendable {
   var password: String = String()
 
   var scope: String = String()
+
+  var device: String = String()
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -723,6 +729,10 @@ nonisolated struct Api_RegisterResponse: Sendable {
 
   var errors: [String] = []
 
+  var refreshToken: String = String()
+
+  var expiresIn: Int32 = 0
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
@@ -744,6 +754,8 @@ nonisolated struct Api_UserTokenRequest: Sendable {
   var scope: String = String()
 
   var deviceCode: String = String()
+
+  var device: String = String()
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -834,6 +846,7 @@ nonisolated struct Api_UserChangeResponse: Sendable {
 
   var message: String = String()
 
+  /// JSON name is camelCase in the client's nameMap (upstream quirk).
   var messageID: String = String()
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -6401,6 +6414,22 @@ nonisolated struct Api_TranscriptContributionRequest: Sendable {
   fileprivate var _createdAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
 }
 
+nonisolated struct Api_TranscriptContributionResponse: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  var candidateID: String = String()
+
+  var sha256: String = String()
+
+  var attachmentToken: String = String()
+
+  var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  init() {}
+}
+
 /// Body of POST transcripts/sighting. Same encoding rules as
 /// TranscriptContributionRequest. The server fetches the transcript content
 /// itself; the client never uploads publisher transcript bytes.
@@ -9507,6 +9536,10 @@ nonisolated struct Api_UserResetPasswordRequest: Sendable {
 
   var scope: String = String()
 
+  var email: String = String()
+
+  var device: String = String()
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
@@ -9886,9 +9919,10 @@ nonisolated struct Api_ProfileResponse: Sendable {
   fileprivate var _profile: Api_SocialProfile? = nil
 }
 
-/// GET social/u/{handle} — optionally authenticated. The server applies per-field
+/// POST /social/profile/public — optionally authenticated. The server applies per-field
 /// visibility AND the viewer's block relationship (a blocked viewer reads as
-/// not-found); only fields the viewer may see are populated. Powers pca.st/u/<handle>.
+/// not-found); only fields the viewer may see are populated. The separate HTML
+/// profile page is served by GET /u/{handle}.
 nonisolated struct Api_PublicProfileRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -12189,7 +12223,7 @@ nonisolated extension Api_UserLoginRequest: SwiftProtobuf.Message, SwiftProtobuf
 
 nonisolated extension Api_UserLoginResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".UserLoginResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}token\0\u{1}uuid\0\u{1}email\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}token\0\u{1}uuid\0\u{1}email\0\u{4}f\u{f}refresh_token\0\u{3}expires_in\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -12200,6 +12234,8 @@ nonisolated extension Api_UserLoginResponse: SwiftProtobuf.Message, SwiftProtobu
       case 1: try { try decoder.decodeSingularStringField(value: &self.token) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.uuid) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.email) }()
+      case 1001: try { try decoder.decodeSingularStringField(value: &self.refreshToken) }()
+      case 1002: try { try decoder.decodeSingularInt32Field(value: &self.expiresIn) }()
       default: break
       }
     }
@@ -12215,6 +12251,12 @@ nonisolated extension Api_UserLoginResponse: SwiftProtobuf.Message, SwiftProtobu
     if !self.email.isEmpty {
       try visitor.visitSingularStringField(value: self.email, fieldNumber: 3)
     }
+    if !self.refreshToken.isEmpty {
+      try visitor.visitSingularStringField(value: self.refreshToken, fieldNumber: 1001)
+    }
+    if self.expiresIn != 0 {
+      try visitor.visitSingularInt32Field(value: self.expiresIn, fieldNumber: 1002)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -12222,6 +12264,8 @@ nonisolated extension Api_UserLoginResponse: SwiftProtobuf.Message, SwiftProtobu
     if lhs.token != rhs.token {return false}
     if lhs.uuid != rhs.uuid {return false}
     if lhs.email != rhs.email {return false}
+    if lhs.refreshToken != rhs.refreshToken {return false}
+    if lhs.expiresIn != rhs.expiresIn {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -12229,7 +12273,7 @@ nonisolated extension Api_UserLoginResponse: SwiftProtobuf.Message, SwiftProtobu
 
 nonisolated extension Api_RegisterRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".RegisterRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}email\0\u{1}password\0\u{1}scope\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}email\0\u{1}password\0\u{1}scope\0\u{2}f\u{f}device\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -12240,6 +12284,7 @@ nonisolated extension Api_RegisterRequest: SwiftProtobuf.Message, SwiftProtobuf.
       case 1: try { try decoder.decodeSingularStringField(value: &self.email) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.password) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.scope) }()
+      case 1001: try { try decoder.decodeSingularStringField(value: &self.device) }()
       default: break
       }
     }
@@ -12255,6 +12300,9 @@ nonisolated extension Api_RegisterRequest: SwiftProtobuf.Message, SwiftProtobuf.
     if !self.scope.isEmpty {
       try visitor.visitSingularStringField(value: self.scope, fieldNumber: 3)
     }
+    if !self.device.isEmpty {
+      try visitor.visitSingularStringField(value: self.device, fieldNumber: 1001)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -12262,6 +12310,7 @@ nonisolated extension Api_RegisterRequest: SwiftProtobuf.Message, SwiftProtobuf.
     if lhs.email != rhs.email {return false}
     if lhs.password != rhs.password {return false}
     if lhs.scope != rhs.scope {return false}
+    if lhs.device != rhs.device {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -12269,7 +12318,7 @@ nonisolated extension Api_RegisterRequest: SwiftProtobuf.Message, SwiftProtobuf.
 
 nonisolated extension Api_RegisterResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".RegisterResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}message\0\u{1}token\0\u{1}uuid\0\u{1}errors\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}message\0\u{1}token\0\u{1}uuid\0\u{1}errors\0\u{4}d\u{f}refresh_token\0\u{3}expires_in\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -12282,6 +12331,8 @@ nonisolated extension Api_RegisterResponse: SwiftProtobuf.Message, SwiftProtobuf
       case 3: try { try decoder.decodeSingularStringField(value: &self.token) }()
       case 4: try { try decoder.decodeSingularStringField(value: &self.uuid) }()
       case 5: try { try decoder.decodeRepeatedStringField(value: &self.errors) }()
+      case 1001: try { try decoder.decodeSingularStringField(value: &self.refreshToken) }()
+      case 1002: try { try decoder.decodeSingularInt32Field(value: &self.expiresIn) }()
       default: break
       }
     }
@@ -12307,6 +12358,12 @@ nonisolated extension Api_RegisterResponse: SwiftProtobuf.Message, SwiftProtobuf
     if !self.errors.isEmpty {
       try visitor.visitRepeatedStringField(value: self.errors, fieldNumber: 5)
     }
+    if !self.refreshToken.isEmpty {
+      try visitor.visitSingularStringField(value: self.refreshToken, fieldNumber: 1001)
+    }
+    if self.expiresIn != 0 {
+      try visitor.visitSingularInt32Field(value: self.expiresIn, fieldNumber: 1002)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -12316,6 +12373,8 @@ nonisolated extension Api_RegisterResponse: SwiftProtobuf.Message, SwiftProtobuf
     if lhs.token != rhs.token {return false}
     if lhs.uuid != rhs.uuid {return false}
     if lhs.errors != rhs.errors {return false}
+    if lhs.refreshToken != rhs.refreshToken {return false}
+    if lhs.expiresIn != rhs.expiresIn {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -12323,7 +12382,7 @@ nonisolated extension Api_RegisterResponse: SwiftProtobuf.Message, SwiftProtobuf
 
 nonisolated extension Api_UserTokenRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".UserTokenRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}code\0\u{3}grant_type\0\u{3}refresh_token\0\u{1}scope\0\u{3}device_code\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}code\0\u{3}grant_type\0\u{3}refresh_token\0\u{1}scope\0\u{3}device_code\0\u{2}d\u{f}device\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -12336,6 +12395,7 @@ nonisolated extension Api_UserTokenRequest: SwiftProtobuf.Message, SwiftProtobuf
       case 3: try { try decoder.decodeSingularStringField(value: &self.refreshToken) }()
       case 4: try { try decoder.decodeSingularStringField(value: &self.scope) }()
       case 5: try { try decoder.decodeSingularStringField(value: &self.deviceCode) }()
+      case 1001: try { try decoder.decodeSingularStringField(value: &self.device) }()
       default: break
       }
     }
@@ -12357,6 +12417,9 @@ nonisolated extension Api_UserTokenRequest: SwiftProtobuf.Message, SwiftProtobuf
     if !self.deviceCode.isEmpty {
       try visitor.visitSingularStringField(value: self.deviceCode, fieldNumber: 5)
     }
+    if !self.device.isEmpty {
+      try visitor.visitSingularStringField(value: self.device, fieldNumber: 1001)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -12366,6 +12429,7 @@ nonisolated extension Api_UserTokenRequest: SwiftProtobuf.Message, SwiftProtobuf
     if lhs.refreshToken != rhs.refreshToken {return false}
     if lhs.scope != rhs.scope {return false}
     if lhs.deviceCode != rhs.deviceCode {return false}
+    if lhs.device != rhs.device {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -12543,7 +12607,7 @@ nonisolated extension Api_UserChangePasswordRequest: SwiftProtobuf.Message, Swif
 
 nonisolated extension Api_UserChangeResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".UserChangeResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}message\0\u{3}message_id\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}message\0\u{1}messageId\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -18736,6 +18800,46 @@ nonisolated extension Api_TranscriptContributionRequest: SwiftProtobuf.Message, 
   }
 }
 
+nonisolated extension Api_TranscriptContributionResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  static let protoMessageName: String = _protobuf_package + ".TranscriptContributionResponse"
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}candidate_id\0\u{1}sha256\0\u{3}attachment_token\0")
+
+  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.candidateID) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.sha256) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.attachmentToken) }()
+      default: break
+      }
+    }
+  }
+
+  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.candidateID.isEmpty {
+      try visitor.visitSingularStringField(value: self.candidateID, fieldNumber: 1)
+    }
+    if !self.sha256.isEmpty {
+      try visitor.visitSingularStringField(value: self.sha256, fieldNumber: 2)
+    }
+    if !self.attachmentToken.isEmpty {
+      try visitor.visitSingularStringField(value: self.attachmentToken, fieldNumber: 3)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  static func ==(lhs: Api_TranscriptContributionResponse, rhs: Api_TranscriptContributionResponse) -> Bool {
+    if lhs.candidateID != rhs.candidateID {return false}
+    if lhs.sha256 != rhs.sha256 {return false}
+    if lhs.attachmentToken != rhs.attachmentToken {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
 nonisolated extension Api_TranscriptSightingRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".TranscriptSightingRequest"
   static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}episode_uuid\0\u{3}podcast_uuid\0\u{3}transcript_url\0\u{1}format\0\u{1}language\0")
@@ -23683,7 +23787,7 @@ nonisolated extension Api_UserPlaylistEpisodesRequest: SwiftProtobuf.Message, Sw
 
 nonisolated extension Api_UserResetPasswordRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".UserResetPasswordRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}reset_password_token\0\u{1}password\0\u{1}scope\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}reset_password_token\0\u{1}password\0\u{1}scope\0\u{1}email\0\u{2}e\u{f}device\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -23694,6 +23798,8 @@ nonisolated extension Api_UserResetPasswordRequest: SwiftProtobuf.Message, Swift
       case 1: try { try decoder.decodeSingularStringField(value: &self.resetPasswordToken) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.password) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.scope) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.email) }()
+      case 1001: try { try decoder.decodeSingularStringField(value: &self.device) }()
       default: break
       }
     }
@@ -23709,6 +23815,12 @@ nonisolated extension Api_UserResetPasswordRequest: SwiftProtobuf.Message, Swift
     if !self.scope.isEmpty {
       try visitor.visitSingularStringField(value: self.scope, fieldNumber: 3)
     }
+    if !self.email.isEmpty {
+      try visitor.visitSingularStringField(value: self.email, fieldNumber: 4)
+    }
+    if !self.device.isEmpty {
+      try visitor.visitSingularStringField(value: self.device, fieldNumber: 1001)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -23716,6 +23828,8 @@ nonisolated extension Api_UserResetPasswordRequest: SwiftProtobuf.Message, Swift
     if lhs.resetPasswordToken != rhs.resetPasswordToken {return false}
     if lhs.password != rhs.password {return false}
     if lhs.scope != rhs.scope {return false}
+    if lhs.email != rhs.email {return false}
+    if lhs.device != rhs.device {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

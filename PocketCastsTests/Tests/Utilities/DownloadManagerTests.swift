@@ -3,6 +3,36 @@ import XCTest
 import PocketCastsDataModel
 
 final class DownloadManagerTests: DBTestCase {
+    func testExportCompletionSignalUsesFirstSettlement() async {
+        let signal = ExportCompletionSignal()
+
+        XCTAssertTrue(signal.settle(.failure("first")))
+        XCTAssertFalse(signal.settle(.success))
+
+        let result = await signal.wait(timeout: .seconds(1))
+        XCTAssertEqual(result, .settled(.failure("first")))
+    }
+
+    func testExportCompletionSignalTimesOut() async {
+        let signal = ExportCompletionSignal()
+
+        let result = await signal.wait(timeout: .milliseconds(10))
+
+        XCTAssertEqual(result, .timedOut)
+    }
+
+    func testExportCompletionSignalCooperatesWithCancellation() async {
+        let signal = ExportCompletionSignal()
+        let task = Task {
+            await signal.wait(timeout: .seconds(10))
+        }
+
+        task.cancel()
+
+        let result = await task.value
+        XCTAssertEqual(result, .cancelled)
+    }
+
     func testStuckSingleDownload() async throws {
         let (_, task) = try await setUpQueuedDownload()
 

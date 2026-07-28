@@ -8,6 +8,7 @@ public extension ApiServerHandler {
         loginRequest.email = username
         loginRequest.password = password
         loginRequest.scope = scope
+        loginRequest.device = ServerConfig.shared.syncDelegate?.uniqueAppId() ?? ""
 
         let url = ServerHelper.asUrl(ServerConstants.Urls.api() + "user/login")
         let data = try loginRequest.serializedData()
@@ -25,20 +26,24 @@ public extension ApiServerHandler {
         }
     }
 
-    func forgotPassword(email: String, completion: @escaping @Sendable (_ success: Bool, _ error: APIError?) -> Void) {
-        var request = Api_EmailRequest()
-        request.email = email
+    func resetPassword(email: String, code: String, newPassword: String, completion: @escaping @Sendable (_ success: Bool, _ error: APIError?) -> Void) {
+        var message = Api_UserResetPasswordRequest()
+        message.email = email
+        message.resetPasswordToken = code
+        message.password = newPassword
+        message.scope = ServerConstants.Values.apiScope
+        message.device = ServerConfig.shared.syncDelegate?.uniqueAppId() ?? ""
 
-        let url = ServerHelper.asUrl(ServerConstants.Urls.api() + "user/forgot_password")
+        let url = ServerHelper.asUrl(ServerConstants.Urls.api() + "user/reset_password")
         do {
-            let data = try request.serializedData()
+            let data = try message.serializedData()
 
             guard let request = ServerHelper.createProtoRequest(url: url, data: data) else {
                 completion(false, nil)
                 return
             }
 
-            URLSession.shared.dataTask(with: request) { data, response, error in
+            urlConnection.send(request: request) { data, response, error in
                 guard let responseData = data, error == nil, (response as? HTTPURLResponse)?.statusCode == ServerConstants.HttpConstants.ok else {
                     let errorResponse = ApiServerHandler.extractErrorResponse(data: data, response: response)
                     completion(false, errorResponse)
@@ -52,9 +57,9 @@ public extension ApiServerHandler {
                 } catch {
                     completion(false, nil)
                 }
-            }.resume()
+            }
         } catch {
-            FileLog.shared.addMessage("forgotPassword failed \(error.localizedDescription)")
+            FileLog.shared.addMessage("resetPassword failed \(error.localizedDescription)")
             completion(false, nil)
         }
     }
@@ -64,6 +69,7 @@ public extension ApiServerHandler {
         request.email = username
         request.password = password
         request.scope = ServerConstants.Values.apiScope
+        request.device = ServerConfig.shared.syncDelegate?.uniqueAppId() ?? ""
 
         let url = ServerHelper.asUrl(ServerConstants.Urls.api() + "user/register")
         do {
@@ -74,7 +80,7 @@ public extension ApiServerHandler {
                 return
             }
 
-            URLSession.shared.dataTask(with: request) { data, response, error in
+            urlConnection.send(request: request) { data, response, error in
                 guard let responseData = data, error == nil, (response as? HTTPURLResponse)?.statusCode == ServerConstants.HttpConstants.ok else {
                     let errorResponse = ApiServerHandler.extractErrorResponse(data: data, response: response)
                     completion(false, nil, errorResponse)
@@ -88,7 +94,7 @@ public extension ApiServerHandler {
                 } catch {
                     completion(false, nil, nil)
                 }
-            }.resume()
+            }
         } catch {
             FileLog.shared.addMessage("registerAccount failed \(error.localizedDescription)")
             completion(false, nil, nil)
@@ -100,6 +106,7 @@ public extension ApiServerHandler {
         loginRequest.email = username
         loginRequest.password = password
         loginRequest.scope = scope
+        loginRequest.device = ServerConfig.shared.syncDelegate?.uniqueAppId() ?? ""
 
         let url = ServerHelper.asUrl(ServerConstants.Urls.api() + "user/login")
         do {
@@ -111,7 +118,7 @@ public extension ApiServerHandler {
                 return
             }
 
-            URLSession.shared.dataTask(with: request) { data, response, error in
+            urlConnection.send(request: request) { data, response, error in
                 guard let responseData = data, error == nil, response?.extractStatusCode() == ServerConstants.HttpConstants.ok else {
                     let errorResponse = ApiServerHandler.extractErrorResponse(data: data, response: response, error: error)
                     FileLog.shared.addMessage("Unable to obtain token, status code: \(response?.extractStatusCode() ?? -1), server error: \(errorResponse?.rawValue ?? "none")")
@@ -127,7 +134,7 @@ public extension ApiServerHandler {
                     FileLog.shared.addMessage("Error occurred while trying to unpack token request \(error.localizedDescription)")
                     completion(nil, nil, nil)
                 }
-            }.resume()
+            }
         } catch {
             FileLog.shared.addMessage("obtainToken failed \(error.localizedDescription)")
             completion(nil, nil, nil)
@@ -150,10 +157,16 @@ public extension ApiServerHandler {
     }
 
     private func obtainToken(request: URLRequest, usingRefreshToken: Bool, retryOnTooManyRequests: Bool) async throws -> AuthenticationResponse {
-        let (data, response, requestError): (Data?, URLResponse?, Error?) = await withUnsafeContinuation { continuation in
-            URLSession.shared.dataTask(with: request) { data, response, error in
-                continuation.resume(returning: (data, response, error))
-            }.resume()
+        let data: Data?
+        let response: URLResponse?
+        let requestError: Error?
+        do {
+            (data, response) = try await urlConnection.send(request: request)
+            requestError = nil
+        } catch {
+            data = nil
+            response = nil
+            requestError = error
         }
 
         // Rate limited: honor Retry-After with a single capped retry, not a loop (C.0-4).

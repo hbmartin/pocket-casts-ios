@@ -298,6 +298,7 @@ final class TokenHelper: Sendable {
             loginRequest.email = email
             loginRequest.password = password
             loginRequest.scope = ServerConstants.Values.apiScope
+            loginRequest.device = ServerConfig.shared.syncDelegate?.uniqueAppId() ?? ""
             let data = try loginRequest.serializedData()
             request.httpBody = data
 

@@ -18,7 +18,6 @@ if [[ -n "${POCKET_CASTS_CREDENTIALS_JSON:-}" ]]; then
   if ! printf '%s' "$POCKET_CASTS_CREDENTIALS_JSON" | /usr/bin/ruby -rjson -e '
     required_keys = %w[
       encrypted_log_key
-      sharing_server_secret
       bitdrift_sdk_key
       telemetry_deck_app_id
       instagram_app_id

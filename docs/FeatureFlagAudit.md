@@ -7,9 +7,11 @@ excluding the definition file).
 
 **No flag is retired by this document.** Every flag has a live remote kill-switch key (the
 `remoteKey` fallthrough derives one from the case name), so each retirement needs sign-off from
-whoever owns remote config: confirm the key is not actively targeted, then fill in the Sign-off
-column and remove the flag in a small PR (inline the `true` branch, delete the `false` branch and
-the enum case).
+the code owner and a separate remote-retirement request from whoever owns remote config. Confirm
+the key is not actively targeted, then fill in the **Code sign-off / remote-retirement request**
+column with both the code approval and the remote-config owner/status. Remove the flag in a small
+PR (inline the `true` branch, delete the `false` branch and the enum case); do not mark remote
+retirement complete until the remote owner records the completed change and date.
 
 Assessment meanings:
 

@@ -13,8 +13,21 @@ import Foundation
 ///   identical bytes can never succeed.
 public enum ContributionSendResult: Equatable, Sendable {
     case accepted
+    case acceptedContribution(TranscriptContributionReceipt)
     case retryAfter(TimeInterval)
     case pauseQueue(TimeInterval)
     case attestationRejected
     case permanentFailure(String)
+}
+
+public struct TranscriptContributionReceipt: Equatable, Sendable {
+    public let candidateID: String
+    public let sha256: String
+    public let attachmentToken: String
+
+    public init(candidateID: String, sha256: String, attachmentToken: String) {
+        self.candidateID = candidateID
+        self.sha256 = sha256
+        self.attachmentToken = attachmentToken
+    }
 }

@@ -1,16 +1,27 @@
 import Foundation
 
-// Mutable model object passed across threads by long-standing
-// convention in this codebase; consistency is maintained by database-write discipline
-// @unchecked Sendable: database-write discipline, rather than the type itself, maintains consistency.
-public final class PlaylistEpisode: Equatable, Hashable, @unchecked Sendable {
-    public var id = 0 as Int64
-    public var episodePosition = 0 as Int32
-    public var episodeUuid = ""
-    public var title = ""
-    public var podcastUuid = ""
+/// A snapshot of an episode's position in Up Next.
+public struct PlaylistEpisode: Equatable, Hashable, Sendable {
+    public var id: Int64
+    public var episodePosition: Int32
+    public var episodeUuid: String
+    public var title: String
+    public var podcastUuid: String
 
-    public init() {}
+    /// Creates an Up Next snapshot. An `id` of zero requests a generated database ID when saved.
+    public init(
+        id: Int64 = 0,
+        episodePosition: Int32 = 0,
+        episodeUuid: String = "",
+        title: String = "",
+        podcastUuid: String = ""
+    ) {
+        self.id = id
+        self.episodePosition = episodePosition
+        self.episodeUuid = episodeUuid
+        self.title = title
+        self.podcastUuid = podcastUuid
+    }
 
     public func taggableId() -> Int {
         Int(truncatingIfNeeded: id)

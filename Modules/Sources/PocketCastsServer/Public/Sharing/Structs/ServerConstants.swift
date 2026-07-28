@@ -2,8 +2,6 @@ import Foundation
 
 public enum ServerConstants {
     public enum Urls {
-        static let localBaseURLEnvironmentKey = "POCKET_CASTS_SERVER_BASE_URL"
-
         struct Endpoints: Equatable {
             let main: String
             let api: String
@@ -22,16 +20,8 @@ public enum ServerConstants {
         private static var currentEndpoints: Endpoints {
             resolvedEndpoints(
                 production: production(),
-                localBaseURL: simulatorLocalBaseURL
+                localBaseURL: ServerOriginPolicy.shared.origin?.absoluteString
             )
-        }
-
-        private static var simulatorLocalBaseURL: String? {
-            #if DEBUG && targetEnvironment(simulator)
-                ProcessInfo.processInfo.environment[localBaseURLEnvironmentKey]
-            #else
-                nil
-            #endif
         }
 
         static func resolvedEndpoints(production: Bool, localBaseURL: String?) -> Endpoints {
@@ -78,37 +68,17 @@ public enum ServerConstants {
                 sharing: baseURL,
                 discover: baseURL + "discover/",
                 image: baseURL,
-                share: hosted.share,
-                lists: hosted.lists,
+                share: baseURL,
+                lists: baseURL,
                 search: baseURL,
-                generatedTranscripts: hosted.generatedTranscripts,
+                generatedTranscripts: baseURL + "generated_transcripts/",
                 tvPair: hosted.tvPair,
                 tvCreate: hosted.tvCreate
             )
         }
 
         static func normalizedLocalBaseURL(_ value: String?) -> String? {
-            guard let value = value?.trimmingCharacters(in: .whitespacesAndNewlines),
-                  !value.isEmpty,
-                  var components = URLComponents(string: value),
-                  let scheme = components.scheme?.lowercased(),
-                  scheme == "http" || scheme == "https",
-                  let host = components.host,
-                  !host.isEmpty,
-                  components.user == nil,
-                  components.password == nil,
-                  components.query == nil,
-                  components.fragment == nil
-            else {
-                return nil
-            }
-
-            components.scheme = scheme
-            if !components.path.hasSuffix("/") {
-                components.path += "/"
-            }
-
-            return components.url?.absoluteString
+            ServerOriginPolicy.normalizedOrigin(value, allowInsecureLoopback: true)
         }
 
         public static func main() -> String {
@@ -227,6 +197,7 @@ public enum ServerConstants {
         public static let etag = "ETag"
         public static let userRegion = "X-User-Region"
         public static let appLanguage = "X-App-Language"
+        public static let installationID = "X-Installation-ID"
     }
 
     public enum Timeouts {

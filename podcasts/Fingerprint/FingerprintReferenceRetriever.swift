@@ -27,9 +27,7 @@ actor FingerprintReferenceRetriever {
     }
 
     private func performFetch(podcastUuid: String, episodeUuid: String) async throws -> Data? {
-        let urlString = "\(ServerConstants.Urls.generatedTranscripts)\(podcastUuid)/\(episodeUuid)-fingerprints.json.gz"
-        guard let url = URL(string: urlString) else {
-            FileLog.shared.addMessage("FingerprintReferenceRetriever: invalid URL for \(episodeUuid)")
+        guard await ServerCapabilitiesClient.shared.load()?.features.corpus == true else {
             return nil
         }
 
@@ -50,27 +48,12 @@ actor FingerprintReferenceRetriever {
             }
 
             do {
-                let (data, response) = try await URLSession.shared.data(from: url)
-                let statusCode = response.extractStatusCode()
-
-                if statusCode == ServerConstants.HttpConstants.notFound {
-                    FileLog.shared.addMessage("FingerprintReferenceRetriever: no reference for \(episodeUuid) (404)")
-                    return nil
-                }
-
-                guard statusCode == ServerConstants.HttpConstants.ok else {
-                    if statusCode >= ServerConstants.HttpConstants.serverError {
-                        FileLog.shared.addMessage(
-                            "FingerprintReferenceRetriever: server error \(statusCode) for \(episodeUuid), "
-                                + "attempt \(attempt + 1)/\(Self.maxRetries)"
-                        )
-                        continue
-                    }
-                    FileLog.shared.addMessage(
-                        "FingerprintReferenceRetriever: unexpected status \(statusCode) for \(episodeUuid)"
-                    )
-                    return nil
-                }
+                let manifest = try await CorpusManifestClient.shared.manifest(
+                    episodeUUID: episodeUuid,
+                    acceptLanguage: Locale.preferredLanguages.joined(separator: ",")
+                )
+                guard let descriptor = manifest.fingerprints.first else { return nil }
+                let data = try await CorpusManifestClient.shared.artifact(descriptor)
 
                 guard let jsonData = Self.decompressGzipIfNeeded(data) else {
                     FileLog.shared.addMessage("FingerprintReferenceRetriever: decompression failed for \(episodeUuid)")
@@ -84,7 +67,7 @@ actor FingerprintReferenceRetriever {
             } catch is CancellationError {
                 throw CancellationError()
             } catch {
-                if Self.isTransientError(error) {
+                if Self.isTransientError(error) || error is CorpusClientError {
                     FileLog.shared.addMessage(
                         "FingerprintReferenceRetriever: transient error for \(episodeUuid), "
                             + "attempt \(attempt + 1)/\(Self.maxRetries) — \(error.localizedDescription)"

@@ -16,9 +16,17 @@ extension URLSession: RequestHandler {
 public final class URLConnection: Sendable {
 
     private let handler: RequestHandler
+    private let originPolicy: ServerOriginPolicy
+    private let appAttestService: AppAttestService
 
-    public init(handler: RequestHandler) {
+    public init(
+        handler: RequestHandler,
+        originPolicy: ServerOriginPolicy = .shared,
+        appAttestService: AppAttestService = .shared
+    ) {
         self.handler = handler
+        self.originPolicy = originPolicy
+        self.appAttestService = appAttestService
     }
 
     public func sendSynchronousRequest(with request: URLRequest) throws -> (Data?, URLResponse?) {
@@ -26,9 +34,13 @@ public final class URLConnection: Sendable {
         let result = UncheckedSendableBox<(Data?, URLResponse?, Error?)>((nil, nil, nil))
         let semaphore = DispatchSemaphore(value: 0)
 
-        handler.send(request: request) {
-            result.value = ($0, $1, $2)
-
+        Task {
+            do {
+                let response = try await send(request: request)
+                result.value = (response.0, response.1, nil)
+            } catch {
+                result.value = (nil, nil, error)
+            }
             semaphore.signal()
         }
 
@@ -41,12 +53,40 @@ public final class URLConnection: Sendable {
     }
 
     public func send(request: URLRequest, completion: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void) {
-        handler.send(request: request, completion: completion)
+        Task {
+            do {
+                let (data, response) = try await send(request: request)
+                completion(data, response, nil)
+            } catch {
+                completion(nil, nil, error)
+            }
+        }
     }
 
     public func send(request: URLRequest) async throws -> (Data?, URLResponse?) {
+        guard originPolicy.isNetworkAllowed else {
+            throw ServerOriginError.networkBlocked(originPolicy.blockingMessage ?? "Server networking is disabled.")
+        }
+
+        var preparedRequest = request
+        if AppAttestRoutePolicy.isSelfHosted(request, origin: originPolicy.origin),
+           preparedRequest.value(forHTTPHeaderField: ServerConstants.HttpHeaders.installationID) == nil,
+           let installationID = ServerConfig.shared.syncDelegate?.uniqueAppId(), !installationID.isEmpty {
+            preparedRequest.setValue(installationID, forHTTPHeaderField: ServerConstants.HttpHeaders.installationID)
+        }
+
+        if AppAttestRoutePolicy.requiresAttestation(preparedRequest, origin: originPolicy.origin) {
+            return try await appAttestService.send(request: preparedRequest, using: self)
+        }
+
+        return try await sendRaw(request: preparedRequest)
+    }
+
+    /// Bypasses policy/interceptors for the App Attest bootstrap and for the
+    /// transport's already-signed attempt. Not public outside this module.
+    func sendRaw(request: URLRequest) async throws -> (Data?, URLResponse?) {
         try await withCheckedThrowingContinuation { continuation in
-            send(request: request) { data, response, error in
+            handler.send(request: request) { data, response, error in
                 if let error {
                     continuation.resume(throwing: error)
                 } else {

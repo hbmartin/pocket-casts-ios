@@ -45,12 +45,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         configureBitdrift()
         configureTelemetryDeck()
         configureMetricKit()
-        setupSecrets()
         addAnalyticsObservers()
         setupAnalytics()
 
         DataManager.logger = BitdriftErrorLogger(category: "grdb")
-        ServerConfig.shared.errorLogger = BitdriftErrorLogger(category: "sync")
+        ServerConfig.shared.configure(
+            syncDelegate: ServerSyncManager.shared,
+            playbackDelegate: PlaybackServerAdapter(),
+            errorLogger: BitdriftErrorLogger(category: "sync")
+        )
         ServerConfig.shared.warmProtectedDataAvailabilityCache()
 
         configureTipKit()
@@ -116,8 +119,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 return
             }
 
-            ServerConfig.shared.syncDelegate = ServerSyncManager.shared
-            ServerConfig.shared.playbackDelegate = PlaybackServerAdapter()
             checkDefaults()
 
             logActiveDownloadTasks()
@@ -489,10 +490,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         TelemetryDeck.initialize(config: TelemetryDeck.Config(appID: telemetryDeckAppID))
         return true
-    }
-
-    private func setupSecrets() {
-        ServerCredentials.configureSharing(ApiCredentials.sharingServerSecret)
     }
 
     private func setupSignOutListener() {

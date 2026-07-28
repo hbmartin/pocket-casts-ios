@@ -345,7 +345,17 @@ final class SocialFeedViewModel: ObservableObject {
         seen.formUnion(fresh.map(\.id))
         UserDefaults.standard.set(Array(seen), forKey: Self.seenMilestonesKey)
         if stored != nil, !fresh.isEmpty {
-            celebration = fresh.first
+            celebration = Self.newestMilestone(in: fresh)
+        }
+    }
+
+    static func newestMilestone(in milestones: [SocialMilestone]) -> SocialMilestone? {
+        milestones.max { lhs, rhs in
+            let lhsDate = lhs.crossedAt ?? .distantPast
+            let rhsDate = rhs.crossedAt ?? .distantPast
+            if lhsDate != rhsDate { return lhsDate < rhsDate }
+            if lhs.kind != rhs.kind { return lhs.kind.rawValue < rhs.kind.rawValue }
+            return lhs.tier < rhs.tier
         }
     }
 
@@ -360,7 +370,7 @@ final class SocialFeedViewModel: ObservableObject {
     /// Re-loads when the joined state changed since the last load (e.g. the
     /// user joined from the card and navigated back to Explore).
     func refreshIfStale() async {
-        guard !fixtureLoaded else { return }
+        guard !fixtureLoaded, !isLoadInFlight else { return }
         let joinedNow = FeatureFlag.socialProfiles.enabled && SocialIdentityStore.isJoined
         if joinedNow != lastLoadedJoined {
             isLoading = true

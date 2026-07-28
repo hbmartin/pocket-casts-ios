@@ -378,7 +378,7 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         let (invStatus, _) = try await post("social/share/send", token: tokenA, message: invalid)
         XCTAssertEqual(invStatus, 400)
 
-        var inboxCheck = Api_InboxRequest()
+        let inboxCheck = Api_InboxRequest()
         let (recInboxStatus, recBody) = try await post("social/inbox", token: tokenB, message: inboxCheck)
         XCTAssertEqual(recInboxStatus, 200)
         let recInbox = try Api_InboxResponse(serializedBytes: recBody)
@@ -854,7 +854,7 @@ final class SocialLocalBackendE2ETests: XCTestCase {
 
         var postsReq = Api_GroupPostsRequest()
         postsReq.groupID = hub.id
-        (status, body) = try await post("social/group/posts", token: "", message: postsReq)
+        (status, body) = try await post("social/group/posts", token: nil, message: postsReq)
         XCTAssertEqual(status, 200)
         var page = try Api_GroupPostsResponse(serializedBytes: body)
         XCTAssertEqual(page.posts.count, 1)
@@ -1096,7 +1096,6 @@ final class SocialLocalBackendE2ETests: XCTestCase {
         XCTAssertEqual(status, 200)
         matched = try Api_ContactsMatchResponse(serializedBytes: body)
         XCTAssertEqual(matched.profiles.count, 1, "email matches; the phone hash is wire-ready but unmatched")
-        XCTAssertEqual(matched.profiles.first?.handle, handleB)
         XCTAssertEqual(matched.profiles.first?.handle, handleB)
     }
 

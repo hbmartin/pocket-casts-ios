@@ -7,9 +7,12 @@ import SwiftProtobuf
 
 final class SyncTaskManualPlaylistTests: XCTestCase {
     private var dataManager: DataManager!
+    private var originalSharedManager: DataManager!
     private var syncTask: SyncTask!
 
     override func setUp() {
+        super.setUp()
+        originalSharedManager = DataManager.sharedManager
         dataManager = DataManager(dbQueue: GRDBQueue(dbPool: try! DatabasePool(path: NSTemporaryDirectory().appending("\(UUID().uuidString).sqlite"))))
         syncTask = SyncTask(dataManager: dataManager)
 
@@ -18,7 +21,11 @@ final class SyncTaskManualPlaylistTests: XCTestCase {
     }
 
     override func tearDown() {
+        DataManager.sharedManager = originalSharedManager
+        originalSharedManager = nil
+        dataManager = nil
         FeatureFlagMock().reset()
+        super.tearDown()
     }
 
     func testChangedFiltersIncludesManualEpisodesAndFlag() {

@@ -36,7 +36,10 @@ struct SocialGroupsView: View {
             if !viewModel.discover.isEmpty {
                 Section(header: Text(L10n.socialGroupsDiscoverTitle)) {
                     ForEach(viewModel.discover) { group in
-                        NavigationLink(destination: GroupDetailView(viewModel: GroupDetailViewModel(groupId: group.id))
+                        NavigationLink(destination: GroupDetailView(viewModel: GroupDetailViewModel(
+                            groupId: group.id,
+                            onJoined: { viewModel.joinedGroup(id: $0) }
+                        ))
                             .environmentObject(theme)) {
                             groupRow(group)
                         }
@@ -151,7 +154,14 @@ final class SocialGroupsViewModel: ObservableObject {
     }
 
     func inserted(_ group: SocialGroup) {
+        discover.removeAll { $0.id == group.id }
         groups.insert(group, at: 0)
+    }
+
+    func joinedGroup(id: Int64) {
+        discover.removeAll { $0.id == id }
+        guard !fixtureLoaded else { return }
+        Task { await reconcileMembership() }
     }
 
     func respond(to invite: SocialGroup, accept: Bool) async {
@@ -159,10 +169,30 @@ final class SocialGroupsViewModel: ObservableObject {
         invites.removeAll { $0.id == invite.id }
         if accept {
             Analytics.track(.socialGroupJoined)
-            if let overview = await ApiServerHandler.shared.fetchGroups() {
-                groups = overview.groups
-            }
+            discover.removeAll { $0.id == invite.id }
+            await reconcileMembership()
         }
+    }
+
+    private func reconcileMembership() async {
+        guard let overview = await ApiServerHandler.shared.fetchGroups() else { return }
+        groups = overview.groups
+        let mine = Set(groups.map(\.id))
+        discover.removeAll { mine.contains($0.id) }
+    }
+}
+
+@MainActor
+final class CreateGroupSubmissionGate: ObservableObject {
+    @Published private(set) var isSaving = false
+
+    var canCancel: Bool { !isSaving }
+
+    func perform(_ operation: () async -> SocialGroup?) async -> SocialGroup? {
+        guard !isSaving else { return nil }
+        isSaving = true
+        defer { isSaving = false }
+        return await operation()
     }
 }
 
@@ -176,7 +206,7 @@ struct CreateGroupView: View {
     @State private var title = ""
     @State private var groupDescription = ""
     @State private var isPublic = false
-    @State private var isSaving = false
+    @StateObject private var submissionGate = CreateGroupSubmissionGate()
     @State private var failed = false
 
     /// Podcast anchor: set when creating from a podcast page.
@@ -184,6 +214,18 @@ struct CreateGroupView: View {
     var anchorTitle = ""
     /// Hub creation entries (podcast page) start on the public setting.
     var startPublic = false
+
+    init(
+        onDone: @escaping (SocialGroup?) -> Void,
+        anchorUuid: String = "",
+        anchorTitle: String = "",
+        startPublic: Bool = false
+    ) {
+        self.onDone = onDone
+        self.anchorUuid = anchorUuid
+        self.anchorTitle = anchorTitle
+        self.startPublic = startPublic
+    }
 
     var body: some View {
         Form {
@@ -212,12 +254,14 @@ struct CreateGroupView: View {
         }
         .navigationTitle(L10n.socialGroupCreateTitle)
         .navigationBarTitleDisplayMode(.inline)
+        .interactiveDismissDisabled(!submissionGate.canCancel)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button(L10n.cancel) { onDone(nil) }
+                    .disabled(!submissionGate.canCancel)
             }
             ToolbarItem(placement: .topBarTrailing) {
-                if isSaving {
+                if submissionGate.isSaving {
                     ProgressView()
                 } else {
                     Button(L10n.done) {
@@ -230,15 +274,16 @@ struct CreateGroupView: View {
     }
 
     private func save() async {
-        isSaving = true
+        guard !submissionGate.isSaving else { return }
         failed = false
-        let group = await ApiServerHandler.shared.createGroup(
-            title: title.trimmingCharacters(in: .whitespaces),
-            description: groupDescription,
-            visibility: isPublic ? .public : .private,
-            podcastUuid: isPublic ? anchorUuid : "",
-            podcastTitle: isPublic ? anchorTitle : "")
-        isSaving = false
+        let group = await submissionGate.perform {
+            await ApiServerHandler.shared.createGroup(
+                title: title.trimmingCharacters(in: .whitespaces),
+                description: groupDescription,
+                visibility: isPublic ? .public : .private,
+                podcastUuid: isPublic ? anchorUuid : "",
+                podcastTitle: isPublic ? anchorTitle : "")
+        }
         if let group {
             Analytics.track(.socialGroupCreated)
             onDone(group)

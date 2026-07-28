@@ -51,7 +51,7 @@ nonisolated struct TranscriptChapterGenerator: Sendable {
     /// assets still downloading, cancellation) leave the episode unattempted so
     /// a later presentation retries.
     func chapters(episodeUuid: String, cues: [TimedCueText], duration: TimeInterval) async -> [GeneratedChapter] {
-        if let cached = store.load(episodeUuid: episodeUuid) {
+        if let cached = await store.load(episodeUuid: episodeUuid) {
             switch cached {
             case .chapters(let chapters):
                 return chapters
@@ -62,14 +62,17 @@ nonisolated struct TranscriptChapterGenerator: Sendable {
 
         // A handful of cues can't support meaningful segmentation.
         guard cues.count >= 10 else {
-            return cacheNoChapters(episodeUuid: episodeUuid)
+            return await cacheNoChapters(episodeUuid: episodeUuid)
         }
         let availability = intelligence.availability()
         guard case .available = availability else {
             // Assets still downloading is a moment-in-time condition, not a
             // verdict on this episode — leave it unattempted so a later
             // presentation retries once the model is ready.
-            return availability.isTransientlyUnavailable ? [] : cacheNoChapters(episodeUuid: episodeUuid)
+            if availability.isTransientlyUnavailable {
+                return []
+            }
+            return await cacheNoChapters(episodeUuid: episodeUuid)
         }
 
         do {
@@ -83,10 +86,10 @@ nonisolated struct TranscriptChapterGenerator: Sendable {
             try Task.checkCancellation()
             let validated = Self.validated(generated.chapters, cueStartTimes: cues.map(\.startTime), duration: duration)
             guard !validated.isEmpty else {
-                return cacheNoChapters(episodeUuid: episodeUuid)
+                return await cacheNoChapters(episodeUuid: episodeUuid)
             }
 
-            store.save(.chapters(validated), episodeUuid: episodeUuid)
+            await store.save(.chapters(validated), episodeUuid: episodeUuid)
             FileLog.shared.addMessage("TranscriptChapterGenerator: generated \(validated.count) chapters for \(episodeUuid)")
             return validated
         } catch is CancellationError {
@@ -102,13 +105,13 @@ nonisolated struct TranscriptChapterGenerator: Sendable {
             return []
         } catch {
             FileLog.shared.addMessage("TranscriptChapterGenerator: generation failed for \(episodeUuid): \(error)")
-            return cacheNoChapters(episodeUuid: episodeUuid)
+            return await cacheNoChapters(episodeUuid: episodeUuid)
         }
     }
 
-    private func cacheNoChapters(episodeUuid: String) -> [GeneratedChapter] {
+    private func cacheNoChapters(episodeUuid: String) async -> [GeneratedChapter] {
         guard !Task.isCancelled else { return [] }
-        store.save(.noChapters, episodeUuid: episodeUuid)
+        await store.save(.noChapters, episodeUuid: episodeUuid)
         return []
     }
 
@@ -278,7 +281,8 @@ nonisolated struct OnDeviceChapterStore: Sendable {
         self.directoryURL = directoryURL ?? cachesDirectory.appendingPathComponent("generated_chapters", isDirectory: true)
     }
 
-    func load(episodeUuid: String) -> OnDeviceChapterCacheEntry? {
+    @concurrent
+    func load(episodeUuid: String) async -> OnDeviceChapterCacheEntry? {
         guard let data = try? Data(contentsOf: fileURL(episodeUuid: episodeUuid)),
               let stored = try? JSONDecoder().decode(StoredEntry.self, from: data) else { return nil }
 
@@ -295,7 +299,8 @@ nonisolated struct OnDeviceChapterStore: Sendable {
         }
     }
 
-    func save(_ entry: OnDeviceChapterCacheEntry, episodeUuid: String) {
+    @concurrent
+    func save(_ entry: OnDeviceChapterCacheEntry, episodeUuid: String) async {
         let stored: StoredEntry = switch entry {
         case .chapters(let chapters):
             StoredEntry(

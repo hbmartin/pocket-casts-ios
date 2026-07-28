@@ -18,7 +18,13 @@ private final class ProtectedDataAvailability: Sendable {
         var refreshScheduled = false
         // Block-based observer tokens auto-unregister on dealloc, so they must stay retained
         // for the lifetime of this singleton.
-        var notificationObservers = [NSObjectProtocol]()
+        var notificationObservers = [ObserverToken]()
+    }
+
+    /// @unchecked Sendable: NotificationCenter's opaque token is only retained
+    /// and released while protected by `state`; it is never messaged directly.
+    private struct ObserverToken: @unchecked Sendable {
+        let value: NSObjectProtocol
     }
 
     private let state = Mutex(State())
@@ -60,7 +66,12 @@ private final class ProtectedDataAvailability: Sendable {
             self?.setCachedValue(false)
         }
 
-        state.withLock { $0.notificationObservers = [didBecomeAvailable, willBecomeUnavailable] }
+        state.withLock {
+            $0.notificationObservers = [
+                ObserverToken(value: didBecomeAvailable),
+                ObserverToken(value: willBecomeUnavailable),
+            ]
+        }
 
         scheduleRefresh()
     }

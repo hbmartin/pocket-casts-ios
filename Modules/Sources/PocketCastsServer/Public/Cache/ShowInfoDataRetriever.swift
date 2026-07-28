@@ -16,9 +16,11 @@ public actor ShowInfoDataRetriever {
     private var dataRequestMap: [String: Task<Data, Error>] = [:]
 
     private let cache: URLCache
+    private let urlConnection: URLConnection
 
-    public init() {
+    public init(urlConnection: URLConnection = URLConnection(handler: URLSession.shared)) {
         cache = Self.sharedCache
+        self.urlConnection = urlConnection
     }
 
     /// Try to load episode data from the network
@@ -93,7 +95,10 @@ public actor ShowInfoDataRetriever {
             guard let self else { throw TaskError.nilSelf }
 
             do {
-                let (data, response) = try await URLSession.shared.data(for: request)
+                let (optionalData, optionalResponse) = try await urlConnection.send(request: request)
+                guard let data = optionalData, let response = optionalResponse else {
+                    throw URLError(.badServerResponse)
+                }
 
                 if response.extractStatusCode() == 200 {
                     let responseToCache = CachedURLResponse(response: response, data: data)

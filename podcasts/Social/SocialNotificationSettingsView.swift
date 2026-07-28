@@ -100,7 +100,7 @@ final class SocialNotificationSettingsViewModel: ObservableObject {
         defer { saveTask = nil }
         guard var confirmedProfile = profile else { return }
 
-        while !Task.isCancelled {
+        while true {
             let requestedMask = disabledMask
             var updated = confirmedProfile
             updated.socialPushDisabled = requestedMask

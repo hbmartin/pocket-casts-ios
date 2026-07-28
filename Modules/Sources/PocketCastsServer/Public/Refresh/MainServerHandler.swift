@@ -1,7 +1,7 @@
 import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
-    import UIKit
+import UIKit
 
 protocol BaseRequest: Encodable {
     var device: String? { get set }
@@ -17,6 +17,12 @@ public final class MainServerHandler: Sendable {
     private static let callTimeout = 60.seconds
 
     public static let shared = MainServerHandler()
+
+    private let urlConnection: URLConnection
+
+    public init(urlConnection: URLConnection = URLConnection(handler: URLSession.shared)) {
+        self.urlConnection = urlConnection
+    }
 
     private static let parserVersion = "1.7"
     private static let deviceType = "1"
@@ -104,7 +110,7 @@ public final class MainServerHandler: Sendable {
             return
         }
 
-        URLSession.shared.dataTask(with: request) { data, _, error in
+        urlConnection.send(request: request) { data, _, error in
             guard let data, error == nil else {
                 completion(ImportOpmlResponse.failedResponse())
                 return
@@ -116,7 +122,7 @@ public final class MainServerHandler: Sendable {
             } catch {
                 completion(ImportOpmlResponse.failedResponse())
             }
-        }.resume()
+        }
     }
 
     public func lookupShareLink(sharePath: String, completion: @escaping @Sendable (ShareListResponse?) -> Void) {
@@ -134,7 +140,7 @@ public final class MainServerHandler: Sendable {
             return
         }
 
-        URLSession.shared.dataTask(with: request) { data, _, error in
+        urlConnection.send(request: request) { data, _, error in
             guard let data, error == nil else {
                 completion(ShareListResponse.failedResponse())
                 return
@@ -146,7 +152,7 @@ public final class MainServerHandler: Sendable {
             } catch {
                 completion(ShareListResponse.failedResponse())
             }
-        }.resume()
+        }
     }
 
     public func refresh(podcasts: [Podcast], completion: @escaping @Sendable (PodcastRefreshResponse?) -> Void) {
@@ -194,6 +200,7 @@ public final class MainServerHandler: Sendable {
             jsonRequest["push_token"] = pushToken
         }
         jsonRequest["push_on"] = pushEnabled ? "true" : "false"
+        jsonRequest["push_environment"] = (ServerConfig.shared.syncDelegate?.production() ?? true) ? "production" : "sandbox"
         guard let data = try? JSONSerialization.data(withJSONObject: jsonRequest) else {
             FileLog.shared.addMessage("Failed to create refresh request")
             return nil
@@ -217,7 +224,7 @@ public final class MainServerHandler: Sendable {
         var searchQuery = baseQuery as! PodcastSearchQuery
         searchQuery.q = searchTerm
 
-        let searchOperation = PodcastSearchOperation(searchQuery: searchQuery, completionHandler: completion)
+        let searchOperation = PodcastSearchOperation(searchQuery: searchQuery, urlConnection: urlConnection, completionHandler: completion)
         searchQueue.addOperation(searchOperation)
     }
 
@@ -254,7 +261,7 @@ public final class MainServerHandler: Sendable {
         let url = ServerHelper.asUrl(ServerConstants.Urls.main() + "podcasts/refresh")
         let request = ServerHelper.createJsonRequest(url: url, data: data, timeout: MainServerHandler.callTimeout, cachePolicy: .reloadIgnoringCacheData)
         FileLog.shared.addMessage("Attempting to refresh podcast feed for \(podcast.uuid)")
-        URLSession.shared.dataTask(with: request) { _, response, error in
+        urlConnection.send(request: request) { _, response, error in
             guard let response = response as? HTTPURLResponse, response.statusCode == ServerConstants.HttpConstants.ok else {
                 FileLog.shared.addMessage("Feed refresh failed: \(error?.localizedDescription ?? "No error")")
                 completion(false)
@@ -264,7 +271,7 @@ public final class MainServerHandler: Sendable {
 
             FileLog.shared.addMessage("Server indicated podcast refresh was successful")
             completion(true)
-        }.resume()
+        }
     }
 
     public func findPodcastByiTunesId(_ iTunesId: Int, completion: @escaping @Sendable (String?) -> Void) {
@@ -285,7 +292,7 @@ public final class MainServerHandler: Sendable {
             return
         }
 
-        URLSession.shared.dataTask(with: request) { data, _, error in
+        urlConnection.send(request: request) { data, _, error in
             guard let data, error == nil else {
                 completion(nil)
                 return
@@ -297,15 +304,14 @@ public final class MainServerHandler: Sendable {
             } catch {
                 completion(nil)
             }
-        }.resume()
+        }
     }
 
     public func updatePodcast(uuid: String, lastEpisodeUuid: String?) async throws -> Bool {
-        var query = "podcast_uuid=\(uuid)"
-        if let lastEpisodeUuid {
-            query += "&last_episode_uuid=\(lastEpisodeUuid)"
-        }
-        let url = ServerHelper.asUrl(ServerConstants.Urls.main() + "api/v1/update_podcast?\(query)")
+        guard var components = URLComponents(string: ServerConstants.Urls.main() + "api/v1/update_podcast") else { return false }
+        components.queryItems = [URLQueryItem(name: "podcast_uuid", value: uuid)]
+        if let lastEpisodeUuid { components.queryItems?.append(URLQueryItem(name: "last_episode_uuid", value: lastEpisodeUuid)) }
+        guard let url = components.url else { return false }
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.cachePolicy = .reloadIgnoringLocalCacheData
@@ -316,26 +322,20 @@ public final class MainServerHandler: Sendable {
             return false
         }
 
-        let response = try await URLSession.shared.data(for: request)
-        guard let urlResponse = response.1 as? HTTPURLResponse else {
+        let response = try await urlConnection.send(request: request)
+        guard var urlResponse = response.1 as? HTTPURLResponse else {
             return false
         }
 
         FileLog.shared.console("Update Podcast API response status code \(urlResponse.statusCode)")
 
-        var statusCode = urlResponse.statusCode
-        let allHeaderFields = urlResponse.allHeaderFields
-        while statusCode == 202 {
-            guard
-                let location = allHeaderFields["Location"] as? String,
-                let retry = allHeaderFields["retry-after"] as? String,
-                let interval = UInt(retry) else {
+        for _ in 0 ..< 60 where urlResponse.statusCode == ServerConstants.HttpConstants.accepted {
+            guard let location = urlResponse.value(forHTTPHeaderField: "Location") else {
                 FileLog.shared.console("Update Podcast API response incorrect header")
                 return false
             }
-            FileLog.shared.console("Poll Podcast API with delay of \(interval) sec")
-            let delay = UInt64(interval * 1_000_000_000)
-            try await Task<Never, Never>.sleep(nanoseconds: delay)
+            FileLog.shared.console("Poll Podcast API with delay of 2 sec")
+            try await Task.sleep(for: .seconds(2))
             if Task.isCancelled {
                 return false
             }
@@ -343,14 +343,11 @@ public final class MainServerHandler: Sendable {
                 FileLog.shared.console("Poll Podcast API no response")
                 return false
             }
-            statusCode = newUrlResponse.statusCode
-            FileLog.shared.console("Poll Podcast API new status code \(statusCode)")
+            urlResponse = newUrlResponse
+            FileLog.shared.console("Poll Podcast API new status code \(urlResponse.statusCode)")
         }
 
-        if statusCode == 200 {
-            return true
-        }
-        return false
+        return urlResponse.statusCode == ServerConstants.HttpConstants.ok
     }
 
     private func pollUpdatePodcast(url: String) async throws -> HTTPURLResponse? {
@@ -363,7 +360,7 @@ public final class MainServerHandler: Sendable {
         request.httpMethod = "GET"
         request.cachePolicy = .reloadIgnoringLocalCacheData
 
-        let response = try await URLSession.shared.data(for: request)
+        let response = try await urlConnection.send(request: request)
         return response.1 as? HTTPURLResponse
     }
 

@@ -233,7 +233,7 @@ class UpNextSyncTask: ApiBaseTask, @unchecked Sendable {
 
                 // if the episode exists in the queue already
                 // move it to a new position if it's not already there
-                if let existingEpisode = DataManager.sharedManager.findPlaylistEpisode(uuid: episodeInfo.uuid) {
+                if var existingEpisode = DataManager.sharedManager.findPlaylistEpisode(uuid: episodeInfo.uuid) {
                     FileLog.shared.addMessage("UpNextSyncTask: Found episode \(episodeInfo.uuid) in the queue already at position \(existingEpisode.episodePosition)")
 
                     if existingEpisode.episodePosition != Int32(index) {
@@ -244,7 +244,7 @@ class UpNextSyncTask: ApiBaseTask, @unchecked Sendable {
                 } else {
                     FileLog.shared.addMessage("UpNextSyncTask: Incoming episode not found \(episodeInfo.uuid) in the devices queue.")
 
-                    let newEpisode = PlaylistEpisode()
+                    var newEpisode = PlaylistEpisode()
                     newEpisode.episodePosition = Int32(index)
                     newEpisode.episodeUuid = episodeInfo.uuid
 

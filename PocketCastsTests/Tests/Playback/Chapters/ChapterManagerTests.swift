@@ -27,7 +27,7 @@ class ChapterManagerTests: XCTestCase {
         let store = OnDeviceChapterStore(directoryURL: directory)
         let episode = makeEpisodeMock()
         episode.uuid = "cached-episode"
-        store.save(.chapters([
+        await store.save(.chapters([
             GeneratedChapter(title: "Intro", timestamp: "0:00", startTime: 0),
             GeneratedChapter(title: "Topic", timestamp: "2:00", startTime: 120)
         ]), episodeUuid: episode.uuid)
@@ -57,7 +57,7 @@ class ChapterManagerTests: XCTestCase {
         let store = OnDeviceChapterStore(directoryURL: directory)
         let episode = makeEpisodeMock()
         episode.uuid = "no-chapters-episode"
-        store.save(.noChapters, episodeUuid: episode.uuid)
+        await store.save(.noChapters, episodeUuid: episode.uuid)
         let transcriptLoads = Mutex(0)
         let manager = ChapterManager(
             chapterParser: PodcastChapterParserMock(),

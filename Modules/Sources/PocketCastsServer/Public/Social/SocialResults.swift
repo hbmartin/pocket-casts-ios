@@ -27,7 +27,7 @@ public enum SocialReportReason: Int, Sendable, CaseIterable {
     case other = 6
 }
 
-/// Outcome of an avatar upload after the mandatory CSAM/nudity scan. `.failed`
+/// Outcome of an avatar upload after the mandatory nudity/racy SafeSearch scan. `.failed`
 /// is transport failure; the rejection cases are the server's scan verdict.
 public enum SocialAvatarUploadResult: Equatable, Sendable {
     case accepted(avatarURL: String)

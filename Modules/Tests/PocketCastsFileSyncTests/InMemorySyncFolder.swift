@@ -21,7 +21,9 @@ actor InMemorySyncFolder: SyncFolder {
     func list(_ relativeDir: String) async throws -> [FolderEntry] {
         let prefix = relativeDir.isEmpty ? "" : relativeDir + "/"
         var entries: [FolderEntry] = []
-        var directories = Set<String>()
+        var listedDirectories = Set(directories.filter { path in
+            relativeDir.isEmpty || path.hasPrefix(prefix)
+        })
         for (path, data) in files where path.hasPrefix(prefix) {
             let remainder = String(path.dropFirst(prefix.count))
             let components = remainder.components(separatedBy: "/")
@@ -29,7 +31,7 @@ actor InMemorySyncFolder: SyncFolder {
                 var partial = prefix
                 for component in components.dropLast() {
                     partial += component
-                    directories.insert(partial)
+                    listedDirectories.insert(partial)
                     partial += "/"
                 }
             }
@@ -40,7 +42,7 @@ actor InMemorySyncFolder: SyncFolder {
                 isDirectory: false,
                 isPlaceholder: false))
         }
-        entries.append(contentsOf: directories.map {
+        entries.append(contentsOf: listedDirectories.map {
             FolderEntry(relativePath: $0, sizeBytes: 0, mtimeMs: 1000, isDirectory: true, isPlaceholder: false)
         })
         return entries.sorted { $0.relativePath < $1.relativePath }

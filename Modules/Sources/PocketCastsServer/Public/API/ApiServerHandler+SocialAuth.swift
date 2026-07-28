@@ -62,6 +62,7 @@ public extension ApiServerHandler {
         data.refreshToken = identityToken
         data.grantType = "refresh_token"
         data.scope = scope.rawValue
+        data.device = ServerConfig.shared.syncDelegate?.uniqueAppId() ?? ""
 
         return ServerHelper.createProtoRequest(url: url, data: try! data.serializedData())
     }

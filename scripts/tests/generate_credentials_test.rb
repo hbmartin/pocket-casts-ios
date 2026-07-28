@@ -137,7 +137,6 @@ class GenerateCredentialsTest < Minitest::Test
       @secrets_path,
       JSON.pretty_generate(
         'encrypted_log_key' => 'encrypted-log-key',
-        'sharing_server_secret' => 'sharing-server-secret',
         'bitdrift_sdk_key' => bitdrift_sdk_key,
         'telemetry_deck_app_id' => telemetry_deck_app_id
       )

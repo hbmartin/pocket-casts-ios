@@ -15,64 +15,50 @@ struct GeneratedChapter: Decodable, Sendable {
 
 /// Fetches AI-generated episode metadata and caches/coalesces in-flight requests.
 public actor GeneratedEpisodeMetadataRetriever {
-    private let cache: URLCache
-
     private var dataRequestMap: [String: Task<GeneratedMetadataEnvelope, Error>] = [:]
 
-    public init() {
-        cache = URLCache(memoryCapacity: 1.megabytes, diskCapacity: 10.megabytes, diskPath: "generated_episode_metadata")
-    }
-
-    private func buildGeneratedMetadataURL(podcastUuid: String, episodeUuid: String) -> String {
-        return "\(ServerConstants.Urls.generatedTranscripts)\(podcastUuid)/\(episodeUuid)-meta.json"
-    }
+    public init() {}
 
     public func loadMetadata(podcastUuid: String, episodeUuid: String) async throws -> GeneratedMetadataEnvelope {
-        let urlString = buildGeneratedMetadataURL(podcastUuid: podcastUuid, episodeUuid: episodeUuid)
+        let cacheKey = "corpus:\(episodeUuid)"
 
-        if let task = dataRequestMap[urlString] {
+        if let task = dataRequestMap[cacheKey] {
             return try await task.value
         }
 
-        guard let url = URL(string: urlString) else {
-            throw Errors.malformedURL
-        }
-
-        let request = URLRequest(url: url, cachePolicy: .reloadRevalidatingCacheData)
-
-        if let cachedResponse = cache.cachedResponse(for: request),
-           let parsedData = try? metadata(from: cachedResponse.data) {
-            return parsedData
-        }
-
         defer {
-            dataRequestMap[urlString] = nil
+            dataRequestMap[cacheKey] = nil
         }
 
-        let cache = cache
         let task = Task<GeneratedMetadataEnvelope, Error> { [weak self] in
             guard let self else { throw TaskError.nilSelf }
-            let (data, response) = try await URLSession.shared.data(for: request)
-            if let httpResponse = response as? HTTPURLResponse,
-               (200..<300).contains(httpResponse.statusCode) {
-                let responseToCache = CachedURLResponse(response: response, data: data)
-                cache.storeCachedResponse(responseToCache, for: request)
+            guard await ServerCapabilitiesClient.shared.load()?.features.corpus == true else {
+                throw Errors.corpusUnavailable
             }
-
-            return try metadata(from: data)
+            let manifest = try await CorpusManifestClient.shared.manifest(
+                episodeUUID: episodeUuid,
+                acceptLanguage: Locale.preferredLanguages.joined(separator: ",")
+            )
+            let chapters = manifest.chapters?.map {
+                GeneratedChapter(
+                    title: $0.title,
+                    timestamp: $0.timestamp ?? Self.timestamp($0.startTime),
+                    startTime: $0.startTime
+                )
+            }
+            return GeneratedMetadataEnvelope(summary: manifest.summary, chapters: chapters)
         }
-        dataRequestMap[urlString] = task
+        dataRequestMap[cacheKey] = task
 
         return try await task.value
     }
 
-    nonisolated private func metadata(from data: Data) throws -> GeneratedMetadataEnvelope {
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        return try decoder.decode(GeneratedMetadataEnvelope.self, from: data)
+    nonisolated private static func timestamp(_ seconds: TimeInterval) -> String {
+        let total = Int(seconds)
+        return String(format: "%02d:%02d:%02d", total / 3600, (total / 60) % 60, total % 60)
     }
 
     enum Errors: Error {
-        case malformedURL
+        case corpusUnavailable
     }
 }

@@ -1116,3 +1116,12 @@ enum UnsafeDeveloperSettingsVisibility {
     // ruleid: pocketcasts.developer-settings-must-be-debug-only
     static let isVisible = BuildEnvironment.current != .appStore
 }
+
+enum DebugOnlyDeveloperSettingsVisibility {
+    #if DEBUG
+    // ok: pocketcasts.developer-settings-must-be-debug-only
+    static let isVisible = BuildEnvironment.current != .appStore
+    #else
+    static let isVisible = false
+    #endif
+}

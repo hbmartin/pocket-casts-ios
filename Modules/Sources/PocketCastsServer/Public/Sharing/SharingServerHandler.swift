@@ -1,4 +1,3 @@
-import CryptoKit
 import Foundation
 import PocketCastsUtils
 
@@ -7,10 +6,8 @@ public final class SharingServerHandler: Sendable {
 
     public static let shared = SharingServerHandler()
 
-    /// Attaches `Authorization: Bearer` on the flag-gated bearer path.
     private let tokenHelper: TokenHelper
 
-    /// Transport for the legacy signature path; injectable so tests can capture the request.
     private let urlConnection: URLConnection
 
     init(tokenHelper: TokenHelper = .shared, urlConnection: URLConnection = URLConnection(handler: URLSession.shared)) {
@@ -55,23 +52,10 @@ public final class SharingServerHandler: Sendable {
         }
     }
 
-    private let securityDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyyMMddHHmmss"
-
-        return formatter
-    }()
-
     private struct PodcastShareRequest: Codable {
         let title: String
         let description: String?
         let podcasts: [[String: String]]
-
-        // M3: delete `datetime` and `h` — they exist only for the legacy static-secret
-        // signature path (plans/API Auth Hardening Plan.md §3.4). They are never set on
-        // the bearer path, and JSONEncoder omits them when nil.
-        var datetime: String?
-        var h: String?
     }
 
     private struct PodcastShareResponse: Decodable {
@@ -102,43 +86,12 @@ public final class SharingServerHandler: Sendable {
         let convertedPodcasts = listInfo.podcasts.compactMap { uuid -> [String: String] in
             ["uuid": uuid]
         }
-        var shareRequest = PodcastShareRequest(title: listInfo.title, description: listInfo.description, podcasts: convertedPodcasts)
+        let shareRequest = PodcastShareRequest(title: listInfo.title, description: listInfo.description, podcasts: convertedPodcasts)
 
-        if FeatureFlag.sharingListBearerAuth.enabled {
-            // Bearer path (plans/API Auth Hardening Plan.md §3.4): the request is
-            // authorized by the user's access token, attached by TokenHelper as
-            // `Authorization: Bearer`. The legacy `datetime`/`h` params are not sent.
-            guard SyncManager.isUserLoggedIn() else {
-                // Creating a list requires an account on the bearer path; the
-                // typed result lets the UI route to sign-in.
-                FileLog.shared.addMessage("SharingServerHandler: share list requires sign-in when sharingListBearerAuth is enabled")
-                completion(.requiresSignIn)
-
-                return
-            }
-
-            guard let request = ServerHelper.createJsonRequest(url: url, params: shareRequest, timeout: SharingServerHandler.timeout, cachePolicy: .useProtocolCachePolicy) else {
-                completion(.failed)
-
-                return
-            }
-
-            tokenHelper.callSecureUrl(request: request) { response, data, error in
-                let shareUrl = Self.parseShareResponse(statusCode: response?.statusCode, data: data, error: error)
-                completion(shareUrl.map { .shared(url: $0) } ?? .failed)
-            }
-
+        guard SyncManager.isUserLoggedIn() else {
+            completion(.requiresSignIn)
             return
         }
-
-        // M3: delete this whole legacy branch (timestamp + static-secret signature) once
-        // the sharing server's bearer dual-accept window closes and the fleet threshold is
-        // met — plans/API Auth Hardening Plan.md §3.4. Removal checklist at that milestone:
-        // `datetime`/`h` fields above, `securityDateFormatter`, `legacySharingServerSignature`
-        // below, `ServerCredentials`, and the sharing_server_secret credentials pipeline.
-        let dateStr = securityDateFormatter.string(from: Date())
-        shareRequest.datetime = dateStr
-        shareRequest.h = Self.legacySharingServerSignature(for: dateStr)
 
         guard let request = ServerHelper.createJsonRequest(url: url, params: shareRequest, timeout: SharingServerHandler.timeout, cachePolicy: .useProtocolCachePolicy) else {
             completion(.failed)
@@ -146,8 +99,8 @@ public final class SharingServerHandler: Sendable {
             return
         }
 
-        urlConnection.send(request: request) { data, response, error in
-            let shareUrl = Self.parseShareResponse(statusCode: (response as? HTTPURLResponse)?.statusCode, data: data, error: error)
+        tokenHelper.callSecureUrl(request: request) { response, data, error in
+            let shareUrl = Self.parseShareResponse(statusCode: response?.statusCode, data: data, error: error)
             completion(shareUrl.map { .shared(url: $0) } ?? .failed)
         }
     }
@@ -161,7 +114,7 @@ public final class SharingServerHandler: Sendable {
     }
 
     public func loadList(listUrl: URL, completion: @escaping @Sendable (_ podcastList: PodcastList?) -> Void) {
-        URLSession.shared.dataTask(with: listUrl) { data, response, error in
+        urlConnection.send(request: URLRequest(url: listUrl)) { data, response, error in
             guard (response as? HTTPURLResponse)?.statusCode == ServerConstants.HttpConstants.ok, let data, error == nil else {
                 completion(nil)
 
@@ -174,22 +127,6 @@ public final class SharingServerHandler: Sendable {
             } catch {
                 completion(nil)
             }
-        }.resume()
-    }
-
-    // M3: delete legacySharingServerSignature and its fixtures (SharingServerHandlerTests +
-    // the CopiedSharingServerHandler block in semgrep/tests/swift-security-crypto.swift) once
-    // the sharing server disables the legacy `h` signature — plans/API Auth Hardening Plan.md
-    // §3.4. That removes the repo's last Insecure.SHA1 suppression.
-    // nosemgrep: pocketcasts.sharing-no-static-secret-signing - Legacy sharing-server protocol site kept until the M3 dual-accept sunset; new signing code must use the bearer path.
-    static func legacySharingServerSignature(for dateString: String, credential: String = ServerCredentials.sharing) -> String {
-        // The legacy sharing endpoint validates SHA-1 signatures built from the
-        // request timestamp and shared credential.
-        // This is protocol compatibility only; do not reuse it for password hashing or local integrity checks.
-        let signatureInput = "\(dateString)\(credential)"
-        let hashDigest = CryptoKit.Insecure.SHA1.hash( // nosemgrep: pocketcasts.no-insecure-cryptokit-hashes, pocketcasts.sharing-no-static-secret-signing - Required by the legacy sharing server signature protocol until the M3 sunset (plans/API Auth Hardening Plan.md §3.4). NOSONAR
-            data: Data(signatureInput.utf8)
-        )
-        return hashDigest.map { String(format: "%02hhx", $0) }.joined()
+        }
     }
 }

@@ -39,6 +39,16 @@ extension DataManager {
         }
     }
 
+    func podcastSettingsForTest(podcastUuid: String) throws -> String? {
+        try testDbQueue.dbPool.read { db in
+            try String.fetchOne(
+                db,
+                sql: "SELECT settings FROM \(DataManager.podcastTableName) WHERE uuid = ?",
+                arguments: [podcastUuid]
+            )
+        }
+    }
+
     /// Test-only accessor for the database queue. Used for low-level GRDB Record type tests.
     var testDbQueue: GRDBQueue {
         dbQueue
