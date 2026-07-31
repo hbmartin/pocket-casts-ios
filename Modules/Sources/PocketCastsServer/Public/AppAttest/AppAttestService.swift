@@ -95,21 +95,7 @@ public actor AppAttestService {
     /// server's per-endpoint enforcement mode decides. Enrollment happens
     /// lazily inside this call when the install has no enrolled key yet.
     public func assertionHeaders(forBody body: Data) async -> [String: String] {
-        guard attester.isSupported else { return [:] }
-        guard let keyId = await enrolledKeyId() else { return [:] }
-
-        do {
-            let assertion = try await attester.generateAssertion(keyId, clientDataHash: Data(SHA256.hash(data: body)))
-            return [
-                HeaderNames.keyId: keyId,
-                HeaderNames.assertion: assertion.base64EncodedString()
-            ]
-        } catch {
-            // Unrecoverable for this request; send unattested. If the key itself is
-            // bad the server's 401 → handleAttestationRejection() path recovers it.
-            FileLog.shared.addMessage("AppAttestService: generateAssertion failed: \(error)")
-            return [:]
-        }
+        await assertionHeaders(forHashInput: body, failureContext: "generateAssertion")
     }
 
     /// Sends one canonical request through the serialized App Attest lane.
@@ -165,6 +151,10 @@ public actor AppAttestService {
     }
 
     private func assertionHeaders(forCanonicalData data: Data) async -> [String: String] {
+        await assertionHeaders(forHashInput: data, failureContext: "canonical assertion generation")
+    }
+
+    private func assertionHeaders(forHashInput data: Data, failureContext: String) async -> [String: String] {
         guard attester.isSupported else { return [:] }
         guard let keyId = await enrolledKeyId() else { return [:] }
 
@@ -175,7 +165,9 @@ public actor AppAttestService {
                 HeaderNames.assertion: assertion.base64EncodedString(),
             ]
         } catch {
-            FileLog.shared.addMessage("AppAttestService: canonical assertion generation failed: \(error)")
+            // Unrecoverable for this request; send unattested. If the key itself is
+            // bad the server's 401 → handleAttestationRejection() path recovers it.
+            FileLog.shared.addMessage("AppAttestService: \(failureContext) failed: \(error)")
             return [:]
         }
     }
@@ -324,6 +316,7 @@ public actor AppAttestService {
     }
 
     private func fetchChallenge() async throws -> (base64: String, bytes: Data)? {
+        guard urlConnection.isNetworkAllowed else { return nil }
         guard let url = URL(string: Endpoints.challenge) else { return nil }
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: requestTimeout)
         request.httpMethod = "GET"
@@ -357,6 +350,7 @@ public actor AppAttestService {
 
     /// Returns the HTTP status of the enroll POST.
     private func postEnrollment(keyId: String, attestation: Data, challengeBase64: String) async throws -> Int {
+        guard urlConnection.isNetworkAllowed else { return ServerConstants.HttpConstants.serverError }
         guard let url = URL(string: Endpoints.enroll) else { return ServerConstants.HttpConstants.serverError }
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: requestTimeout)
         request.httpMethod = "POST"

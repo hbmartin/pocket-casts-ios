@@ -6,19 +6,12 @@ import PocketCastsUtils
 /// Retains the app-lifetime protected-data observation that retries migrations
 /// when a pre-unlock background launch remains alive through first unlock.
 @MainActor
-final class ProtectedDataMigrationRetryObserver {
+final class ProtectedDataMigrationRetryObserver: NSObject {
     private let notificationCenter: NotificationCenter
     private let notificationName: Notification.Name
     private let handler: @MainActor @Sendable () -> Void
 
-    /// @unchecked Sendable: NotificationCenter's opaque token is only retained
-    /// and handed back to removeObserver; it is never messaged directly. The
-    /// wrapper lets the nonisolated deinit read it without a Sendable violation.
-    nonisolated private struct ObserverToken: @unchecked Sendable {
-        let value: NSObjectProtocol
-    }
-
-    private var token: ObserverToken?
+    private var isStarted = false
 
     init(
         notificationCenter: NotificationCenter = .default,
@@ -28,23 +21,28 @@ final class ProtectedDataMigrationRetryObserver {
         self.notificationCenter = notificationCenter
         self.notificationName = notificationName
         self.handler = handler
+        super.init()
     }
 
     func start() {
-        guard token == nil else { return }
-        token = ObserverToken(value: notificationCenter.addObserver(forName: notificationName, object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                self?.handler()
-            }
-        })
+        guard !isStarted else { return }
+        isStarted = true
+        notificationCenter.addObserver(
+            self,
+            selector: #selector(protectedDataBecameAvailable),
+            name: notificationName,
+            object: nil
+        )
+    }
+
+    @objc nonisolated private func protectedDataBecameAvailable() {
+        Task { @MainActor [weak self] in
+            self?.handler()
+        }
     }
 
     deinit {
-        // Block-based observations persist until removed, so dropping the token
-        // without this would leave the handler registered in the center forever.
-        if let token {
-            notificationCenter.removeObserver(token.value)
-        }
+        notificationCenter.removeObserver(self)
     }
 }
 

@@ -97,8 +97,7 @@ message UserChangePasswordRequest {
 message UserChangeResponse {
   google.protobuf.BoolValue success = 1;
   string message = 2;
-  // JSON name is camelCase in the client's nameMap (upstream quirk).
-  string messageId = 3;
+  string message_id = 3 [json_name = "messageId"];
 }
 
 message BasicRequest {
@@ -1733,7 +1732,10 @@ message UserResetPasswordRequest {
   string scope = 3;
   // Fork-added fields use tags >= 1001 so upstream can never collide with them.
   string device = 1001;
-  string email = 1002;
+  // Email is an established upstream field; changing its tag breaks the wire
+  // contract with deployed servers even though the generated property name is
+  // unchanged.
+  string email = 4;
 }
 
 message UserRevokeRequest {

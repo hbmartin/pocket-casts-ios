@@ -27,10 +27,6 @@ actor FingerprintReferenceRetriever {
     }
 
     private func performFetch(podcastUuid: String, episodeUuid: String) async throws -> Data? {
-        guard await ServerCapabilitiesClient.shared.load()?.features.corpus == true else {
-            return nil
-        }
-
         for attempt in 0..<Self.maxRetries {
             try Task.checkCancellation()
             if attempt > 0 {
@@ -48,10 +44,7 @@ actor FingerprintReferenceRetriever {
             }
 
             do {
-                let manifest = try await CorpusManifestClient.shared.manifest(
-                    episodeUUID: episodeUuid,
-                    acceptLanguage: Locale.preferredLanguages.joined(separator: ",")
-                )
+                guard let manifest = try await CorpusManifestClient.shared.availableManifest(episodeUUID: episodeUuid) else { return nil }
                 guard let descriptor = manifest.fingerprints.first else { return nil }
                 let data = try await CorpusManifestClient.shared.artifact(descriptor)
 
@@ -66,8 +59,20 @@ actor FingerprintReferenceRetriever {
                 return jsonData
             } catch is CancellationError {
                 throw CancellationError()
+            } catch let error as CorpusClientError {
+                if error == .unavailable {
+                    FileLog.shared.addMessage(
+                        "FingerprintReferenceRetriever: transient error for \(episodeUuid), "
+                            + "attempt \(attempt + 1)/\(Self.maxRetries) — \(error.localizedDescription)"
+                    )
+                    continue
+                }
+                FileLog.shared.addMessage(
+                    "FingerprintReferenceRetriever: fetch failed for \(episodeUuid) — \(error.localizedDescription)"
+                )
+                return nil
             } catch {
-                if Self.isTransientError(error) || error is CorpusClientError {
+                if Self.isTransientError(error) {
                     FileLog.shared.addMessage(
                         "FingerprintReferenceRetriever: transient error for \(episodeUuid), "
                             + "attempt \(attempt + 1)/\(Self.maxRetries) — \(error.localizedDescription)"

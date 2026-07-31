@@ -59,24 +59,26 @@ final class ServerConfigTests: XCTestCase {
 }
 
 private final class TestServerErrorLogger: ErrorLogger, Sendable {
-    func log(error: any Error, context: [String: String]?) {}
+    func log(error _: any Error, context _: [String: String]?) {
+        // Intentionally ignored by this dependency-wiring test double.
+    }
 }
 
 private final class TestServerSyncDelegate: ServerSyncDelegate, Sendable {
-    func podcastUpdated(podcastUuid: String) {}
-    func podcastAdded(podcastUuid: String) {}
-    func checkForUnusedPodcasts() {}
-    func applyAutoArchivingToAllPodcasts() {}
-    func subscribedToPodcast() {}
-    func playlistChanged() {}
-    func episodeStarredChanged(episode: Episode) {}
-    func archiveEpisodeExternal(episode: Episode) {}
-    func markEpisodeAsPlayedExternal(episode: Episode) {}
-    func deselectedChaptersChanged() {}
-    func episodeCanBeCleanedUp(episode: Episode) -> Bool { false }
-    func autoDownloadLatestEpisodes(uuids: [String]) {}
-    func cleanupAllUnusedEpisodeBuffers() {}
-    func performActionsAfterSync() {}
+    func podcastUpdated(podcastUuid _: String) { /* Intentional protocol no-op. */ }
+    func podcastAdded(podcastUuid _: String) { /* Intentional protocol no-op. */ }
+    func checkForUnusedPodcasts() { /* Intentional protocol no-op. */ }
+    func applyAutoArchivingToAllPodcasts() { /* Intentional protocol no-op. */ }
+    func subscribedToPodcast() { /* Intentional protocol no-op. */ }
+    func playlistChanged() { /* Intentional protocol no-op. */ }
+    func episodeStarredChanged(episode _: Episode) { /* Intentional protocol no-op. */ }
+    func archiveEpisodeExternal(episode _: Episode) { /* Intentional protocol no-op. */ }
+    func markEpisodeAsPlayedExternal(episode _: Episode) { /* Intentional protocol no-op. */ }
+    func deselectedChaptersChanged() { /* Intentional protocol no-op. */ }
+    func episodeCanBeCleanedUp(episode _: Episode) -> Bool { false }
+    func autoDownloadLatestEpisodes(uuids _: [String]) { /* Intentional protocol no-op. */ }
+    func cleanupAllUnusedEpisodeBuffers() { /* Intentional protocol no-op. */ }
+    func performActionsAfterSync() { /* Intentional protocol no-op. */ }
     func isPushEnabled() -> Bool { false }
     func defaultPodcastGrouping() -> Int32 { 0 }
     func defaultShowArchived() -> Bool { false }
@@ -89,17 +91,17 @@ private final class TestServerSyncDelegate: ServerSyncDelegate, Sendable {
 
 private final class TestServerPlaybackDelegate: ServerPlaybackDelegate, Sendable {
     func playing() -> Bool { false }
-    func inUpNext(episode: BaseEpisode?) -> Bool { false }
-    func addToUpNext(episode: BaseEpisode, ignoringQueueLimit: Bool, toTop: Bool) {}
-    func removeLastEpisodeFromUpNext() {}
+    func inUpNext(episode _: BaseEpisode?) -> Bool { false }
+    func addToUpNext(episode _: BaseEpisode, ignoringQueueLimit _: Bool, toTop _: Bool) { /* Intentional protocol no-op. */ }
+    func removeLastEpisodeFromUpNext() { /* Intentional protocol no-op. */ }
     func currentEpisode() -> BaseEpisode? { nil }
-    func isNowPlayingEpisode(episodeUuid: String?) -> Bool { false }
-    func isActivelyPlaying(episodeUuid: String?) -> Bool { false }
-    func queuePersistLocalCopyAsReplace() {}
-    func queueRefreshList(checkForAutoDownload: Bool) {}
-    func allEpisodesInQueue(includeNowPlaying: Bool) -> [BaseEpisode] { [] }
-    func playingEpisodeChangedExternally() {}
-    func upNextQueueChanged() {}
+    func isNowPlayingEpisode(episodeUuid _: String?) -> Bool { false }
+    func isActivelyPlaying(episodeUuid _: String?) -> Bool { false }
+    func queuePersistLocalCopyAsReplace() { /* Intentional protocol no-op. */ }
+    func queueRefreshList(checkForAutoDownload _: Bool) { /* Intentional protocol no-op. */ }
+    func allEpisodesInQueue(includeNowPlaying _: Bool) -> [BaseEpisode] { [] }
+    func playingEpisodeChangedExternally() { /* Intentional protocol no-op. */ }
+    func upNextQueueChanged() { /* Intentional protocol no-op. */ }
     func upNextQueueCount() -> Int { 0 }
-    func seekToFromSync(time: TimeInterval, syncChanges: Bool, startPlaybackAfterSeek: Bool) {}
+    func seekToFromSync(time _: TimeInterval, syncChanges _: Bool, startPlaybackAfterSeek _: Bool) { /* Intentional protocol no-op. */ }
 }

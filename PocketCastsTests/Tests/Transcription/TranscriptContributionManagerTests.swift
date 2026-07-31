@@ -64,12 +64,20 @@ final class TranscriptContributionManagerTests: XCTestCase {
                              result: ContributionSendResult,
                              powerDeferred: Bool = false,
                              fingerprintData: Data = Data("fingerprint-json".utf8),
+                             audioFileURL: (@Sendable (String) -> URL?)? = nil,
+                             fingerprint: (@Sendable (URL) async throws -> Data)? = nil,
                              resultScript: [ContributionSendResult]? = nil,
-                             generateMetadata: @escaping @Sendable (String, String, TranscriptContributionManager.MetadataInfo) async -> CorpusMetadataAttachment? = { _, _, _ in nil },
+                             generateMetadata: @escaping @Sendable (String, String, TranscriptContributionManager.MetadataInfo) async -> TranscriptCorpusMetadataGenerationResult = { _, _, _ in .retryable },
                              sendMetadata: @escaping @Sendable (CorpusMetadataAttachment) async -> ContributionSendResult = { _ in .accepted },
+                             hasConsent: @escaping @Sendable () -> Bool = { true },
                              now: @escaping @Sendable () -> Date = { Date() },
                              scheduledSleep: @escaping @Sendable (TimeInterval) async throws -> Void = { _ in throw CancellationError() }) -> TranscriptContributionManager {
-        let audioURL = audioURL
+        let defaultAudioURL = audioURL
+        let resolveAudioFileURL = audioFileURL ?? { _ in defaultAudioURL }
+        let generateFingerprint = fingerprint ?? { _ in
+            recorder.fingerprintCalls.withLock { $0 += 1 }
+            return fingerprintData
+        }
         let scriptedResults = Mutex(resultScript ?? [result])
         let nextResult: @Sendable () -> ContributionSendResult = {
             scriptedResults.withLock { results in
@@ -82,11 +90,8 @@ final class TranscriptContributionManagerTests: XCTestCase {
         return TranscriptContributionManager(
             dataManager: dataManager,
             artifactStore: artifactStore,
-            audioFileURL: { _ in audioURL },
-            fingerprint: { _ in
-                recorder.fingerprintCalls.withLock { $0 += 1 }
-                return fingerprintData
-            },
+            audioFileURL: resolveAudioFileURL,
+            fingerprint: generateFingerprint,
             gzip: { $0 }, // Identity: payload bytes are asserted against the inputs.
             sendContribution: { payload in
                 recorder.contributions.withLock { $0.append(payload) }
@@ -112,7 +117,8 @@ final class TranscriptContributionManagerTests: XCTestCase {
             sleep: { delay in
                 recorder.wakeDelays.withLock { $0.append(delay) }
                 try await scheduledSleep(delay)
-            }
+            },
+            hasConsent: hasConsent
         )
     }
 
@@ -412,6 +418,43 @@ final class TranscriptContributionManagerTests: XCTestCase {
         XCTAssertEqual(payload.gzippedFingerprint, Data("cached-bytes".utf8))
     }
 
+    func testMissingAudioSendsContributionWithoutOptionalFingerprint() async throws {
+        try seedContribution()
+        let recorder = Recorder()
+        let manager = makeManager(
+            recorder: recorder,
+            result: .accepted,
+            audioFileURL: { _ in nil }
+        )
+
+        await drain(manager)
+
+        let payload = try XCTUnwrap(recorder.contributions.withLock { $0.first })
+        XCTAssertTrue(payload.gzippedFingerprint.isEmpty)
+        XCTAssertEqual(recorder.fingerprintCalls.withLock { $0 }, 0)
+        XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 0)
+    }
+
+    func testFingerprintGenerationFailureSendsContributionWithoutFingerprint() async throws {
+        try seedContribution()
+        let recorder = Recorder()
+        let manager = makeManager(
+            recorder: recorder,
+            result: .accepted,
+            fingerprint: { _ in
+                recorder.fingerprintCalls.withLock { $0 += 1 }
+                throw CocoaError(.fileReadCorruptFile)
+            }
+        )
+
+        await drain(manager)
+
+        let payload = try XCTUnwrap(recorder.contributions.withLock { $0.first })
+        XCTAssertTrue(payload.gzippedFingerprint.isEmpty)
+        XCTAssertEqual(recorder.fingerprintCalls.withLock { $0 }, 1)
+        XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 0)
+    }
+
     // MARK: - Power gate
 
     func testPowerDeferredStopsDrainWithoutSending() async throws {
@@ -453,10 +496,10 @@ final class TranscriptContributionManagerTests: XCTestCase {
             result: .acceptedContribution(receipt),
             generateMetadata: { episodeUuid, _, info in
                 generated.withLock { $0.append(episodeUuid) }
-                return CorpusMetadataAttachment(candidateID: info.candidateID,
-                                                attachmentToken: info.attachmentToken,
-                                                summary: "summary",
-                                                chapters: [])
+                return .generated(CorpusMetadataAttachment(candidateID: info.candidateID,
+                                                           attachmentToken: info.attachmentToken,
+                                                           summary: "summary",
+                                                           chapters: []))
             },
             sendMetadata: { metadata in
                 attached.withLock { $0.append(metadata) }
@@ -496,10 +539,10 @@ final class TranscriptContributionManagerTests: XCTestCase {
         let manager = makeManager(recorder: recorder,
                                   result: .accepted,
                                   generateMetadata: { _, _, info in
-                                      CorpusMetadataAttachment(candidateID: info.candidateID,
-                                                               attachmentToken: info.attachmentToken,
-                                                               summary: "summary",
-                                                               chapters: [])
+                                      .generated(CorpusMetadataAttachment(candidateID: info.candidateID,
+                                                                          attachmentToken: info.attachmentToken,
+                                                                          summary: "summary",
+                                                                          chapters: []))
                                   },
                                   sendMetadata: { _ in .permanentFailure("attachment token consumed") })
 
@@ -516,10 +559,10 @@ final class TranscriptContributionManagerTests: XCTestCase {
         let manager = makeManager(recorder: recorder,
                                   result: .accepted,
                                   generateMetadata: { _, _, info in
-                                      CorpusMetadataAttachment(candidateID: info.candidateID,
-                                                               attachmentToken: info.attachmentToken,
-                                                               summary: "summary",
-                                                               chapters: [])
+                                      .generated(CorpusMetadataAttachment(candidateID: info.candidateID,
+                                                                          attachmentToken: info.attachmentToken,
+                                                                          summary: "summary",
+                                                                          chapters: []))
                                   },
                                   sendMetadata: { _ in .retryAfter(60) })
 
@@ -536,12 +579,37 @@ final class TranscriptContributionManagerTests: XCTestCase {
     func testMetadataGenerationFailureGivesUpAtAttemptCap() async throws {
         try seedMetadata(attempts: TranscriptContributionManager.maxMetadataAttempts - 1)
         let recorder = Recorder()
-        let manager = makeManager(recorder: recorder, result: .accepted) // generateMetadata defaults to nil.
+        let manager = makeManager(recorder: recorder, result: .accepted) // Generation remains retryable until the cap.
 
         await drain(manager)
 
         XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 0,
                        "Out-of-contract generation output must not re-run the map/reduce weekly forever")
+    }
+
+    func testPermanentMetadataGenerationFailureDeletesImmediately() async throws {
+        try seedMetadata()
+        let recorder = Recorder()
+        let manager = makeManager(
+            recorder: recorder,
+            result: .accepted,
+            generateMetadata: { _, _, _ in .permanentFailure("invalid transcript") }
+        )
+
+        await drain(manager)
+
+        XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 0)
+    }
+
+    func testRevokedConsentPurgesPendingExportsWithoutSending() async throws {
+        try seedContribution()
+        let recorder = Recorder()
+        let manager = makeManager(recorder: recorder, result: .accepted, hasConsent: { false })
+
+        await drain(manager)
+
+        XCTAssertEqual(recorder.sendCount, 0)
+        XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 0)
     }
 
     func testMetadataMissingArtifactDeletesRowWithoutGenerating() async throws {
@@ -552,7 +620,7 @@ final class TranscriptContributionManagerTests: XCTestCase {
                                   result: .accepted,
                                   generateMetadata: { _, _, _ in
                                       generated.withLock { $0 = true }
-                                      return nil
+                                      return .retryable
                                   })
 
         await drain(manager)
@@ -646,6 +714,7 @@ final class TranscriptContributionManagerTests: XCTestCase {
                                                        format: "text/vtt",
                                                        language: "en",
                                                        dataManager: dataManager,
+                                                       hasConsent: true,
                                                        kickAfterInsert: false)
         }
 
@@ -668,6 +737,7 @@ final class TranscriptContributionManagerTests: XCTestCase {
                                                    format: "text/vtt",
                                                    language: nil,
                                                    dataManager: dataManager,
+                                                   hasConsent: true,
                                                    kickAfterInsert: false)
 
         XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 0)
@@ -686,6 +756,7 @@ final class TranscriptContributionManagerTests: XCTestCase {
                                                    format: "text/vtt",
                                                    language: nil,
                                                    dataManager: dataManager,
+                                                   hasConsent: true,
                                                    kickAfterInsert: false)
 
         XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 0,
@@ -704,9 +775,27 @@ final class TranscriptContributionManagerTests: XCTestCase {
                                                    format: "text/vtt",
                                                    language: nil,
                                                    dataManager: dataManager,
+                                                   hasConsent: true,
                                                    kickAfterInsert: false)
 
         XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 1,
                        "A credential-less locally-refreshed feed is public — out-of-catalog episodes are deliberately eligible")
+    }
+
+    func testNoteSightingRequiresContributionConsent() {
+        insertEligibilityFixture(episodeUuid: "ep-s", podcastUuid: "pod-s")
+
+        TranscriptContributionManager.noteSighting(
+            episodeUuid: "ep-s",
+            podcastUuid: "pod-s",
+            transcriptUrl: "https://example.com/t.vtt",
+            format: "text/vtt",
+            language: nil,
+            dataManager: dataManager,
+            hasConsent: false,
+            kickAfterInsert: false
+        )
+
+        XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 0)
     }
 }

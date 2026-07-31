@@ -98,19 +98,27 @@ class ForgotPasswordViewController: PCViewController, UITextFieldDelegate {
     @IBAction func performResetPassword(_ sender: Any) {
         guard let email = emailField.text else { return }
 
+        presentResetPasswordPrompt(email: email)
+    }
+
+    private func presentResetPasswordPrompt(email: String, code: String = "", password: String = "", validationFailed: Bool = false) {
         let prompt = UIAlertController(
             title: L10n.profileResetPassword,
-            message: L10n.profileResetPasswordPromptMessage,
+            message: validationFailed
+                ? "\(L10n.profileResetPasswordInvalidInput)\n\n\(L10n.profileResetPasswordPromptMessage)"
+                : L10n.profileResetPasswordPromptMessage,
             preferredStyle: .alert
         )
         prompt.addTextField { field in
             field.placeholder = L10n.profileResetPasswordCodePlaceholder
+            field.text = code
             field.autocapitalizationType = .none
             field.autocorrectionType = .no
             field.textContentType = .oneTimeCode
         }
         prompt.addTextField { field in
             field.placeholder = L10n.profileResetPasswordNewPlaceholder
+            field.text = password
             field.isSecureTextEntry = true
             field.textContentType = .newPassword
         }
@@ -119,19 +127,29 @@ class ForgotPasswordViewController: PCViewController, UITextFieldDelegate {
             // The backend contract is byte-based (docs/ServerAPISurface.md:
             // "a 12–72-byte password"), so validation counts UTF-8 bytes and
             // the copy above states the same limits.
-            guard let self,
-                  let code = prompt?.textFields?[0].text?.trimmingCharacters(in: .whitespacesAndNewlines),
-                  let password = prompt?.textFields?[1].text,
-                  !code.isEmpty,
-                  password.utf8.count >= 12,
-                  password.utf8.count <= 72
-            else {
-                self?.showErrorMessage(L10n.profileResetPasswordInvalidInput)
+            guard let self else { return }
+            let enteredCode = prompt?.textFields?[0].text ?? ""
+            let enteredPassword = prompt?.textFields?[1].text ?? ""
+            let normalizedCode = enteredCode.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !normalizedCode.isEmpty,
+                  enteredPassword.utf8.count >= 12,
+                  enteredPassword.utf8.count <= 72 else {
+                // Alert actions dismiss before their handlers execute. Re-present
+                // on the next run-loop turn with both values retained so the user
+                // can correct the invalid field in place.
+                DispatchQueue.main.async { [weak self] in
+                    self?.presentResetPasswordPrompt(
+                        email: email,
+                        code: enteredCode,
+                        password: enteredPassword,
+                        validationFailed: true
+                    )
+                }
                 return
             }
             self.progressAlert = ShiftyLoadingAlert(title: L10n.profileResetPassword)
             self.progressAlert?.showAlert(self, hasProgress: false) {
-                self.startPasswordReset(email: email, code: code, password: password)
+                self.startPasswordReset(email: email, code: normalizedCode, password: enteredPassword)
             }
         })
         present(prompt, animated: true)

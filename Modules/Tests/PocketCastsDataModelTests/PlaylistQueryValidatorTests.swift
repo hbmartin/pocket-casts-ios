@@ -229,11 +229,7 @@ final class PlaylistQueryValidatorTests: DataManagerTestCase {
             shouldShowArchived: false,
             sortType: nil
         )
-        let validator = PlaylistQueryBuilder.smartCountFragment(
-            shouldShowArchived: false,
-            allEpisodesCount: false,
-            whereFragment: PlaylistQueryBuilder.sqlModeWhereFragment(fragment)
-        )
+        let validator = PlaylistQueryValidator.countFragment(for: fragment)
 
         try dataManager.dbQueue.dbPool.read { db in
             let runtimeBuilt = try runtime.build(db)

@@ -332,7 +332,12 @@ final class TranscriptionQueueManagerTests: XCTestCase {
     private func makeManagerWithContributionHook(engine: MockSpeechEngine) -> TranscriptionQueueManager {
         let dataManager: DataManager = dataManager
         return makeManager(engine: engine, contributionEnqueue: { episodeUuid, record in
-            TranscriptContributionManager.enqueueContribution(episodeUuid: episodeUuid, record: record, dataManager: dataManager)
+            TranscriptContributionManager.enqueueContribution(
+                episodeUuid: episodeUuid,
+                record: record,
+                dataManager: dataManager,
+                hasConsent: true
+            )
         })
     }
 

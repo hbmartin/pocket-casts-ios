@@ -92,9 +92,9 @@ private enum StreamingExportMonitorError: LocalizedError, Sendable {
     var errorDescription: String? {
         switch self {
         case .timedOut:
-            "The streaming download timed out."
+            L10n.downloadStreamingTimedOut
         case .cancelled:
-            "The streaming download was cancelled."
+            L10n.downloadStreamingCancelled
         }
     }
 }

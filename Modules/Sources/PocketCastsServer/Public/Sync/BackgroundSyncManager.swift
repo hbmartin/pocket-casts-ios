@@ -5,8 +5,7 @@ import PocketCastsUtils
 /// Runs the three reduced background-sync phases through the same serialized
 /// App Attest transport as foreground requests. Network send and response
 /// processing complete in order: refresh, Up Next, then regular sync.
-/// @unchecked Sendable: all mutable coordination state is read or written on
-/// `syncProcessQueue`; asynchronous phases capture only immutable requests.
+/// @unchecked Sendable: mutable coordination state is serialized by `syncProcessQueue`.
 public final class BackgroundSyncManager: @unchecked Sendable {
     public static let shared = BackgroundSyncManager()
 

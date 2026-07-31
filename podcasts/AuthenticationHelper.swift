@@ -104,6 +104,7 @@ class AuthenticationHelper {
             // refresh token could not be committed to the Keychain.
             SyncManager.clearTokensFromKeyChain()
             ServerSettings.userId = nil
+            ServerSettings.accountAuthMethod = nil
             ServerSettings.setTokenExpiry(expiresIn: nil)
             throw APIError.TOKEN_DEAUTH
         }

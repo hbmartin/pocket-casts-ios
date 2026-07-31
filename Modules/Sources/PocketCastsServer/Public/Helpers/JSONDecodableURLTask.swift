@@ -5,11 +5,16 @@ import Foundation
 /// Usage:
 /// let result = try await JSONDecodableURLTask<MyCoolResponse>.get('https://...')
 public struct JSONDecodableURLTask<Response: Decodable> {
-    let session: URLSession
+    let urlConnection: URLConnection
     let decoder: JSONDecoder
 
-    init(session: URLSession = .shared, decoder: JSONDecoder = .defaultDecoder) {
-        self.session = session
+    init(urlConnection: URLConnection = URLConnection(handler: URLSession.shared), decoder: JSONDecoder = .defaultDecoder) {
+        self.urlConnection = urlConnection
+        self.decoder = decoder
+    }
+
+    init(session: URLSession, decoder: JSONDecoder = .defaultDecoder) {
+        self.urlConnection = URLConnection(handler: session)
         self.decoder = decoder
     }
 
@@ -36,7 +41,10 @@ public struct JSONDecodableURLTask<Response: Decodable> {
     }
 
     public func perform(request: URLRequest) async throws -> Response {
-        let (data, response) = try await session.data(for: request)
+        let (responseData, urlResponse) = try await urlConnection.send(request: request)
+        guard let response = urlResponse, let data = responseData else {
+            throw JSONDecodableURLTaskError.notValidResponse
+        }
         try validate(response: response)
         return try decoder.decode(Response.self, from: data)
     }

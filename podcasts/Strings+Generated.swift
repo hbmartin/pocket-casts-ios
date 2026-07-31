@@ -1042,6 +1042,10 @@ nonisolated internal enum L10n {
   internal static var downloadErrorTryAgain: String { return L10n.tr("Localizable", "download_error_try_again", fallback: "Unable to download episode. Please try again later.") }
   /// A common string used throughout the app. Informs the user the download has failed.
   internal static var downloadFailed: String { return L10n.tr("Localizable", "download_failed", fallback: "Download Failed") }
+  /// User-facing error shown when a streaming download is cancelled before completion.
+  internal static var downloadStreamingCancelled: String { return L10n.tr("Localizable", "download_streaming_cancelled", fallback: "The streaming download was cancelled.") }
+  /// User-facing error shown when a streaming download exceeds its completion timeout.
+  internal static var downloadStreamingTimedOut: String { return L10n.tr("Localizable", "download_streaming_timed_out", fallback: "The streaming download timed out.") }
   /// A common string used throughout the app. Title for screens and prompts related to storage and downloaded files.
   internal static var downloadedFiles: String { return L10n.tr("Localizable", "downloaded_files", fallback: "Downloaded Files") }
   /// Confirmation message when you choose to delete a set of downloaded files
@@ -4664,7 +4668,7 @@ nonisolated internal enum L10n {
     return L10n.tr("Localizable", "social_feed_item_reviewed", String(describing: p1), String(describing: p2), fallback: "%1$@ reviewed %2$@")
   }
   /// Body of the contacts consent alert — honest about the mechanics
-  internal static var socialFindContactsConsentBody: String { return L10n.tr("Localizable", "social_find_contacts_consent_body", fallback: "Your contacts' email addresses and phone numbers are scrambled (hashed) on this device. Email hashes are compared once; phone hashes are currently ignored. Nothing is stored, and no one is notified. Only members who allow discovery can match.") }
+  internal static var socialFindContactsConsentBody: String { return L10n.tr("Localizable", "social_find_contacts_consent_body", fallback: "Your contacts' email addresses and phone numbers are scrambled (hashed) on this device and compared once for matching. Nothing is stored, and no one is notified. Only members who allow discovery can match.") }
   /// Confirm button of the contacts consent alert
   internal static var socialFindContactsConsentCta: String { return L10n.tr("Localizable", "social_find_contacts_consent_cta", fallback: "Match my contacts") }
   /// Header over contact-match results
