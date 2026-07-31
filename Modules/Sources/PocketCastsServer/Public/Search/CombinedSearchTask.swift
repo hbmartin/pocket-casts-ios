@@ -37,10 +37,14 @@ public struct CombinedSearchResult: Decodable, Hashable {
 }
 
 public final class CombinedSearchTask: Sendable {
-    private let session: URLSession
+    private let urlConnection: URLConnection
 
-    public init(session: URLSession = .shared) {
-        self.session = session
+    public init(urlConnection: URLConnection = URLConnection(handler: URLSession.shared)) {
+        self.urlConnection = urlConnection
+    }
+
+    public convenience init(session: URLSession) {
+        self.init(urlConnection: URLConnection(handler: session))
     }
 
     public func search(term: String) async throws -> [CombinedSearchResultType] {
@@ -51,7 +55,10 @@ public final class CombinedSearchTask: Sendable {
             throw URL.URLCreationError.invalidURLString
         }
 
-        let (data, _) = try await session.data(for: request)
+        let (responseData, _) = try await urlConnection.send(request: request)
+        guard let data = responseData else {
+            throw URLError(.badServerResponse)
+        }
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         let dateFormatter = DateFormatter()

@@ -4,6 +4,18 @@ import PocketCastsServer
 import PocketCastsTranscription
 import PocketCastsUtils
 
+/// Contribution consent is intentionally distinct from remote-transcription
+/// provider consent: it governs exporting transcript material into the shared
+/// corpus. No UI writes this key yet, so production contribution remains
+/// disabled by default.
+nonisolated enum TranscriptContributionConsent {
+    static let defaultsKey = "transcript.contribution.consent.v1"
+
+    static var isGranted: Bool {
+        UserDefaults.standard.bool(forKey: defaultsKey)
+    }
+}
+
 /// Serial drain loop for the transcript-contribution upload queue
 /// (docs/TranscriptContributions.md §2): the `PendingTranscriptUpload` rows a
 /// completed transcription (Contribution) or a first-viewed Provided
@@ -26,7 +38,7 @@ import PocketCastsUtils
 /// generation obey the same battery policy as transcription jobs; lightweight
 /// sightings remain network-only and are not power-gated.
 actor TranscriptContributionManager {
-    static let shared = TranscriptContributionManager()
+    static let shared = TranscriptContributionManager(hasConsent: { TranscriptContributionConsent.isGranted })
 
     /// UserDefaults key holding the `pauseQueue` park date (epoch seconds).
     static let pausedUntilDefaultsKey = "TranscriptContributions.pausedUntil"
@@ -82,7 +94,7 @@ actor TranscriptContributionManager {
     private let gzip: @Sendable (Data) throws -> Data
     private let sendContribution: @Sendable (TranscriptContributionPayload) async -> ContributionSendResult
     private let sendSighting: @Sendable (TranscriptSightingPayload) async -> ContributionSendResult
-    private let generateMetadata: @Sendable (String, String, MetadataInfo) async -> CorpusMetadataAttachment?
+    private let generateMetadata: @Sendable (String, String, MetadataInfo) async -> TranscriptCorpusMetadataGenerationResult
     private let sendMetadata: @Sendable (CorpusMetadataAttachment) async -> ContributionSendResult
     private let powerState: @Sendable () async -> TranscriptionPowerState
     private let batteryPolicy: @Sendable () -> TranscriptionBatteryPolicy
@@ -92,6 +104,7 @@ actor TranscriptContributionManager {
     private let storePausedUntil: @Sendable (Date?) -> Void
     private let now: @Sendable () -> Date
     private let sleep: @Sendable (TimeInterval) async throws -> Void
+    private let hasConsent: @Sendable () -> Bool
 
     private var drainTask: Task<Void, Never>?
     private var wakeTask: Task<Void, Never>?
@@ -112,7 +125,7 @@ actor TranscriptContributionManager {
          gzip: @escaping @Sendable (Data) throws -> Data = { try ReferenceFingerprintEncoder.gzipped($0) },
          sendContribution: @escaping @Sendable (TranscriptContributionPayload) async -> ContributionSendResult = { await TranscriptContributeTask().send($0) },
          sendSighting: @escaping @Sendable (TranscriptSightingPayload) async -> ContributionSendResult = { await TranscriptSightingTask().send($0) },
-         generateMetadata: @escaping @Sendable (String, String, MetadataInfo) async -> CorpusMetadataAttachment? = { episodeUuid, podcastUuid, info in
+         generateMetadata: @escaping @Sendable (String, String, MetadataInfo) async -> TranscriptCorpusMetadataGenerationResult = { episodeUuid, podcastUuid, info in
              await TranscriptCorpusMetadataGenerator.shared.generate(
                  episodeUUID: episodeUuid,
                  podcastUUID: podcastUuid,
@@ -136,10 +149,11 @@ actor TranscriptContributionManager {
                  UserDefaults.standard.removeObject(forKey: TranscriptContributionManager.pausedUntilDefaultsKey)
              }
          },
-         now: @escaping @Sendable () -> Date = { Date() },
-         sleep: @escaping @Sendable (TimeInterval) async throws -> Void = { interval in
-             try await Task.sleep(for: .seconds(interval))
-         }) {
+          now: @escaping @Sendable () -> Date = { Date() },
+          sleep: @escaping @Sendable (TimeInterval) async throws -> Void = { interval in
+              try await Task.sleep(for: .seconds(interval))
+          },
+          hasConsent: @escaping @Sendable () -> Bool = { true }) {
         self.dataManager = dataManager
         self.artifactStore = artifactStore
         self.audioFileURL = audioFileURL
@@ -157,6 +171,7 @@ actor TranscriptContributionManager {
         self.storePausedUntil = storePausedUntil
         self.now = now
         self.sleep = sleep
+        self.hasConsent = hasConsent
     }
 
     // MARK: - Public API
@@ -165,6 +180,10 @@ actor TranscriptContributionManager {
     /// hook (launch, enqueue, power change): a paused/deferred/empty queue
     /// no-ops immediately.
     func kick() {
+        guard hasConsent() else {
+            dataManager.pendingTranscriptUploads.deleteAll()
+            return
+        }
         guard drainTask == nil else { return }
         drainTask = Task { await self.drainLoop() }
     }
@@ -200,7 +219,9 @@ actor TranscriptContributionManager {
     @discardableResult
     nonisolated static func enqueueContribution(episodeUuid: String,
                                                 record: EpisodeTranscriptionRecord,
-                                                dataManager: DataManager) -> Bool {
+                                                dataManager: DataManager,
+                                                hasConsent: Bool) -> Bool {
+        guard hasConsent else { return false }
         let episode = dataManager.findBaseEpisode(uuid: episodeUuid)
         guard let podcastUuid = record.podcastUuid ?? (episode as? Episode)?.podcastUuid else { return false }
         let podcast = dataManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true)
@@ -237,7 +258,9 @@ actor TranscriptContributionManager {
                                          format: String,
                                          language: String?,
                                          dataManager: DataManager = .sharedManager,
+                                         hasConsent: Bool,
                                          kickAfterInsert: Bool = true) {
+        guard hasConsent else { return }
         let episode = dataManager.findBaseEpisode(uuid: episodeUuid)
         let podcast = dataManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true)
         let hasCredentials = LocalFeedCredentials.credentials(podcastUuid: podcastUuid) != nil
@@ -270,6 +293,10 @@ actor TranscriptContributionManager {
 
         var lastProcessed: (id: Int64, kind: Int32, attempts: Int32)?
         while true {
+            guard hasConsent() else {
+                dataManager.pendingTranscriptUploads.deleteAll()
+                break
+            }
             let currentDate = now()
             if let pausedUntil = loadPausedUntil(), currentDate < pausedUntil {
                 // Operator kill switch (docs/TranscriptContributions.md §5):
@@ -405,33 +432,10 @@ actor TranscriptContributionManager {
             return nil
         }
 
-        // Fingerprint, with disk cache: retries and relaunches must not
-        // re-decode the whole audio file.
-        let gzippedFingerprint: Data
-        if let cached = artifactStore.readFingerprint(episodeUuid: row.episodeUuid) {
-            gzippedFingerprint = cached
-        } else {
-            guard let audioURL = audioFileURL(row.episodeUuid) else {
-                // The downloaded audio is gone. A re-download may be a different
-                // ad stitch, so a fingerprint computed later could mismatch the
-                // transcript — this contribution is unrecoverable.
-                FileLog.shared.addMessage("[TranscriptContribution] dropping contribution for \(row.episodeUuid): audio no longer downloaded")
-                removeContributionRow(id: rowId, episodeUuid: row.episodeUuid)
-                return nil
-            }
-            do {
-                let json = try await fingerprint(audioURL)
-                gzippedFingerprint = try gzip(json)
-                try artifactStore.writeFingerprint(gzippedFingerprint, episodeUuid: row.episodeUuid)
-            } catch {
-                // Fingerprinting failures are deterministic for the same file
-                // (unreadable/empty audio) — treat as unrecoverable rather than
-                // retrying a CPU-heavy decode forever.
-                FileLog.shared.addMessage("[TranscriptContribution] dropping contribution for \(row.episodeUuid): fingerprint failed: \(error)")
-                removeContributionRow(id: rowId, episodeUuid: row.episodeUuid)
-                return nil
-            }
-        }
+        // Fingerprints improve corpus matching but are optional in the upload
+        // contract. The VTT remains useful when downloaded audio has already
+        // been cleaned up or fingerprint generation fails.
+        let gzippedFingerprint = await fingerprintPayload(for: row.episodeUuid)
 
         let gzippedVtt: Data
         do {
@@ -454,6 +458,35 @@ actor TranscriptContributionManager {
                                                     episodeDurationSeconds: info.durationSeconds,
                                                     createdAt: Date(timeIntervalSince1970: info.createdAt))
         return await sendContribution(payload)
+    }
+
+    private func fingerprintPayload(for episodeUuid: String) async -> Data {
+        if let cached = artifactStore.readFingerprint(episodeUuid: episodeUuid) {
+            return cached
+        }
+
+        guard let audioURL = audioFileURL(episodeUuid) else {
+            FileLog.shared.addMessage("[TranscriptContribution] sending \(episodeUuid) without optional fingerprint: audio no longer downloaded")
+            return Data()
+        }
+
+        let gzippedFingerprint: Data
+        do {
+            let json = try await fingerprint(audioURL)
+            gzippedFingerprint = try gzip(json)
+        } catch {
+            FileLog.shared.addMessage("[TranscriptContribution] sending \(episodeUuid) without optional fingerprint: generation failed: \(error)")
+            return Data()
+        }
+
+        do {
+            try artifactStore.writeFingerprint(gzippedFingerprint, episodeUuid: episodeUuid)
+        } catch {
+            // A cache failure must not discard either the successfully generated
+            // fingerprint or the contribution; retries can recompute it.
+            FileLog.shared.addMessage("[TranscriptContribution] fingerprint cache write failed for \(episodeUuid): \(error)")
+        }
+        return gzippedFingerprint
     }
 
     /// nil = the row was dropped (undecodable payload) and no send happened.
@@ -488,11 +521,19 @@ actor TranscriptContributionManager {
             dataManager.pendingTranscriptUploads.delete(id: rowId)
             return nil
         }
-        guard let metadata = await generateMetadata(row.episodeUuid, row.podcastUuid, info) else {
+        let metadata: CorpusMetadataAttachment
+        switch await generateMetadata(row.episodeUuid, row.podcastUuid, info) {
+        case .generated(let generated):
+            metadata = generated
+        case .retryable:
             // Model assets/lifecycle can be unavailable for long periods. Keep
             // the compact job and retry weekly — bounded by maxMetadataAttempts —
             // in addition to lifecycle kicks.
             scheduleMetadataRetry(row: row, rowId: rowId)
+            return nil
+        case .permanentFailure(let message):
+            FileLog.shared.addMessage("[TranscriptContribution] dropping metadata job for \(row.episodeUuid): \(message)")
+            dataManager.pendingTranscriptUploads.delete(id: rowId)
             return nil
         }
         let result = await sendMetadata(metadata)

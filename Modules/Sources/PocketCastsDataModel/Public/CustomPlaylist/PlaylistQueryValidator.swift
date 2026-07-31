@@ -47,11 +47,7 @@ enum PlaylistQueryValidator {
 
         // The exact `.episodeCount` shape custom playlists execute at runtime,
         // including both the SQL-mode rule wrapper and combined WHERE wrapper.
-        let countLiteral = PlaylistQueryBuilder.smartCountFragment(
-            shouldShowArchived: false,
-            allEpisodesCount: false,
-            whereFragment: PlaylistQueryBuilder.sqlModeWhereFragment(trimmed)
-        )
+        let countLiteral = countFragment(for: trimmed)
 
         do {
             return try dbQueue.dbPool.read { db -> Result<Int, CustomQueryValidationError> in
@@ -86,6 +82,16 @@ enum PlaylistQueryValidator {
         } catch {
             return .failure(.executionFailed(message: databaseErrorMessage(error)))
         }
+    }
+
+    /// The exact runtime count shape used during validation. Kept as one entry
+    /// point so parity tests fail if validation ever drifts from playlist reads.
+    static func countFragment(for fragment: String) -> SQL {
+        PlaylistQueryBuilder.smartCountFragment(
+            shouldShowArchived: false,
+            allEpisodesCount: false,
+            whereFragment: PlaylistQueryBuilder.sqlModeWhereFragment(fragment)
+        )
     }
 
     /// Prepares a single statement and asserts it cannot write. Split out so tests

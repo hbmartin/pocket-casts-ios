@@ -45,7 +45,7 @@ public extension ApiServerHandler {
 
             urlConnection.send(request: request) { data, response, error in
                 guard let responseData = data, error == nil, (response as? HTTPURLResponse)?.statusCode == ServerConstants.HttpConstants.ok else {
-                    let errorResponse = ApiServerHandler.extractErrorResponse(data: data, response: response)
+                    let errorResponse = ApiServerHandler.extractErrorResponse(data: data, response: response, error: error)
                     completion(false, errorResponse)
 
                     return

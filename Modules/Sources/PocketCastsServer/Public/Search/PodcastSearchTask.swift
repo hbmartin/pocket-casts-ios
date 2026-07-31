@@ -100,10 +100,16 @@ extension PodcastFolderSearchResult: Identifiable {
 }
 
 public final class PodcastSearchTask: Sendable {
-    private let session: URLSession
+    private let urlConnection: URLConnection
 
-    public init(session: URLSession = .shared) {
-        self.session = session
+    public init(urlConnection: URLConnection = URLConnection(handler: URLSession.shared)) {
+        self.urlConnection = urlConnection
+    }
+
+    /// Retains the existing test/integration injection point while ensuring
+    /// every request still passes through the server transport policies.
+    public convenience init(session: URLSession) {
+        self.init(urlConnection: URLConnection(handler: session))
     }
 
     public func search(term: String) async throws -> [PodcastFolderSearchResult] {
@@ -140,7 +146,10 @@ public final class PodcastSearchTask: Sendable {
             throw URLError(.badURL)
         }
 
-        let (data, _) = try await session.data(for: request)
+        let (responseData, _) = try await urlConnection.send(request: request)
+        guard let data = responseData else {
+            throw URLError(.badServerResponse)
+        }
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         let envelope = try decoder.decode(PodcastsSearchEnvelope.self, from: data)

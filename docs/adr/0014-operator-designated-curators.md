@@ -50,15 +50,15 @@ or revoke a curator. Every change requires an approved change ticket containing:
 - rollback result when rollback is used.
 
 Resolve the immutable user ID from the reviewed ticket before opening the
-transaction. Do not target a mutable handle in the write predicate. Run the
-following idempotent shape with `:user_id` supplied as a bound parameter and
-record the returned row in the ticket:
+transaction. Do not target a mutable handle in the write predicate. Pass it to
+`psql` with `-v user_id="$CURATOR_USER_ID"`; `:'user_id'` below safely quotes the
+client-side variable as a SQL literal. Record the returned row in the ticket:
 
 ```sql
 BEGIN;
 UPDATE <schema>.social_profiles
 SET curator = TRUE
-WHERE user_id = :user_id
+WHERE user_id = :'user_id'
   AND curator IS DISTINCT FROM TRUE
 RETURNING user_id, handle, curator;
 COMMIT;
@@ -73,7 +73,7 @@ procedure with `FALSE`:
 BEGIN;
 UPDATE <schema>.social_profiles
 SET curator = FALSE
-WHERE user_id = :user_id
+WHERE user_id = :'user_id'
   AND curator IS DISTINCT FROM FALSE
 RETURNING user_id, handle, curator;
 COMMIT;

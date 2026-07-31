@@ -43,6 +43,7 @@ public actor ServerCapabilitiesClient {
             cachedCapabilities = decoded
             return decoded
         } catch {
+            FileLog.shared.addMessage("ServerCapabilitiesClient: capability load failed: \(error)")
             return nil
         }
     }

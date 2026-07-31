@@ -74,6 +74,10 @@ public actor CorpusManifestClient {
 
     private let connection: URLConnection
     private var cache: [URL: Cached] = [:]
+    private var cacheOrder: [URL] = []
+    private var cacheCost = 0
+    private static let maximumCacheEntries = 64
+    private static let maximumCacheBytes = 16 * 1024 * 1024
 
     public init(connection: URLConnection = URLConnection(handler: URLSession.shared)) {
         self.connection = connection
@@ -92,6 +96,16 @@ public actor CorpusManifestClient {
         return try JSONDecoder().decode(CorpusManifest.self, from: data)
     }
 
+    /// Shared capability gate and preferred-language construction used by all
+    /// corpus consumers.
+    public func availableManifest(episodeUUID: String) async throws -> CorpusManifest? {
+        guard await ServerCapabilitiesClient.shared.load()?.features.corpus == true else { return nil }
+        return try await manifest(
+            episodeUUID: episodeUUID,
+            acceptLanguage: Locale.preferredLanguages.joined(separator: ",")
+        )
+    }
+
     public func artifact(_ descriptor: CorpusArtifactDescriptor) async throws -> Data {
         guard isBackendURL(descriptor.url) else { throw CorpusClientError.externalArtifactURL }
         let data = try await revalidatedData(for: URLRequest(url: descriptor.url, cachePolicy: .reloadIgnoringLocalCacheData))
@@ -103,25 +117,43 @@ public actor CorpusManifestClient {
     private func revalidatedData(for original: URLRequest) async throws -> Data {
         guard let url = original.url else { throw CorpusClientError.invalidManifest }
         var request = original
-        if let cached = cache[url] { request.setValue(cached.etag, forHTTPHeaderField: ServerConstants.HttpHeaders.ifNoneMatch) }
+        let cached = cachedValue(for: url)
+        if let cached { request.setValue(cached.etag, forHTTPHeaderField: ServerConstants.HttpHeaders.ifNoneMatch) }
         let (data, response) = try await connection.send(request: request)
         guard let http = response as? HTTPURLResponse else { throw CorpusClientError.unavailable }
-        if http.statusCode == ServerConstants.HttpConstants.notModified, let cached = cache[url] { return cached.data }
+        if http.statusCode == ServerConstants.HttpConstants.notModified, let cached { return cached.data }
         guard http.statusCode == ServerConstants.HttpConstants.ok, let data else { throw CorpusClientError.unavailable }
-        if let etag = http.value(forHTTPHeaderField: ServerConstants.HttpHeaders.etag) { cache[url] = Cached(etag: etag, data: data) }
+        if let etag = http.value(forHTTPHeaderField: ServerConstants.HttpHeaders.etag) {
+            store(Cached(etag: etag, data: data), for: url)
+        }
         return data
     }
 
-    private func isBackendURL(_ url: URL) -> Bool {
-        guard let origin = ServerOriginPolicy.shared.origin else { return false }
-        return url.scheme?.lowercased() == origin.scheme?.lowercased()
-            && url.host?.lowercased() == origin.host?.lowercased()
-            && effectivePort(url) == effectivePort(origin)
-            && url.user == nil
-            && url.password == nil
+    private func cachedValue(for url: URL) -> Cached? {
+        guard let value = cache[url] else { return nil }
+        cacheOrder.removeAll { $0 == url }
+        cacheOrder.append(url)
+        return value
     }
 
-    private func effectivePort(_ url: URL) -> Int {
-        url.port ?? (url.scheme?.lowercased() == "https" ? 443 : 80)
+    private func store(_ value: Cached, for url: URL) {
+        if let previous = cache.updateValue(value, forKey: url) {
+            cacheCost -= previous.data.count
+            cacheOrder.removeAll { $0 == url }
+        }
+        cacheCost += value.data.count
+        cacheOrder.append(url)
+
+        while cache.count > Self.maximumCacheEntries || cacheCost > Self.maximumCacheBytes {
+            guard let oldest = cacheOrder.first else { break }
+            cacheOrder.removeFirst()
+            if let evicted = cache.removeValue(forKey: oldest) {
+                cacheCost -= evicted.data.count
+            }
+        }
+    }
+
+    private func isBackendURL(_ url: URL) -> Bool {
+        ServerOriginPolicy.shared.isSameOrigin(url)
     }
 }

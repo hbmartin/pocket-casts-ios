@@ -15,11 +15,29 @@ actor TranscriptsDataRetriever {
     /// External publisher transcripts stay off the shared session so third-party
     /// hosts never see the app's cookie jar, and they bypass `URLConnection` so
     /// backend origin blocking cannot break URLs that were never on the backend.
-    private let externalSession = URLSession(configuration: .ephemeral)
+    private let externalSession: URLSession
 
-    public init(connection: URLConnection = URLConnection(handler: URLSession.shared)) {
-        cache = URLCache(memoryCapacity: 1.megabytes, diskCapacity: 100.megabytes, diskPath: "transcripts")
-        self.connection = connection
+    public init(connection: URLConnection? = nil, cache: URLCache? = nil, externalSession: URLSession? = nil) {
+        let transcriptCache = cache ?? URLCache(memoryCapacity: 1.megabytes, diskCapacity: 100.megabytes, diskPath: "transcripts")
+        self.cache = transcriptCache
+
+        if let connection {
+            self.connection = connection
+        } else {
+            let configuration = URLSessionConfiguration.default
+            configuration.urlCache = transcriptCache
+            configuration.requestCachePolicy = .reloadRevalidatingCacheData
+            self.connection = URLConnection(handler: URLSession(configuration: configuration))
+        }
+
+        if let externalSession {
+            self.externalSession = externalSession
+        } else {
+            let configuration = URLSessionConfiguration.ephemeral
+            configuration.urlCache = transcriptCache
+            configuration.requestCachePolicy = .reloadRevalidatingCacheData
+            self.externalSession = URLSession(configuration: configuration)
+        }
     }
 
     public func loadTranscript(url: URL) async throws -> String? {

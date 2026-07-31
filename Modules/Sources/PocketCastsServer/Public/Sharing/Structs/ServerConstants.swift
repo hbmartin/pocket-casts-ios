@@ -83,7 +83,12 @@ public enum ServerConstants {
         }
 
         static func normalizedLocalBaseURL(_ value: String?) -> String? {
-            ServerOriginPolicy.normalizedOrigin(value, allowInsecureLoopback: true)
+            #if DEBUG && targetEnvironment(simulator)
+            let allowInsecureLoopback = true
+            #else
+            let allowInsecureLoopback = false
+            #endif
+            return ServerOriginPolicy.normalizedOrigin(value, allowInsecureLoopback: allowInsecureLoopback)
         }
 
         public static func main() -> String {

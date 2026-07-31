@@ -1,5 +1,6 @@
 import Foundation
 import FoundationModels
+import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
@@ -27,6 +28,12 @@ nonisolated private struct CorpusReduceResult {
     let chapters: [CorpusBoundary]
 }
 
+nonisolated enum TranscriptCorpusMetadataGenerationResult: Sendable {
+    case generated(CorpusMetadataAttachment)
+    case retryable
+    case permanentFailure(String)
+}
+
 /// Eager, bounded, transcript-segment-aligned map/reduce metadata generation.
 /// Failed or unavailable runs leave the durable metadata job untouched; the
 /// contribution manager retries on lifecycle kicks and at least weekly.
@@ -46,17 +53,20 @@ actor TranscriptCorpusMetadataGenerator {
 
     func generate(
         episodeUUID: String,
-        podcastUUID _: String,
+        podcastUUID: String,
         candidateID: String,
         attachmentToken: String
-    ) async -> CorpusMetadataAttachment? {
-        guard case .available = intelligence.availability(),
-              let model = artifactStore.loadUsableTranscript(episodeUuid: episodeUUID, speakerNames: nil)
-        else { return nil }
+    ) async -> TranscriptCorpusMetadataGenerationResult {
+        guard case .available = intelligence.availability() else { return .retryable }
+        guard let model = artifactStore.loadUsableTranscript(episodeUuid: episodeUUID, speakerNames: nil),
+              let episode = DataManager.sharedManager.findEpisode(uuid: episodeUUID),
+              episode.podcastUuid == podcastUUID,
+              episode.duration > 0
+        else { return .permanentFailure("missing transcript or episode duration") }
 
         let cues = SummaryTakeawayGenerator.timedCues(from: model)
-        guard cues.count >= 10 else { return nil }
-        let duration = cues.last?.startTime ?? 0
+        guard cues.count >= 10 else { return .permanentFailure("transcript has too few timed cues") }
+        let duration = episode.duration
 
         do {
             var maps: [CorpusMapResult] = []
@@ -81,25 +91,31 @@ actor TranscriptCorpusMetadataGenerator {
             )
 
             let summary = reduced.summary.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard (150 ... 250).contains(summary.split(whereSeparator: { $0.isWhitespace }).count) else { return nil }
+            guard (150 ... 250).contains(summary.split(whereSeparator: { $0.isWhitespace }).count) else {
+                return .permanentFailure("generated summary is outside the 150–250 word contract")
+            }
             let chapters = TranscriptChapterGenerator.validated(
                 reduced.chapters.map { GeneratedChapterListItem(title: $0.title, startSeconds: $0.startSeconds) },
                 cueStartTimes: cues.map(\.startTime),
                 duration: duration,
                 minimumGap: 1
             )
-            guard (3 ... 8).contains(chapters.count) else { return nil }
-            return CorpusMetadataAttachment(
+            guard (3 ... 8).contains(chapters.count) else {
+                return .permanentFailure("generated chapters are outside the 3–8 chapter contract")
+            }
+            return .generated(CorpusMetadataAttachment(
                 candidateID: candidateID,
                 attachmentToken: attachmentToken,
                 summary: summary,
                 chapters: chapters.map {
                     CorpusMetadataAttachment.Chapter(title: $0.title, timestamp: $0.timestamp, startTime: $0.startTime)
                 }
-            )
+            ))
+        } catch is CancellationError {
+            return .retryable
         } catch {
             FileLog.shared.addMessage("TranscriptCorpusMetadataGenerator: generation deferred for \(episodeUUID): \(error)")
-            return nil
+            return .retryable
         }
     }
 

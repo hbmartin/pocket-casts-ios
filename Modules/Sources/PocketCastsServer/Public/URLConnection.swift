@@ -1,15 +1,33 @@
 import Foundation
 import PocketCastsUtils
+import Synchronization
+
+/// Cancellation handle for callback-style requests. Cancelling the outer
+/// `URLConnection` task propagates through the async App Attest lane to the
+/// underlying URLSession task.
+public struct RequestCancellation: Sendable {
+    private let cancelHandler: @Sendable () -> Void
+
+    public init(cancelHandler: @escaping @Sendable () -> Void) {
+        self.cancelHandler = cancelHandler
+    }
+
+    public func cancel() {
+        cancelHandler()
+    }
+}
 
 /// A generic request handler to send URLRequests with a completion block
 public protocol RequestHandler: Sendable {
-    func send(request: URLRequest, completion: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void)
+    @discardableResult
+    func send(request: URLRequest, completion: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void) -> RequestCancellation?
 }
 
 extension URLSession: RequestHandler {
-    public func send(request: URLRequest, completion: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void) {
+    public func send(request: URLRequest, completion: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void) -> RequestCancellation? {
         let task = dataTask(with: request, completionHandler: completion)
         task.resume()
+        return RequestCancellation { task.cancel() }
     }
 }
 
@@ -24,6 +42,7 @@ public final class URLConnection: Sendable {
     /// deadlock the first thread to construct either singleton.
     private let injectedAppAttestService: AppAttestService?
     private var appAttestService: AppAttestService { injectedAppAttestService ?? .shared }
+    var isNetworkAllowed: Bool { originPolicy.isNetworkAllowed }
 
     public init(
         handler: RequestHandler,
@@ -58,8 +77,9 @@ public final class URLConnection: Sendable {
         return (data, response)
     }
 
-    public func send(request: URLRequest, completion: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void) {
-        Task {
+    @discardableResult
+    public func send(request: URLRequest, completion: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void) -> RequestCancellation {
+        let task = Task {
             do {
                 let (data, response) = try await send(request: request)
                 completion(data, response, nil)
@@ -67,6 +87,7 @@ public final class URLConnection: Sendable {
                 completion(nil, nil, error)
             }
         }
+        return RequestCancellation { task.cancel() }
     }
 
     public func send(request: URLRequest) async throws -> (Data?, URLResponse?) {
@@ -91,13 +112,32 @@ public final class URLConnection: Sendable {
     /// Bypasses policy/interceptors for the App Attest bootstrap and for the
     /// transport's already-signed attempt. Not public outside this module.
     func sendRaw(request: URLRequest) async throws -> (Data?, URLResponse?) {
-        try await withCheckedThrowingContinuation { continuation in
-            handler.send(request: request) { data, response, error in
-                if let error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume(returning: (data, response))
+        struct State: Sendable {
+            var request: RequestCancellation?
+            var isCancelled = false
+        }
+        let state = Mutex(State())
+
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                let cancellation = handler.send(request: request) { data, response, error in
+                    if let error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume(returning: (data, response))
+                    }
                 }
+                state.withLock { state in
+                    state.request = cancellation
+                    if state.isCancelled {
+                        cancellation?.cancel()
+                    }
+                }
+            }
+        } onCancel: {
+            state.withLock { state in
+                state.isCancelled = true
+                state.request?.cancel()
             }
         }
     }

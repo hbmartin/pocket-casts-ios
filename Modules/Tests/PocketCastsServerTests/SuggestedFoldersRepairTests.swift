@@ -35,4 +35,18 @@ final class SuggestedFoldersRepairTests: XCTestCase {
         XCTAssertEqual(Set(repaired.values.flatMap { $0 }), Set(submitted))
         XCTAssertTrue((repaired["Other"] ?? []).contains("tiny"))
     }
+
+    func testIgnoresRepeatedUUIDsWithinOneLogicalFolder() {
+        let repaired = SuggestedFoldersResponse.repaired(
+            [
+                "Technology": ["a", "a"],
+                "technology": ["b", "b"],
+            ],
+            submittedUUIDs: ["a", "b"],
+            otherName: "Other"
+        ).suggestions
+
+        XCTAssertEqual(repaired["Technology"], ["a", "b"])
+        XCTAssertNil(repaired["Other"])
+    }
 }

@@ -25,9 +25,11 @@ request, default artwork, and the attested capabilities manifest.
 ## Authentication
 
 Login, registration, refresh, and reset include the ordinary installation/device
-identifier. Login/register return a one-hour access token and a rotating 90-day
-refresh token family bound to that identifier. Logout calls possession-only
-`POST /user/token/revoke`. The public reset form submits an administrator-issued
+identifier. Login/register return an access token with a lifetime no greater
+than 24 hours and a rotating refresh-token family with a 12-month absolute
+lifetime and a 90-day idle timeout. Logout calls `POST /user/token/revoke`
+without Bearer authentication or App Attest; a DPoP-bound family additionally
+requires a proof whose key thumbprint matches its `jkt`. The public reset form submits an administrator-issued
 15-minute code, email, identifier, and a 12–72-byte password; the backend does
 not send email.
 

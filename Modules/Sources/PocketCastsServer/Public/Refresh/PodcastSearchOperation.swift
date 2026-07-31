@@ -60,7 +60,7 @@ class PodcastSearchOperation: Operation, @unchecked Sendable {
         }
 
         dispatchGroup.enter()
-        urlConnection.send(request: request) { data, _, error in
+        let cancellation = urlConnection.send(request: request) { data, _, error in
             defer { self.dispatchGroup.leave() }
 
             guard let data, error == nil else {
@@ -88,6 +88,7 @@ class PodcastSearchOperation: Operation, @unchecked Sendable {
 
         let waitResult = dispatchGroup.wait(timeout: .now() + 15.seconds)
         guard waitResult == .success else {
+            cancellation.cancel()
             state.setShouldRetry(false)
             state.complete {
                 completion(PodcastSearchResponse.failedResponse())

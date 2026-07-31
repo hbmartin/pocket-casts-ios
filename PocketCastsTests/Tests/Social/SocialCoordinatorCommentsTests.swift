@@ -16,7 +16,9 @@ final class SocialCoordinatorCommentsTests: DBTestCase {
     }
 
     func testRefreshCallbackTimesOutWhenCallbackNeverArrives() async {
-        let result = await SocialCoordinator.waitForRefreshCallback(timeout: .milliseconds(10)) { _ in }
+        let result = await SocialCoordinator.waitForRefreshCallback(timeout: .milliseconds(10)) { _ in
+            // Intentionally omit completion to exercise the timeout path.
+        }
 
         XCTAssertEqual(result, .timedOut)
     }

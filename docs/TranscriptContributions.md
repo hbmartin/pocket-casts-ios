@@ -1,12 +1,27 @@
 # Transcript corpus contribution and read contract
 
-The transcript system is a read/write immutable corpus. Automatic client
-contribution remains enabled with no consent or premium gate.
+The transcript system is a read/write immutable corpus. Client contribution is
+fail-closed and requires an explicit, persisted user opt-in before any
+transcript bytes, fingerprints, metadata, or sightings leave the device. The
+current client has no contribution-consent UI, so production enqueueing remains
+disabled until that choice and the deletion workflow ship together.
+
+Consent is separate from consent for a remote transcription provider. Before
+enqueueing, the client must also establish that the feed is public, requires no
+stored credentials, is not a private/local/imported source, and has no
+publisher or feed-level prohibition on corpus redistribution. Unknown
+eligibility is ineligible.
+
+Revoking consent stops new contributions immediately and removes all unsent
+contribution, sighting, and metadata jobs. Deleting a local transcript removes
+its unsent jobs. The consent UI must explain the retention policy for accepted
+immutable artifacts and provide the backend deletion/erasure request path for
+unreleased user-attributed candidates before upload can be enabled.
 
 ## Contribution pipeline
 
-After on-device transcription completes, the app uploads the transcript
-immediately. A successful response supplies a candidate ID, SHA-256, and a
+After an opted-in, eligible on-device transcription completes, the app uploads
+the transcript. A successful response supplies a candidate ID, SHA-256, and a
 cryptographically random candidate-scoped attachment token. Only the token hash
 is stored by the server and it is consumed once when the client later attaches
 summary and chapters through `POST /transcripts/contribute/metadata`.

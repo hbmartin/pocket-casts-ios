@@ -42,7 +42,10 @@ App Attest applies to:
 It does not apply to public catalog/search/discover, feed artwork, public share
 resolution, profile/podcast/episode HTML, AASA, `/health.html`, or `/livez`.
 Refresh exchange accepts either valid Bearer authentication or App Attest.
-Possession-only `POST /user/token/revoke` deliberately requires neither.
+`POST /user/token/revoke` deliberately requires neither Bearer authentication
+nor App Attest. Possession of an unbound refresh token is sufficient; a
+DPoP-bound refresh family additionally requires a proof whose key thumbprint
+matches the family's `jkt`.
 
 Required mode is a release operation, not a client toggle. It should be enabled
 only after a real production device enrolls and seven continuous telemetry days

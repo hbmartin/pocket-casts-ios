@@ -116,7 +116,7 @@ final class MixedDBFamiliesExample {
         }
     }
 
-    func mixedReadLegacyPlusOptionalExecute(uuid: String, dbQueue: GRDBQueue) {
+    func mixedReadLegacyPlusOptionalExecute(uuid _: String, dbQueue: GRDBQueue) {
         dbQueue.read { db in
             // ruleid: pocketcasts.no-mixed-db-api-families-in-db-closure, pocketcasts.no-new-raw-sql-in-data-managers
             try db.executeQuery("SELECT 1", values: nil)

@@ -766,6 +766,12 @@
 /* The episode failed to download but the app wasn't able to determine why. Suggesting to try again after waiting for a bit. */
 "download_error_try_again" = "Unable to download episode. Please try again later.";
 
+/* User-facing error shown when a streaming download exceeds its completion timeout. */
+"download_streaming_timed_out" = "The streaming download timed out.";
+
+/* User-facing error shown when a streaming download is cancelled before completion. */
+"download_streaming_cancelled" = "The streaming download was cancelled.";
+
 /* A common string used throughout the app. Informs the user the download has failed. */
 "download_failed" = "Download Failed";
 
@@ -7705,7 +7711,7 @@
 "social_find_contacts_consent_cta" = "Match my contacts";
 
 /* Body of the contacts consent alert — honest about the mechanics */
-"social_find_contacts_consent_body" = "Your contacts' email addresses and phone numbers are scrambled (hashed) on this device. Email hashes are compared once; phone hashes are currently ignored. Nothing is stored, and no one is notified. Only members who allow discovery can match.";
+"social_find_contacts_consent_body" = "Your contacts' email addresses and phone numbers are scrambled (hashed) on this device and compared once for matching. Nothing is stored, and no one is notified. Only members who allow discovery can match.";
 
 /* Row sharing the owner's Profile Link to invite a friend */
 "social_find_invite" = "Invite a friend";

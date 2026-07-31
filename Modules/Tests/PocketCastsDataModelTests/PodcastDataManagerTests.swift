@@ -877,28 +877,32 @@ final class PodcastDataManagerTests: DataManagerTestCase {
 
         for setting in [AutoAddToUpNextSetting.off, .addLast, .addFirst] {
             try runWithBothImplementations { dataManager, impl in
-                let uuid = "all-\(setting.rawValue)"
-                _ = self.createTestPodcast(
-                    uuid: uuid,
-                    syncStatus: SyncStatus.synced.rawValue,
-                    dataManager: dataManager
-                )
-                try dataManager.setPodcastSettingsForTest(
-                    podcastUuid: uuid,
-                    settings: #"{"futureField":{"value":"keep"}}"#
-                )
+                let uuids = ["all-\(setting.rawValue)-1", "all-\(setting.rawValue)-2"]
+                for uuid in uuids {
+                    _ = self.createTestPodcast(
+                        uuid: uuid,
+                        syncStatus: SyncStatus.synced.rawValue,
+                        dataManager: dataManager
+                    )
+                    try dataManager.setPodcastSettingsForTest(
+                        podcastUuid: uuid,
+                        settings: #"{"futureField":{"value":"keep"}}"#
+                    )
+                }
 
                 dataManager.saveAutoAddToUpNextForAllPodcasts(autoAddToUpNext: setting.rawValue)
 
-                let found = try XCTUnwrap(dataManager.findPodcast(uuid: uuid), "\(impl)")
-                XCTAssertEqual(found.autoAddToUpNext, setting.rawValue, "\(impl)")
-                XCTAssertEqual(found.syncStatus, SyncStatus.notSynced.rawValue, "\(impl)")
-                try self.assertAutoAddPayload(
-                    dataManager: dataManager,
-                    podcastUuid: uuid,
-                    setting: setting,
-                    context: impl
-                )
+                for uuid in uuids {
+                    let found = try XCTUnwrap(dataManager.findPodcast(uuid: uuid), "\(impl): \(uuid)")
+                    XCTAssertEqual(found.autoAddToUpNext, setting.rawValue, "\(impl): \(uuid)")
+                    XCTAssertEqual(found.syncStatus, SyncStatus.notSynced.rawValue, "\(impl): \(uuid)")
+                    try self.assertAutoAddPayload(
+                        dataManager: dataManager,
+                        podcastUuid: uuid,
+                        setting: setting,
+                        context: "\(impl): \(uuid)"
+                    )
+                }
             }
         }
     }
@@ -924,7 +928,9 @@ final class PodcastDataManagerTests: DataManagerTestCase {
             setting == .addFirst ? Int(UpNextPosition.top.rawValue) : Int(UpNextPosition.bottom.rawValue),
             context
         )
-        XCTAssertEqual(enabled["modifiedAt"] as? Double, position["modifiedAt"] as? Double, context)
+        let enabledModifiedAt = try XCTUnwrap(enabled["modifiedAt"] as? Double, "\(context): missing addToUpNext modifiedAt")
+        let positionModifiedAt = try XCTUnwrap(position["modifiedAt"] as? Double, "\(context): missing addToUpNextPosition modifiedAt")
+        XCTAssertEqual(enabledModifiedAt, positionModifiedAt, context)
         XCTAssertEqual((object["futureField"] as? [String: Any])?["value"] as? String, "keep", context)
     }
 

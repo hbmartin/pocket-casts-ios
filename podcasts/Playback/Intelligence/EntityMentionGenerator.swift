@@ -105,7 +105,7 @@ nonisolated struct EntityMentionGenerator: Sendable {
             result = Self.taggerResult(from: segments)
             shouldCache = !availability.isTransientlyUnavailable
         }
-        guard !result.mentions.isEmpty, !Task.isCancelled else { return nil }
+        guard !Task.isCancelled else { return nil }
 
         if shouldCache {
             store.save(result, episodeUuid: episodeUuid, fingerprint: fingerprint)
@@ -344,8 +344,7 @@ nonisolated struct OnDeviceEntityStore: Sendable {
         guard let data = try? Data(contentsOf: fileURL(episodeUuid: episodeUuid)),
               let payload = try? JSONDecoder().decode(StoredPayload.self, from: data),
               payload.schemaVersion == Self.schemaVersion,
-              payload.fingerprint == fingerprint,
-              !payload.result.mentions.isEmpty else { return nil }
+              payload.fingerprint == fingerprint else { return nil }
         return payload.result
     }
 

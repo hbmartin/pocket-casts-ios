@@ -566,29 +566,11 @@ class PodcastDataManager {
         dbQueue.write { db in
             do {
                 if FeatureFlag.newSettingsStorage.enabled {
-                    let modifiedAt = Date()
-                    let (enabledJsonString, positionJsonString) = try Self.autoAddJson(
+                    try Self.executeAutoAddUpdate(
                         setting: setting,
-                        modifiedAt: modifiedAt
-                    )
-
-                    let query = """
-                    UPDATE \(DataManager.podcastTableName)
-                    SET autoAddToUpNext = ?,
-                        settings = json_set(
-                            coalesce(nullif(settings, ''), json(?)),
-                            '$.addToUpNext',
-                            json(?),
-                            '$.addToUpNextPosition',
-                            json(?)
-                        ),
-                        syncStatus = \(SyncStatus.notSynced.rawValue)
-                    WHERE uuid = ?
-                    """
-                    // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - atomic json_set settings writer; Swift re-encode would drop unmodeled payload fields
-                    try db.execute(
-                        sql: query,
-                        arguments: [autoAddToUpNext, Self.defaultSettingsJsonString, enabledJsonString, positionJsonString, podcastUuid]
+                        whereClause: "uuid = ?",
+                        trailingArguments: [podcastUuid],
+                        db: db
                     )
                 } else {
                     try Podcast
@@ -685,27 +667,11 @@ class PodcastDataManager {
         dbQueue.write { db in
             do {
                 if FeatureFlag.newSettingsStorage.enabled {
-                    let (enabledJson, positionJson) = try Self.autoAddJson(
+                    try Self.executeAutoAddUpdate(
                         setting: setting,
-                        modifiedAt: Date()
-                    )
-                    let query = """
-                    UPDATE \(DataManager.podcastTableName)
-                    SET autoAddToUpNext = ?,
-                        settings = json_set(
-                            coalesce(nullif(settings, ''), json(?)),
-                            '$.addToUpNext',
-                            json(?),
-                            '$.addToUpNextPosition',
-                            json(?)
-                        ),
-                        syncStatus = \(SyncStatus.notSynced.rawValue)
-                    WHERE subscribed = 1
-                    """
-                    // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - atomic json_set settings writer preserves unmodeled payload fields
-                    try db.execute(
-                        sql: query,
-                        arguments: [autoAddToUpNext, Self.defaultSettingsJsonString, enabledJson, positionJson]
+                        whereClause: "subscribed = 1",
+                        trailingArguments: [],
+                        db: db
                     )
                 } else {
                     try Podcast
@@ -731,32 +697,12 @@ class PodcastDataManager {
         dbQueue.write { db in
             do {
                 if FeatureFlag.newSettingsStorage.enabled {
-                    let (enabledJson, positionJson) = try Self.autoAddJson(
+                    try Self.executeAutoAddUpdate(
                         setting: value,
-                        modifiedAt: Date()
+                        whereClause: "uuid IN (\(DBUtils.placeholders(amount: uuids.count)))",
+                        trailingArguments: uuids.map { $0 as (any DatabaseValueConvertible)? },
+                        db: db
                     )
-                    let query = """
-                    UPDATE \(DataManager.podcastTableName)
-                    SET autoAddToUpNext = ?,
-                        settings = json_set(
-                            coalesce(nullif(settings, ''), json(?)),
-                            '$.addToUpNext',
-                            json(?),
-                            '$.addToUpNextPosition',
-                            json(?)
-                        ),
-                        syncStatus = \(SyncStatus.notSynced.rawValue)
-                    WHERE uuid IN (\(DBUtils.placeholders(amount: uuids.count)))
-                    """
-                    var arguments: [(any DatabaseValueConvertible)?] = [
-                        value.rawValue,
-                        Self.defaultSettingsJsonString,
-                        enabledJson,
-                        positionJson,
-                    ]
-                    arguments.append(contentsOf: uuids.map { $0 as (any DatabaseValueConvertible)? })
-                    // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - atomic json_set settings writer preserves unmodeled payload fields
-                    try db.execute(sql: query, arguments: StatementArguments(arguments))
                 } else {
                     try Podcast
                         .filter(uuids.contains(Podcast.Columns.uuid))
@@ -809,6 +755,37 @@ class PodcastDataManager {
             throw JSONError.failedStringConvert("addToUpNextPosition", positionData)
         }
         return (enabled, position)
+    }
+
+    private static func executeAutoAddUpdate(
+        setting: AutoAddToUpNextSetting,
+        whereClause: String,
+        trailingArguments: [(any DatabaseValueConvertible)?],
+        db: Database
+    ) throws {
+        let (enabledJson, positionJson) = try autoAddJson(setting: setting, modifiedAt: Date())
+        let query = """
+        UPDATE \(DataManager.podcastTableName)
+        SET autoAddToUpNext = ?,
+            settings = json_set(
+                coalesce(nullif(settings, ''), json(?)),
+                '$.addToUpNext',
+                json(?),
+                '$.addToUpNextPosition',
+                json(?)
+            ),
+            syncStatus = \(SyncStatus.notSynced.rawValue)
+        WHERE \(whereClause)
+        """
+        var arguments: [(any DatabaseValueConvertible)?] = [
+            setting.rawValue,
+            defaultSettingsJsonString,
+            enabledJson,
+            positionJson,
+        ]
+        arguments.append(contentsOf: trailingArguments)
+        // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - one atomic json_set writer preserves unmodeled payload fields for all auto-add update scopes
+        try db.execute(sql: query, arguments: StatementArguments(arguments))
     }
 
     // NOTE: the json_set settings writers below (setOnAllPodcasts(settingName:),

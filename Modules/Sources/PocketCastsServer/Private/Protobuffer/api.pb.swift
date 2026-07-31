@@ -846,7 +846,6 @@ nonisolated struct Api_UserChangeResponse: Sendable {
 
   var message: String = String()
 
-  /// JSON name is camelCase in the client's nameMap (upstream quirk).
   var messageID: String = String()
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -9539,6 +9538,9 @@ nonisolated struct Api_UserResetPasswordRequest: Sendable {
   /// Fork-added fields use tags >= 1001 so upstream can never collide with them.
   var device: String = String()
 
+  /// Email is an established upstream field; changing its tag breaks the wire
+  /// contract with deployed servers even though the generated property name is
+  /// unchanged.
   var email: String = String()
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -12608,7 +12610,7 @@ nonisolated extension Api_UserChangePasswordRequest: SwiftProtobuf.Message, Swif
 
 nonisolated extension Api_UserChangeResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".UserChangeResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}message\0\u{1}messageId\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}success\0\u{1}message\0\u{3}message_id\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -23788,7 +23790,7 @@ nonisolated extension Api_UserPlaylistEpisodesRequest: SwiftProtobuf.Message, Sw
 
 nonisolated extension Api_UserResetPasswordRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".UserResetPasswordRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}reset_password_token\0\u{1}password\0\u{1}scope\0\u{2}f\u{f}device\0\u{1}email\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}reset_password_token\0\u{1}password\0\u{1}scope\0\u{1}email\0\u{2}e\u{f}device\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -23799,8 +23801,8 @@ nonisolated extension Api_UserResetPasswordRequest: SwiftProtobuf.Message, Swift
       case 1: try { try decoder.decodeSingularStringField(value: &self.resetPasswordToken) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.password) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.scope) }()
+      case 4: try { try decoder.decodeSingularStringField(value: &self.email) }()
       case 1001: try { try decoder.decodeSingularStringField(value: &self.device) }()
-      case 1002: try { try decoder.decodeSingularStringField(value: &self.email) }()
       default: break
       }
     }
@@ -23816,11 +23818,11 @@ nonisolated extension Api_UserResetPasswordRequest: SwiftProtobuf.Message, Swift
     if !self.scope.isEmpty {
       try visitor.visitSingularStringField(value: self.scope, fieldNumber: 3)
     }
+    if !self.email.isEmpty {
+      try visitor.visitSingularStringField(value: self.email, fieldNumber: 4)
+    }
     if !self.device.isEmpty {
       try visitor.visitSingularStringField(value: self.device, fieldNumber: 1001)
-    }
-    if !self.email.isEmpty {
-      try visitor.visitSingularStringField(value: self.email, fieldNumber: 1002)
     }
     try unknownFields.traverse(visitor: &visitor)
   }

@@ -115,6 +115,7 @@ final class AuthenticationHelperTests: XCTestCase {
 
     func testRequiredRefreshTokenPersistenceFailureClearsEntireIdentityState() throws {
         KeychainHelper.store = RejectingRefreshTokenKeychainStore()
+        ServerSettings.accountAuthMethod = .password
         let response = AuthenticationResponse(
             token: "access",
             uuid: "user-id",
@@ -137,6 +138,7 @@ final class AuthenticationHelperTests: XCTestCase {
         XCTAssertNil(try ServerSettings.refreshToken())
         XCTAssertNil(ServerSettings.userId)
         XCTAssertNil(ServerSettings.tokenExpiryDate())
+        XCTAssertNil(ServerSettings.accountAuthMethod)
     }
 
     func testEmptyRefreshTokenIsNotPersisted() throws {

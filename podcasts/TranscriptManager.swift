@@ -142,7 +142,14 @@ nonisolated class TranscriptManager {
                 // Sighting hook (docs/TranscriptContributions.md §1): report that
                 // this episode has a Provided transcript. Deduplicated per
                 // episode, Eligible episodes with token-free URLs only.
-                TranscriptContributionManager.noteSighting(episodeUuid: episodeUUID, podcastUuid: podcastUUID, transcriptUrl: transcript.url, format: transcript.type, language: transcript.language)
+                TranscriptContributionManager.noteSighting(
+                    episodeUuid: episodeUUID,
+                    podcastUuid: podcastUUID,
+                    transcriptUrl: transcript.url,
+                    format: transcript.type,
+                    language: transcript.language,
+                    hasConsent: TranscriptContributionConsent.isGranted
+                )
                 return model
             } catch TranscriptError.empty, TranscriptError.failedToParse {
                 transcriptsAvailable.removeAll { other in
