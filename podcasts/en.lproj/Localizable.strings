@@ -4598,6 +4598,33 @@
 /* Spoken after the last tour stop. */
 "tour_outro_line" = "That's the tour.";
 
+/* Title of the Mentioned Books directory (Profile tab). */
+"book_directory_title" = "Mentioned Books";
+
+/* Empty state title for the books directory. */
+"book_directory_empty_title" = "No books yet";
+
+/* Empty state message for the books directory. */
+"book_directory_empty_message" = "Books mentioned in episodes you view will collect here.";
+
+/* Book row subtitle when the book was mentioned in exactly one episode. */
+"book_directory_episode_count_singular" = "Mentioned in 1 episode";
+
+/* Book row subtitle; placeholder is the number of episodes mentioning it. */
+"book_directory_episode_count_plural" = "Mentioned in %1$@ episodes";
+
+/* Section header listing where an entity appears. */
+"entity_detail_appearances" = "Appearances";
+
+/* Line when exactly one show the user follows mentioned this entity. */
+"entity_detail_followed_shows_singular" = "1 show you follow mentioned this";
+
+/* Line with the number of followed shows mentioning this entity. */
+"entity_detail_followed_shows_plural" = "%1$@ shows you follow mentioned this";
+
+/* Appearance subtitle with the mention's timestamp. Placeholder is a play time like 34:12. */
+"entity_detail_mentioned_at" = "Mentioned at %1$@";
+
 /* Label for displaying the number of bookmarks the user has when the bookmark count is equal to one */
 "bookmarks_count_singular" = "1 bookmark";
 

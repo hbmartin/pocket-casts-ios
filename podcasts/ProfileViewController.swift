@@ -72,7 +72,7 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     private let settingsCellId = "SettingsCell"
 
-    enum TableRow { case informationalBanner, fileSyncBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks, peopleDirectory, socialProfile, socialInbox, socialLists, socialGroups }
+    enum TableRow { case informationalBanner, fileSyncBanner, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, bookmarks, peopleDirectory, bookDirectory, socialProfile, socialInbox, socialLists, socialGroups }
 
     private lazy var informationalBannerCoordinator: InformationalBannerViewCoordinator = {
         let viewModel = InformationalBannerViewModel(bannerType: .profile)
@@ -371,6 +371,9 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         case .peopleDirectory:
             cell.settingsImage.image = UIImage(systemName: "person.2")
             cell.settingsLabel.text = L10n.peopleDirectoryTitle
+        case .bookDirectory:
+            cell.settingsImage.image = UIImage(systemName: "book.closed")
+            cell.settingsLabel.text = L10n.bookDirectoryTitle
         }
 
         return cell
@@ -431,6 +434,9 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         case .peopleDirectory:
             let directoryController = ThemedHostingController(rootView: PersonDirectoryView())
             navigationController?.pushViewController(directoryController, animated: true)
+        case .bookDirectory:
+            let booksController = ThemedHostingController(rootView: NavigationStack { BookDirectoryView() })
+            navigationController?.pushViewController(booksController, animated: true)
         case .socialProfile:
             if SocialIdentityStore.isJoined, let navigationController {
                 SocialCoordinator.pushOwnProfile(on: navigationController)
@@ -494,6 +500,11 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
         if FeatureFlag.speakerDirectory.enabled, let bookmarksIndex = data[0].firstIndex(of: .bookmarks) {
             data[0].insert(.peopleDirectory, at: bookmarksIndex + 1)
+        }
+
+        // Mentioned Books (Highlights S11): needs the entity substrate.
+        if FeatureFlag.mentionedEntityIndex.enabled, let anchorIndex = data[0].firstIndex(of: .peopleDirectory) ?? data[0].firstIndex(of: .bookmarks) {
+            data[0].insert(.bookDirectory, at: anchorIndex + 1)
         }
 
         // The social CTA/entry row: "Claim your @handle" before joining, the

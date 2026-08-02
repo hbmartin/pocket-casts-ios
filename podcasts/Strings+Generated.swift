@@ -486,6 +486,18 @@ nonisolated internal enum L10n {
   }
   /// Title of a message thanking the user for being a beta tester
   internal static var betaThankYou: String { return L10n.tr("Localizable", "beta_thank_you", fallback: "Thank you for beta testing!") }
+  /// Empty state message for the books directory.
+  internal static var bookDirectoryEmptyMessage: String { return L10n.tr("Localizable", "book_directory_empty_message", fallback: "Books mentioned in episodes you view will collect here.") }
+  /// Empty state title for the books directory.
+  internal static var bookDirectoryEmptyTitle: String { return L10n.tr("Localizable", "book_directory_empty_title", fallback: "No books yet") }
+  /// Book row subtitle; placeholder is the number of episodes mentioning it.
+  internal static func bookDirectoryEpisodeCountPlural(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "book_directory_episode_count_plural", String(describing: p1), fallback: "Mentioned in %1$@ episodes")
+  }
+  /// Book row subtitle when the book was mentioned in exactly one episode.
+  internal static var bookDirectoryEpisodeCountSingular: String { return L10n.tr("Localizable", "book_directory_episode_count_singular", fallback: "Mentioned in 1 episode") }
+  /// Title of the Mentioned Books directory (Profile tab).
+  internal static var bookDirectoryTitle: String { return L10n.tr("Localizable", "book_directory_title", fallback: "Mentioned Books") }
   /// A message that appears to inform the user their bookmark is added
   internal static var bookmarkAdded: String { return L10n.tr("Localizable", "bookmark_added", fallback: "Bookmark added") }
   /// Title of a button that allows the user to view their bookmarks
@@ -1126,6 +1138,18 @@ nonisolated internal enum L10n {
   internal static var editClip: String { return L10n.tr("Localizable", "edit_clip", fallback: "Edit clip") }
   /// Button label for a feature that the user can enable
   internal static var enableItNow: String { return L10n.tr("Localizable", "enable_it_now", fallback: "Enable it now") }
+  /// Section header listing where an entity appears.
+  internal static var entityDetailAppearances: String { return L10n.tr("Localizable", "entity_detail_appearances", fallback: "Appearances") }
+  /// Line with the number of followed shows mentioning this entity.
+  internal static func entityDetailFollowedShowsPlural(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "entity_detail_followed_shows_plural", String(describing: p1), fallback: "%1$@ shows you follow mentioned this")
+  }
+  /// Line when exactly one show the user follows mentioned this entity.
+  internal static var entityDetailFollowedShowsSingular: String { return L10n.tr("Localizable", "entity_detail_followed_shows_singular", fallback: "1 show you follow mentioned this") }
+  /// Appearance subtitle with the mention's timestamp. Placeholder is a play time like 34:12.
+  internal static func entityDetailMentionedAt(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "entity_detail_mentioned_at", String(describing: p1), fallback: "Mentioned at %1$@")
+  }
   /// Description shown on the final End of Year story for 2024
   internal static var eoy2024EpilogueDescription: String { return L10n.tr("Localizable", "eoy_2024_epilogue_description", fallback: "Don’t forget to share with friends and give a shout out to your favourite podcasts and creators.") }
   /// Title shown on the final End of Year story for 2024
