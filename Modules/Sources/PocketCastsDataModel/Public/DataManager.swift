@@ -29,6 +29,7 @@ public class DataManager {
     public let networkDataUsageManager: NetworkDataUsageManager
     public let transcriptions: TranscriptionDataManager
     public let transcriptSearch: TranscriptSearchDataManager
+    public let salientSegments: SalientSegmentDataManager
     public let pendingTranscriptUploads: PendingTranscriptUploadDataManager
     public let transcriptEmbeddings: TranscriptEmbeddingDataManager
     public let socialGraph: SocialGraphStore
@@ -106,6 +107,7 @@ public class DataManager {
         networkDataUsageManager = NetworkDataUsageManager(dbQueue: dbQueue)
         transcriptions = TranscriptionDataManager(dbQueue: dbQueue)
         transcriptSearch = TranscriptSearchDataManager(dbQueue: dbQueue)
+        salientSegments = SalientSegmentDataManager(dbQueue: dbQueue)
         pendingTranscriptUploads = PendingTranscriptUploadDataManager(dbQueue: dbQueue)
         transcriptEmbeddings = TranscriptEmbeddingDataManager(dbQueue: dbQueue, isAvailable: transcriptSearch.isAvailable)
         socialGraph = SocialGraphStore(dbQueue: dbQueue)

@@ -1493,6 +1493,12 @@ final class PlaybackManager {
             endBackgroundTask()
         }
 
+        // Suggested Highlights (S8): a finished episode is provably heard, so
+        // queue it for a salient-segment scan (battery-gated, deduped inside).
+        if let finishedUuid = currentEpisode()?.uuid {
+            SuggestedHighlightScanner.shared.episodeDidComplete(episodeUuid: finishedUuid)
+        }
+
         cancelUpdateTimer()
         seekingTo = PlaybackManager.notSeeking
         chapterManager.clearChapterInfo()

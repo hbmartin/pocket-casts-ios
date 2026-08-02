@@ -85,6 +85,9 @@ struct BookmarksListView<ListStyle: BookmarksStyle>: View {
                 .padding(.bottom, BookmarkListConstants.searchFieldBottomPadding)
             }
 
+            // Suggested Highlights review strip (S8): hidden unless pending.
+            SuggestedHighlightsSection(style: style)
+
             if viewModel.bookmarks.isEmpty {
                 emptyView
             } else {

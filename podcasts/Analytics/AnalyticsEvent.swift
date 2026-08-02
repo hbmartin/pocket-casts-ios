@@ -862,6 +862,9 @@ enum AnalyticsEvent: String {
     case readwiseEnabled
     case readwiseDisabled
     case readwisePushed
+    case suggestedHighlightsGenerated
+    case suggestedHighlightAccepted
+    case suggestedHighlightDismissed
 
     // MARK: - People Directory
 

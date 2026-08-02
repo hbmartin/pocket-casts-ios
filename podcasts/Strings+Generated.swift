@@ -5337,6 +5337,12 @@ nonisolated internal enum L10n {
   internal static var suggestedFoldersTitle: String { return L10n.tr("Localizable", "suggested_folders_title", fallback: "Smart Folders") }
   /// Suggested Folders button title to accept suggested folders
   internal static var suggestedFoldersUseSuggestedFolders: String { return L10n.tr("Localizable", "suggested_folders_use_suggested_folders", fallback: "Use these folders") }
+  /// Accessibility label for dismissing a suggested highlight.
+  internal static var suggestedHighlightDismiss: String { return L10n.tr("Localizable", "suggested_highlight_dismiss", fallback: "Dismiss suggestion") }
+  /// Accessibility label for accepting a suggested highlight.
+  internal static var suggestedHighlightKeep: String { return L10n.tr("Localizable", "suggested_highlight_keep", fallback: "Keep highlight") }
+  /// Header of the review strip listing machine-suggested highlights.
+  internal static var suggestedHighlightsTitle: String { return L10n.tr("Localizable", "suggested_highlights_title", fallback: "Suggested Highlights") }
   /// A label used to identify that a user is a supporter of the selected podcast.
   internal static var supporter: String { return L10n.tr("Localizable", "supporter", fallback: "Supporter") }
   /// Menu option to open details on available podcast supporter contribution options.

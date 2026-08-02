@@ -179,6 +179,12 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// weakened; other generators keep fixed prompts.
     case highlightPromptStyles
 
+    /// Suggested Highlights (Highlights program S8, ADR-0018): finished
+    /// episodes are scanned on device for salient segments; the top ranks land
+    /// in a review queue where accepting creates a real highlight. One cached
+    /// generation per episode also feeds the Highlights Tour (S9).
+    case suggestedHighlights
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -275,6 +281,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             BuildEnvironment.current != .appStore
         case .highlightPromptStyles:
             BuildEnvironment.current != .appStore
+        case .suggestedHighlights:
+            BuildEnvironment.current != .appStore
         }
     }
 
@@ -368,6 +376,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             "Pushes new and edited highlights to your Readwise account (token entered in Settings > Highlights, stored in the Keychain). Low risk."
         case .highlightPromptStyles:
             "Choose how AI writes highlight titles: presets (atomic note, question-first, quote-only, punchy) plus an optional free-text style preference. Only affects highlight titling. Low risk."
+        case .suggestedHighlights:
+            "Scans episodes you finish for their best moments on device and suggests them as highlights to keep or dismiss. Battery-policy gated. Medium risk."
         }
     }
 

@@ -119,6 +119,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Readwise push (Highlights S6): no-op until a token is stored.
         ReadwiseSyncManager.shared.startObservingIfNeeded()
 
+        // Suggested Highlights (S8): drain any episodes queued while deferred.
+        SuggestedHighlightScanner.shared.kickAfterLaunch()
+
         NotificationsHelper.shared.register(checkToken: false)
 
         DispatchQueue.global().async { [weak self] in

@@ -4550,6 +4550,15 @@
 /* Highlight title style: as short and punchy as possible. */
 "highlight_style_punchy" = "Punchy";
 
+/* Header of the review strip listing machine-suggested highlights. */
+"suggested_highlights_title" = "Suggested Highlights";
+
+/* Accessibility label for accepting a suggested highlight. */
+"suggested_highlight_keep" = "Keep highlight";
+
+/* Accessibility label for dismissing a suggested highlight. */
+"suggested_highlight_dismiss" = "Dismiss suggestion";
+
 /* Label for displaying the number of bookmarks the user has when the bookmark count is equal to one */
 "bookmarks_count_singular" = "1 bookmark";
 

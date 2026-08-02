@@ -375,6 +375,45 @@ class DatabaseHelper {
             try db.executeUpdate("""
             CREATE INDEX IF NOT EXISTS bookmark_tag_tag ON BookmarkTag (tag);
             """, values: nil)
+        },
+
+        // Highlights program S8 (ADR-0018): salient segments — one on-device
+        // generation per episode serving BOTH the Highlights Tour and Suggested
+        // Highlights. Stored in the DB (not Caches) because suggestionStatus is
+        // user state: a dismissed suggestion that resurrects after a cache purge
+        // is a bug. Device-local, never syncs; accepting a suggestion creates a
+        // Bookmark (which syncs) and records its uuid here.
+        SchemaMigration(toVersion: 88) { db in
+            try db.executeUpdate("""
+            CREATE TABLE IF NOT EXISTS SalientSegment (
+                episodeUuid TEXT NOT NULL,
+                rank INTEGER NOT NULL,
+                startTime REAL NOT NULL,
+                endTime REAL NOT NULL,
+                title TEXT NOT NULL DEFAULT '',
+                score INTEGER NOT NULL DEFAULT 0,
+                excerpt TEXT,
+                suggestionStatus INTEGER NOT NULL DEFAULT 0,
+                bookmarkUuid TEXT,
+                PRIMARY KEY (episodeUuid, rank)
+            );
+            """, values: nil)
+            // The review queue's "pending suggestions across episodes" query.
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS salient_segment_status
+            ON SalientSegment (suggestionStatus, episodeUuid);
+            """, values: nil)
+            try db.executeUpdate("""
+            CREATE TABLE IF NOT EXISTS SalientSegmentMeta (
+                episodeUuid TEXT PRIMARY KEY,
+                podcastUuid TEXT,
+                outcome INTEGER NOT NULL DEFAULT 0,
+                transcriptSource TEXT NOT NULL DEFAULT '',
+                generatorVersion INTEGER NOT NULL DEFAULT 0,
+                generatedAt REAL NOT NULL DEFAULT 0,
+                segmentCount INTEGER NOT NULL DEFAULT 0
+            );
+            """, values: nil)
         }
     ]
 
