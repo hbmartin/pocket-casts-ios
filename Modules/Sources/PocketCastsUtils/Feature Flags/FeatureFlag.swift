@@ -190,6 +190,11 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// spoken transitions (pause → speak → seek → resume). Player shelf action.
     case highlightsTour
 
+    /// Caption burn-in for shared video clips (Highlights program S13):
+    /// cue-level transcript captions rendered onto exported clips via a
+    /// Core Animation overlay on the export composition.
+    case clipCaptions
+
     /// Person follows (Highlights program S12, ADR-0017): follow a person
     /// (host/guest) and get a push when they appear on any newly ingested
     /// episode, catalog-wide. Ships DARK — backend milestone B2 must be live
@@ -307,6 +312,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             BuildEnvironment.current != .appStore
         case .personFollows:
             BuildEnvironment.current != .appStore
+        case .clipCaptions:
+            BuildEnvironment.current != .appStore
         }
     }
 
@@ -408,6 +415,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             "Builds a local index of people and books from episode credits, renamed speakers and transcript mentions, powering library-wide directories. Low risk."
         case .personFollows:
             "Follow people (hosts, guests) and get notified when they appear on any show the server ingests. Ships dark - requires backend milestone B2 in production; enabling early will fail. Medium risk."
+        case .clipCaptions:
+            "Burns transcript captions into shared video clips when the episode has a transcript. Low risk."
         }
     }
 

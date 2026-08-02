@@ -233,7 +233,22 @@ extension ShareDestination {
         func exportVideo() async throws -> URL {
             let size = CGSize(width: style.previewSize.width, height: style.previewSize.height)
 
-            let parameters = await VideoExporter.Parameters(duration: CMTimeGetSeconds(duration), size: size, scale: scale, episodeAsset: playerItem.asset, audioStartTime: startTime, audioDuration: duration, fileType: .mp4)
+            // Burned-in captions (Highlights S13): cue text over the clip window,
+            // flag-gated and best-effort (no transcript = no overlay).
+            var captions: [CaptionOverlayBuilder.Caption] = []
+            if FeatureFlag.clipCaptions.enabled {
+                let transcriptManager = TranscriptManager(episodeUUID: episode.uuid, podcastUUID: episode.parentIdentifier())
+                if let model = try? await transcriptManager.loadTranscript(), !model.cues.isEmpty {
+                    captions = CaptionOverlayBuilder.captions(
+                        cues: model.cues,
+                        plainText: model.plainText,
+                        clipStart: CMTimeGetSeconds(startTime),
+                        clipDuration: CMTimeGetSeconds(duration)
+                    )
+                }
+            }
+
+            let parameters = await VideoExporter.Parameters(duration: CMTimeGetSeconds(duration), size: size, scale: scale, episodeAsset: playerItem.asset, audioStartTime: startTime, audioDuration: duration, fileType: .mp4, captions: captions)
             try await VideoExporter.export(view: AnimatedShareImageView(info: info, style: style, size: size), with: parameters, to: url, progress: progress)
 
             return url

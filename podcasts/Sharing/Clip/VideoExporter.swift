@@ -23,6 +23,8 @@ enum VideoExporter {
         let audioDuration: CMTime
         let additionalLoadingCount: Int64 = 50
         let fileType: AVFileType
+        /// Burned-in captions (Highlights S13); empty = no overlay composition.
+        var captions: [CaptionOverlayBuilder.Caption] = []
     }
 
     enum ExportError: Error {
@@ -56,7 +58,7 @@ enum VideoExporter {
             let composition = try await createFinalComposition(from: temporaryFileURL, with: parameters, to: outputURL, progress: compositionProgress)
 
             let exportProgress = Progress(totalUnitCount: 100, parent: progress, pendingUnitCount: 30)
-            try await exportFinalComposition(composition, to: outputURL, duration: parameters.duration, fileType: parameters.fileType, progress: exportProgress)
+            try await exportFinalComposition(composition, to: outputURL, with: parameters, progress: exportProgress)
 
             // Clean up temporary file
             try? FileManager.default.removeItem(at: temporaryFileURL)
@@ -182,13 +184,48 @@ enum VideoExporter {
     }
 
     // Part of Step 2 of video export to export the final file
-    private static func exportFinalComposition(_ composition: AVComposition, to outputURL: URL, duration: Double, fileType: AVFileType, progress: Progress) async throws {
+    private static func exportFinalComposition(_ composition: AVComposition, to outputURL: URL, with parameters: Parameters, progress: Progress) async throws {
         guard Task.isCancelled == false else {
             throw ExportError.taskCancelled
         }
 
+        let duration = parameters.duration
+        let fileType = parameters.fileType
+
         guard let exportSession = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetHighestQuality) else {
             throw ExportError.failedToCreateExportSession
+        }
+
+        // Burned-in captions (S13): the SwiftUI frame render is a 5s loop and
+        // can't carry time-varying text, so captions ride a Core Animation
+        // overlay on the composition instead — accurate across the full clip.
+        // Synchronous track access: the composition was assembled locally, and
+        // the async loadTracks overload would send the non-Sendable composition
+        // across an isolation boundary.
+        if !parameters.captions.isEmpty,
+           let videoTrack = composition.tracks(withMediaType: .video).first {
+            let renderSize = CGSize(width: parameters.size.width * parameters.scale,
+                                    height: parameters.size.height * parameters.scale)
+
+            let videoLayer = CALayer()
+            videoLayer.frame = CGRect(origin: .zero, size: renderSize)
+            let outputLayer = CALayer()
+            outputLayer.frame = CGRect(origin: .zero, size: renderSize)
+            outputLayer.addSublayer(videoLayer)
+            outputLayer.addSublayer(CaptionOverlayBuilder.overlayLayer(captions: parameters.captions, renderSize: renderSize))
+
+            let videoComposition = AVMutableVideoComposition()
+            videoComposition.renderSize = renderSize
+            videoComposition.frameDuration = CMTime(value: 1, timescale: CMTimeScale(parameters.fps))
+            videoComposition.animationTool = AVVideoCompositionCoreAnimationTool(
+                postProcessingAsVideoLayer: videoLayer, in: outputLayer)
+
+            let instruction = AVMutableVideoCompositionInstruction()
+            instruction.timeRange = CMTimeRange(start: .zero, duration: CMTime(seconds: duration, preferredTimescale: 600))
+            instruction.layerInstructions = [AVMutableVideoCompositionLayerInstruction(assetTrack: videoTrack)]
+            videoComposition.instructions = [instruction]
+
+            exportSession.videoComposition = videoComposition
         }
 
         exportSession.timeRange = CMTimeRange(start: .zero, duration: CMTime(seconds: duration, preferredTimescale: 600))
