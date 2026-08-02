@@ -427,11 +427,26 @@ public enum MergeEngine {
         // Smart-highlight enrichment: stamped LWW like title. Two devices can
         // compute different excerpts for the same bookmark, and a first-writer
         // fill-in would make the winner depend on replay/snapshot order.
-        take(1000, incoming.hasExcerpt, embeddedMs: 0) {
+        // A user trim is authoritative (ADR-0016): once the merged record
+        // carries a trim stamp, machine ops can never touch the window, in any
+        // replay order — trims replay via take(1002) below, whose stamp is the
+        // trim's own wall clock, so trim-vs-trim is order-independent too.
+        let machineOpsBlocked = merged.record.hasTrimModified || incoming.hasTrimModified
+        take(1000, incoming.hasExcerpt && !machineOpsBlocked, embeddedMs: 0) {
             $0.excerpt = incoming.excerpt
         }
-        take(1001, incoming.hasEndTime, embeddedMs: 0) {
+        take(1001, incoming.hasEndTime && !machineOpsBlocked, embeddedMs: 0) {
             $0.endTime = incoming.endTime
+        }
+        take(1002, incoming.hasTrimModified, embeddedMs: incoming.trimModified.value) {
+            $0.excerpt = incoming.excerpt
+            $0.endTime = incoming.endTime
+            $0.trimModified = incoming.trimModified
+        }
+        // Tags: the whole set replaces together, LWW by the tag stamp.
+        take(1003, incoming.hasTagsModified, embeddedMs: incoming.tagsModified.value) {
+            $0.tags = incoming.tags
+            $0.tagsModified = incoming.tagsModified
         }
 
         records[incoming.bookmarkUuid] = merged
@@ -512,22 +527,43 @@ public enum MergeEngine {
             // Title/isDeleted carry their stamps inline and the creation fields
             // are first-writer, so the base record replays as one op; the
             // enrichment fields replay with their persisted snapshot stamps so
-            // fold and live replay pick the same winner.
+            // fold and live replay pick the same winner. A trimmed window
+            // (ADR-0016) replays as one trim op — its excerpt/endTime belong to
+            // the trim, never to the machine-enrichment fields.
             var base = bookmark
             base.clearExcerpt()
             base.clearEndTime()
+            base.clearTrimModified()
+            base.tags = []
+            base.clearTagsModified()
             merge(bookmark: base, stamp: fallback, into: &state.bookmarks)
-            if bookmark.hasExcerpt {
+            if bookmark.hasTrimModified {
                 var single = Api_SyncUserBookmark()
                 single.bookmarkUuid = bookmark.bookmarkUuid
                 single.excerpt = bookmark.excerpt
-                merge(bookmark: single, stamp: stampFor(1000), into: &state.bookmarks)
+                single.endTime = bookmark.endTime
+                single.trimModified = bookmark.trimModified
+                merge(bookmark: single, stamp: stampFor(1002), into: &state.bookmarks)
+            } else {
+                if bookmark.hasExcerpt {
+                    var single = Api_SyncUserBookmark()
+                    single.bookmarkUuid = bookmark.bookmarkUuid
+                    single.excerpt = bookmark.excerpt
+                    merge(bookmark: single, stamp: stampFor(1000), into: &state.bookmarks)
+                }
+                if bookmark.hasEndTime {
+                    var single = Api_SyncUserBookmark()
+                    single.bookmarkUuid = bookmark.bookmarkUuid
+                    single.endTime = bookmark.endTime
+                    merge(bookmark: single, stamp: stampFor(1001), into: &state.bookmarks)
+                }
             }
-            if bookmark.hasEndTime {
+            if bookmark.hasTagsModified {
                 var single = Api_SyncUserBookmark()
                 single.bookmarkUuid = bookmark.bookmarkUuid
-                single.endTime = bookmark.endTime
-                merge(bookmark: single, stamp: stampFor(1001), into: &state.bookmarks)
+                single.tags = bookmark.tags
+                single.tagsModified = bookmark.tagsModified
+                merge(bookmark: single, stamp: stampFor(1003), into: &state.bookmarks)
             }
         case .device?, nil:
             break

@@ -144,6 +144,13 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// see docs/Social.md and ADR-0005/0006/0007.
     case socialProfiles
 
+    /// Account sync for the highlight fields on bookmarks: excerpt/endTime,
+    /// user trims (trim_modified) and tags (tags/tags_modified) ride
+    /// SyncUserBookmark as fork fields >= 1001 and are restored by full sync.
+    /// Ships DARK — backend milestone B1 must be live in production first
+    /// (remote key `highlight_account_sync` is the kill switch); see ADR-0016.
+    case highlightAccountSync
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -228,6 +235,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             BuildEnvironment.current != .appStore
         case .socialProfiles:
             BuildEnvironment.current != .appStore
+        case .highlightAccountSync:
+            BuildEnvironment.current != .appStore
         }
     }
 
@@ -309,6 +318,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             "'Mentioned in this episode' card extracting people, books, products, websites and places from the transcript with tap-to-seek links, generated on device. Medium risk."
         case .socialProfiles:
             "Social identity foundation: opt-in public profiles with an immutable @handle (pca.st/u/<handle>), per-field privacy, and block/mute/report. Ships dark — requires the social backend to be live in production; enabling early will fail. High risk."
+        case .highlightAccountSync:
+            "Syncs highlight excerpts, trims and tags on bookmarks with your account. Requires backend milestone B1 to be live; until then these fields stay device-local while titles keep syncing. Medium risk."
         }
     }
 

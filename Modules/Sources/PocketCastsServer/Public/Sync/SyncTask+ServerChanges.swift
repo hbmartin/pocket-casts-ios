@@ -446,7 +446,9 @@ extension SyncTask {
                                                     dateCreated: apiBookmark.createdAt.date,
                                                     syncStatus: .synced)
 
-                if addedUuid == nil {
+                if let addedUuid {
+                    await applyHighlightFields(from: apiBookmark, to: bookmarkManager.bookmark(for: addedUuid))
+                } else {
                     FileLog.shared.addMessage("SyncTask: Import Bookmark Failed: Could not add non existent bookmark. API data: \(apiBookmark.logDescription)")
                 }
             }
@@ -475,6 +477,60 @@ extension SyncTask {
         await bookmarkManager.update(bookmark: existingBookmark, title: title, time: time, created: created, syncStatus: .synced).when(false) {
             FileLog.shared.addMessage("SyncTask: Update Bookmark Failed. API Data: \(apiBookmark.logDescription)")
         }
+
+        await applyHighlightFields(from: apiBookmark, to: existingBookmark)
+    }
+
+    /// Applies the incoming highlight fields (ADR-0016) with the same merge
+    /// rules the backend uses: a trim (window + stamp) merges LWW against the
+    /// local trim stamp and beats machine-derived state; machine enrichment
+    /// only fills an untrimmed, empty window (`updateEnrichment` additionally
+    /// re-checks the trim guard at the write); tags replace as a whole set,
+    /// LWW by their stamp.
+    private func applyHighlightFields(from apiBookmark: Api_SyncUserBookmark, to bookmark: Bookmark?) async {
+        guard FeatureFlag.highlightAccountSync.enabled, let bookmark else { return }
+
+        let bookmarkManager = dataManager.bookmarks
+
+        if let incomingTrim = apiBookmark.trimModifiedDate,
+           let excerpt = apiBookmark.highlightExcerpt {
+            if incomingTrim.isAfter(bookmark.trimModified) {
+                await bookmarkManager.updateTrim(uuid: bookmark.uuid,
+                                                 excerpt: excerpt,
+                                                 endTime: apiBookmark.highlightEndTime ?? bookmark.time,
+                                                 trimModified: incomingTrim,
+                                                 syncStatus: .synced).when(false) {
+                    FileLog.shared.addMessage("SyncTask: Import Bookmark trim failed. API Data: \(apiBookmark.logDescription)")
+                }
+            }
+        } else if bookmark.excerpt == nil, bookmark.trimModified == nil,
+                  let excerpt = apiBookmark.highlightExcerpt {
+            await bookmarkManager.updateEnrichment(uuid: bookmark.uuid,
+                                                   excerpt: excerpt,
+                                                   endTime: apiBookmark.highlightEndTime,
+                                                   syncStatus: .synced).when(false) {
+                FileLog.shared.addMessage("SyncTask: Import Bookmark enrichment failed. API Data: \(apiBookmark.logDescription)")
+            }
+        }
+
+        if let incomingTags = apiBookmark.tagsModifiedDate, incomingTags.isAfter(bookmark.tagsModified) {
+            await bookmarkManager.setTags(uuid: bookmark.uuid,
+                                          tags: apiBookmark.tags,
+                                          modified: incomingTags,
+                                          syncStatus: .synced).when(false) {
+                FileLog.shared.addMessage("SyncTask: Import Bookmark tags failed. API Data: \(apiBookmark.logDescription)")
+            }
+        }
+    }
+}
+
+private extension Date {
+    /// Strictly-newer comparison against an optional stored stamp, at the
+    /// millisecond resolution the wire uses (sub-millisecond drift from the
+    /// seconds<->ms round trip must not defeat idempotent re-imports).
+    func isAfter(_ other: Date?) -> Bool {
+        guard let other else { return true }
+        return Int64(timeIntervalSince1970 * 1000) > Int64(other.timeIntervalSince1970 * 1000)
     }
 }
 
@@ -500,6 +556,26 @@ private extension Api_SyncUserBookmark {
 
     var created: Date? {
         hasCreatedAt ? createdAt.date : nil
+    }
+
+    // MARK: Highlight fields (ADR-0016)
+
+    var highlightExcerpt: String? {
+        hasExcerpt && !excerpt.value.isEmpty ? excerpt.value : nil
+    }
+
+    var highlightEndTime: TimeInterval? {
+        guard hasEndTime else { return nil }
+        let time = endTime.value
+        return time.isNumeric ? time : nil
+    }
+
+    var trimModifiedDate: Date? {
+        hasTrimModified ? Date(timeIntervalSince1970: TimeInterval(trimModified.value) / 1000) : nil
+    }
+
+    var tagsModifiedDate: Date? {
+        hasTagsModified ? Date(timeIntervalSince1970: TimeInterval(tagsModified.value) / 1000) : nil
     }
 
     var logDescription: String {

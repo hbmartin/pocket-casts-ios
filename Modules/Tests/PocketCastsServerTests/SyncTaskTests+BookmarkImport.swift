@@ -104,6 +104,76 @@ final class SyncTaskTests_BookmarkImport: XCTestCase {
         XCTAssertEqual(updatedTitle, dbBookmark?.title)
     }
 
+    // MARK: - Highlight fields (ADR-0016)
+
+    func testImportAppliesTrimAndTagsToExistingBookmark() async {
+        let bookmark = addBookmark(time: 2)
+
+        var apiBookmark = Api_SyncUserBookmark.fromBookmark(bookmark)
+        apiBookmark.excerpt.value = "trimmed remotely"
+        apiBookmark.endTime.value = 44
+        apiBookmark.trimModified.value = 5_000_000
+        apiBookmark.tags = ["ai", "investing"]
+        apiBookmark.tagsModified.value = 5_000_000
+
+        await syncTask.importBookmark(apiBookmark)
+
+        let imported = bookmarkManager.bookmark(for: bookmark.uuid)
+        XCTAssertEqual(imported?.excerpt, "trimmed remotely")
+        XCTAssertEqual(imported?.endTime, 44)
+        XCTAssertEqual(imported?.trimModified, Date(timeIntervalSince1970: 5000))
+        XCTAssertEqual(imported?.tags, ["ai", "investing"])
+    }
+
+    func testImportedMachineExcerptFillsButNeverOverwrites() async {
+        let bookmark = addBookmark(time: 2)
+
+        var first = Api_SyncUserBookmark.fromBookmark(bookmark)
+        first.excerpt.value = "first machine"
+        first.endTime.value = 10
+        await syncTask.importBookmark(first)
+        XCTAssertEqual(bookmarkManager.bookmark(for: bookmark.uuid)?.excerpt, "first machine")
+
+        var second = Api_SyncUserBookmark.fromBookmark(bookmark)
+        second.excerpt.value = "second machine"
+        second.endTime.value = 20
+        await syncTask.importBookmark(second)
+        XCTAssertEqual(bookmarkManager.bookmark(for: bookmark.uuid)?.excerpt, "first machine",
+                       "machine enrichment over account sync is fill-once")
+    }
+
+    func testImportedStaleTrimLosesToNewerLocalTrim() async {
+        let bookmark = addBookmark(time: 2)
+        _ = await bookmarkManager.updateTrim(uuid: bookmark.uuid, excerpt: "newer local", endTime: 30,
+                                             trimModified: Date(timeIntervalSince1970: 9000))
+
+        var apiBookmark = Api_SyncUserBookmark.fromBookmark(bookmark)
+        apiBookmark.excerpt.value = "older remote"
+        apiBookmark.endTime.value = 15
+        apiBookmark.trimModified.value = 1_000_000 // 1000s — older
+
+        await syncTask.importBookmark(apiBookmark)
+
+        XCTAssertEqual(bookmarkManager.bookmark(for: bookmark.uuid)?.excerpt, "newer local")
+    }
+
+    func testImportedBookmarkAddsWithTrimAndTags() async {
+        let uuid = UUID().uuidString
+        var apiBookmark = Api_SyncUserBookmark(uuid: uuid, episode: "ep-1", podcast: "pod-1")
+        apiBookmark.excerpt.value = "arrives trimmed"
+        apiBookmark.endTime.value = 77
+        apiBookmark.trimModified.value = 2_000_000
+        apiBookmark.tags = ["fresh"]
+        apiBookmark.tagsModified.value = 2_000_000
+
+        await syncTask.importBookmark(apiBookmark)
+
+        let imported = bookmarkManager.bookmark(for: uuid)
+        XCTAssertEqual(imported?.excerpt, "arrives trimmed")
+        XCTAssertNotNil(imported?.trimModified)
+        XCTAssertEqual(imported?.tags, ["fresh"])
+    }
+
     // MARK: - Server Data Processed
 
     func testProcessServerDataParsesBookmarksCorrectly() {

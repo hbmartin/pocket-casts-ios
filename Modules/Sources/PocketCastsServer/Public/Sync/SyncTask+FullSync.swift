@@ -155,8 +155,11 @@ extension SyncTask {
                 }
 
                 // Add the incoming bookmark to the database
-                bookmarkManager.add(from: apiBookmark).when(.none) {
+                let addedUuid = bookmarkManager.add(from: apiBookmark)
+                if addedUuid == nil {
                     FileLog.shared.addMessage("SyncTask: Process Server Bookmarks - Could not add bookmark: \(String(describing: try? apiBookmark.jsonString()))")
+                } else if let addedUuid {
+                    await bookmarkManager.applyHighlightFields(from: apiBookmark, uuid: addedUuid)
                 }
             }
 
@@ -176,6 +179,35 @@ private extension BookmarkDataManager {
             time: .init(apiBookmark.time),
             dateCreated: apiBookmark.createdAt.date,
             syncStatus: .synced)
+    }
+
+    /// Full-sync restore of the highlight fields (ADR-0016). The row was just
+    /// created, so this is plain application, not merging: a trim stamp restores
+    /// the trimmed window, otherwise a bare excerpt restores machine enrichment;
+    /// a tag stamp restores the tag set.
+    func applyHighlightFields(from apiBookmark: Api_BookmarkResponse, uuid: String) async {
+        guard FeatureFlag.highlightAccountSync.enabled else { return }
+
+        if !apiBookmark.excerpt.isEmpty {
+            if apiBookmark.trimModified > 0 {
+                await updateTrim(uuid: uuid,
+                                 excerpt: apiBookmark.excerpt,
+                                 endTime: apiBookmark.endTime,
+                                 trimModified: Date(timeIntervalSince1970: TimeInterval(apiBookmark.trimModified) / 1000),
+                                 syncStatus: .synced)
+            } else {
+                await updateEnrichment(uuid: uuid,
+                                       excerpt: apiBookmark.excerpt,
+                                       endTime: apiBookmark.endTime,
+                                       syncStatus: .synced)
+            }
+        }
+        if apiBookmark.tagsModified > 0 {
+            await setTags(uuid: uuid,
+                          tags: apiBookmark.tags,
+                          modified: Date(timeIntervalSince1970: TimeInterval(apiBookmark.tagsModified) / 1000),
+                          syncStatus: .synced)
+        }
     }
 
     func remove(apiBookmark: Api_BookmarkResponse) async -> Bool? {

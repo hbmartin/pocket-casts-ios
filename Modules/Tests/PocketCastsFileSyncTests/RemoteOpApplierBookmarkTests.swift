@@ -52,7 +52,9 @@ final class RemoteOpApplierBookmarkTests: XCTestCase {
 
     private func bookmarkOp(
         uuid: String = "bm-1", device: String, seq: UInt64, wallClockMs: Int64,
-        excerpt: String? = nil, endTime: Double? = nil
+        excerpt: String? = nil, endTime: Double? = nil,
+        trimModified: Int64? = nil,
+        tags: [String]? = nil, tagsModified: Int64? = nil
     ) -> Filesync_OpEnvelope {
         var bookmark = Api_SyncUserBookmark()
         bookmark.bookmarkUuid = uuid
@@ -60,6 +62,9 @@ final class RemoteOpApplierBookmarkTests: XCTestCase {
         bookmark.podcastUuid = "pod-1"
         if let excerpt { bookmark.excerpt = .with { $0.value = excerpt } }
         if let endTime { bookmark.endTime = .with { $0.value = endTime } }
+        if let trimModified { bookmark.trimModified = .with { $0.value = trimModified } }
+        if let tags { bookmark.tags = tags }
+        if let tagsModified { bookmark.tagsModified = .with { $0.value = tagsModified } }
         var record = Api_Record()
         record.bookmark = bookmark
         var envelope = Filesync_OpEnvelope()
@@ -124,5 +129,90 @@ final class RemoteOpApplierBookmarkTests: XCTestCase {
         XCTAssertEqual(row.endTime, 12)
         XCTAssertEqual(row.excerpt, "local excerpt",
                        "a merged record without an excerpt must not clear the local one")
+    }
+
+    // MARK: - Trim & tags (ADR-0016)
+
+    func testIncomingTrimOverwritesLocalMachineExcerpt() async {
+        seedBookmark(on: deviceA, uuid: "bm-4", excerpt: "machine local", endTime: 10)
+
+        let ops = [
+            bookmarkOp(uuid: "bm-4", device: "device-b", seq: 1, wallClockMs: 2000,
+                       excerpt: "trimmed remotely", endTime: 44, trimModified: 2000),
+        ]
+        let state = MergeEngine.merged(snapshots: [], ops: ops)
+        _ = await RemoteOpApplier(dataManager: deviceA, delegate: nil).apply(state)
+
+        let row = deviceA.bookmarks.bookmark(for: "bm-4")!
+        XCTAssertEqual(row.excerpt, "trimmed remotely")
+        XCTAssertEqual(row.endTime, 44)
+        XCTAssertEqual(row.trimModified, Date(timeIntervalSince1970: 2))
+    }
+
+    func testIncomingMachineExcerptNeverClobbersLocalTrim() async {
+        seedBookmark(on: deviceA, uuid: "bm-5", excerpt: nil, endTime: nil)
+        _ = await deviceA.bookmarks.updateTrim(uuid: "bm-5", excerpt: "local trim", endTime: 33,
+                                               trimModified: Date(timeIntervalSince1970: 5))
+
+        let ops = [
+            bookmarkOp(uuid: "bm-5", device: "device-b", seq: 1, wallClockMs: 9000,
+                       excerpt: "late machine", endTime: 99),
+        ]
+        let state = MergeEngine.merged(snapshots: [], ops: ops)
+        _ = await RemoteOpApplier(dataManager: deviceA, delegate: nil).apply(state)
+
+        let row = deviceA.bookmarks.bookmark(for: "bm-5")!
+        XCTAssertEqual(row.excerpt, "local trim",
+                       "a user trim is authoritative over machine enrichment in any order")
+        XCTAssertEqual(row.endTime, 33)
+    }
+
+    func testStaleTrimDoesNotOverwriteNewerLocalTrim() async {
+        seedBookmark(on: deviceA, uuid: "bm-6", excerpt: nil, endTime: nil)
+        _ = await deviceA.bookmarks.updateTrim(uuid: "bm-6", excerpt: "newer local trim", endTime: 40,
+                                               trimModified: Date(timeIntervalSince1970: 9))
+
+        let ops = [
+            bookmarkOp(uuid: "bm-6", device: "device-b", seq: 1, wallClockMs: 1000,
+                       excerpt: "older remote trim", endTime: 20, trimModified: 1000),
+        ]
+        let state = MergeEngine.merged(snapshots: [], ops: ops)
+        _ = await RemoteOpApplier(dataManager: deviceA, delegate: nil).apply(state)
+
+        XCTAssertEqual(deviceA.bookmarks.bookmark(for: "bm-6")!.excerpt, "newer local trim")
+    }
+
+    func testTagsApplyWholeSetAndConvergeAcrossDevices() async {
+        seedBookmark(on: deviceA, uuid: "bm-7", excerpt: nil, endTime: nil)
+        _ = await deviceA.bookmarks.setTags(uuid: "bm-7", tags: ["local"],
+                                            modified: Date(timeIntervalSince1970: 1))
+        seedBookmark(on: deviceB, uuid: "bm-7", excerpt: nil, endTime: nil)
+
+        let ops = [
+            bookmarkOp(uuid: "bm-7", device: "device-b", seq: 1, wallClockMs: 3000,
+                       tags: ["ai", "climate"], tagsModified: 3000),
+        ]
+        let state = MergeEngine.merged(snapshots: [], ops: ops)
+        _ = await RemoteOpApplier(dataManager: deviceA, delegate: nil).apply(state)
+        _ = await RemoteOpApplier(dataManager: deviceB, delegate: nil).apply(state)
+
+        XCTAssertEqual(deviceA.bookmarks.bookmark(for: "bm-7")!.tags, ["ai", "climate"],
+                       "the stamped whole set replaces the older local set")
+        XCTAssertEqual(deviceB.bookmarks.bookmark(for: "bm-7")!.tags, ["ai", "climate"])
+    }
+
+    func testNewBookmarkArrivesWithTrimAndTags() async {
+        let ops = [
+            bookmarkOp(uuid: "bm-8", device: "device-b", seq: 1, wallClockMs: 2000,
+                       excerpt: "trimmed", endTime: 12, trimModified: 2000,
+                       tags: ["fresh"], tagsModified: 2000),
+        ]
+        let state = MergeEngine.merged(snapshots: [], ops: ops)
+        _ = await RemoteOpApplier(dataManager: deviceA, delegate: nil).apply(state)
+
+        let row = deviceA.bookmarks.bookmark(for: "bm-8")!
+        XCTAssertEqual(row.excerpt, "trimmed")
+        XCTAssertNotNil(row.trimModified)
+        XCTAssertEqual(row.tags, ["fresh"])
     }
 }

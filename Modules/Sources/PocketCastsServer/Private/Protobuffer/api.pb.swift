@@ -1654,144 +1654,170 @@ nonisolated struct Api_SyncUserDevice: Sendable {
   fileprivate var _timeListened: SwiftProtobuf.Google_Protobuf_Int64Value? = nil
 }
 
-nonisolated struct Api_SyncUserBookmark: Sendable {
+nonisolated struct Api_SyncUserBookmark: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var bookmarkUuid: String = String()
+  var bookmarkUuid: String {
+    get {_storage._bookmarkUuid}
+    set {_uniqueStorage()._bookmarkUuid = newValue}
+  }
 
-  var podcastUuid: String = String()
+  var podcastUuid: String {
+    get {_storage._podcastUuid}
+    set {_uniqueStorage()._podcastUuid = newValue}
+  }
 
-  var episodeUuid: String = String()
+  var episodeUuid: String {
+    get {_storage._episodeUuid}
+    set {_uniqueStorage()._episodeUuid = newValue}
+  }
 
   var createdAt: SwiftProtobuf.Google_Protobuf_Timestamp {
-    get {_createdAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
-    set {_createdAt = newValue}
+    get {_storage._createdAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_uniqueStorage()._createdAt = newValue}
   }
   /// Returns true if `createdAt` has been explicitly set.
-  var hasCreatedAt: Bool {self._createdAt != nil}
+  var hasCreatedAt: Bool {_storage._createdAt != nil}
   /// Clears the value of `createdAt`. Subsequent reads from it will return its default value.
-  mutating func clearCreatedAt() {self._createdAt = nil}
+  mutating func clearCreatedAt() {_uniqueStorage()._createdAt = nil}
 
   var time: SwiftProtobuf.Google_Protobuf_Int32Value {
-    get {_time ?? SwiftProtobuf.Google_Protobuf_Int32Value()}
-    set {_time = newValue}
+    get {_storage._time ?? SwiftProtobuf.Google_Protobuf_Int32Value()}
+    set {_uniqueStorage()._time = newValue}
   }
   /// Returns true if `time` has been explicitly set.
-  var hasTime: Bool {self._time != nil}
+  var hasTime: Bool {_storage._time != nil}
   /// Clears the value of `time`. Subsequent reads from it will return its default value.
-  mutating func clearTime() {self._time = nil}
+  mutating func clearTime() {_uniqueStorage()._time = nil}
 
   var title: SwiftProtobuf.Google_Protobuf_StringValue {
-    get {_title ?? SwiftProtobuf.Google_Protobuf_StringValue()}
-    set {_title = newValue}
+    get {_storage._title ?? SwiftProtobuf.Google_Protobuf_StringValue()}
+    set {_uniqueStorage()._title = newValue}
   }
   /// Returns true if `title` has been explicitly set.
-  var hasTitle: Bool {self._title != nil}
+  var hasTitle: Bool {_storage._title != nil}
   /// Clears the value of `title`. Subsequent reads from it will return its default value.
-  mutating func clearTitle() {self._title = nil}
+  mutating func clearTitle() {_uniqueStorage()._title = nil}
 
   var titleModified: SwiftProtobuf.Google_Protobuf_Int64Value {
-    get {_titleModified ?? SwiftProtobuf.Google_Protobuf_Int64Value()}
-    set {_titleModified = newValue}
+    get {_storage._titleModified ?? SwiftProtobuf.Google_Protobuf_Int64Value()}
+    set {_uniqueStorage()._titleModified = newValue}
   }
   /// Returns true if `titleModified` has been explicitly set.
-  var hasTitleModified: Bool {self._titleModified != nil}
+  var hasTitleModified: Bool {_storage._titleModified != nil}
   /// Clears the value of `titleModified`. Subsequent reads from it will return its default value.
-  mutating func clearTitleModified() {self._titleModified = nil}
+  mutating func clearTitleModified() {_uniqueStorage()._titleModified = nil}
 
   var isDeleted: SwiftProtobuf.Google_Protobuf_BoolValue {
-    get {_isDeleted ?? SwiftProtobuf.Google_Protobuf_BoolValue()}
-    set {_isDeleted = newValue}
+    get {_storage._isDeleted ?? SwiftProtobuf.Google_Protobuf_BoolValue()}
+    set {_uniqueStorage()._isDeleted = newValue}
   }
   /// Returns true if `isDeleted` has been explicitly set.
-  var hasIsDeleted: Bool {self._isDeleted != nil}
+  var hasIsDeleted: Bool {_storage._isDeleted != nil}
   /// Clears the value of `isDeleted`. Subsequent reads from it will return its default value.
-  mutating func clearIsDeleted() {self._isDeleted = nil}
+  mutating func clearIsDeleted() {_uniqueStorage()._isDeleted = nil}
 
   var isDeletedModified: SwiftProtobuf.Google_Protobuf_Int64Value {
-    get {_isDeletedModified ?? SwiftProtobuf.Google_Protobuf_Int64Value()}
-    set {_isDeletedModified = newValue}
+    get {_storage._isDeletedModified ?? SwiftProtobuf.Google_Protobuf_Int64Value()}
+    set {_uniqueStorage()._isDeletedModified = newValue}
   }
   /// Returns true if `isDeletedModified` has been explicitly set.
-  var hasIsDeletedModified: Bool {self._isDeletedModified != nil}
+  var hasIsDeletedModified: Bool {_storage._isDeletedModified != nil}
   /// Clears the value of `isDeletedModified`. Subsequent reads from it will return its default value.
-  mutating func clearIsDeletedModified() {self._isDeletedModified = nil}
+  mutating func clearIsDeletedModified() {_uniqueStorage()._isDeletedModified = nil}
 
   /// Upstream AI-title/summary sync fields (defined by the upstream service;
   /// not yet present in this fork's generated client).
   var aiTitle: SwiftProtobuf.Google_Protobuf_StringValue {
-    get {_aiTitle ?? SwiftProtobuf.Google_Protobuf_StringValue()}
-    set {_aiTitle = newValue}
+    get {_storage._aiTitle ?? SwiftProtobuf.Google_Protobuf_StringValue()}
+    set {_uniqueStorage()._aiTitle = newValue}
   }
   /// Returns true if `aiTitle` has been explicitly set.
-  var hasAiTitle: Bool {self._aiTitle != nil}
+  var hasAiTitle: Bool {_storage._aiTitle != nil}
   /// Clears the value of `aiTitle`. Subsequent reads from it will return its default value.
-  mutating func clearAiTitle() {self._aiTitle = nil}
+  mutating func clearAiTitle() {_uniqueStorage()._aiTitle = nil}
 
   var aiTitleModified: SwiftProtobuf.Google_Protobuf_Int64Value {
-    get {_aiTitleModified ?? SwiftProtobuf.Google_Protobuf_Int64Value()}
-    set {_aiTitleModified = newValue}
+    get {_storage._aiTitleModified ?? SwiftProtobuf.Google_Protobuf_Int64Value()}
+    set {_uniqueStorage()._aiTitleModified = newValue}
   }
   /// Returns true if `aiTitleModified` has been explicitly set.
-  var hasAiTitleModified: Bool {self._aiTitleModified != nil}
+  var hasAiTitleModified: Bool {_storage._aiTitleModified != nil}
   /// Clears the value of `aiTitleModified`. Subsequent reads from it will return its default value.
-  mutating func clearAiTitleModified() {self._aiTitleModified = nil}
+  mutating func clearAiTitleModified() {_uniqueStorage()._aiTitleModified = nil}
 
   var aiSummary: SwiftProtobuf.Google_Protobuf_StringValue {
-    get {_aiSummary ?? SwiftProtobuf.Google_Protobuf_StringValue()}
-    set {_aiSummary = newValue}
+    get {_storage._aiSummary ?? SwiftProtobuf.Google_Protobuf_StringValue()}
+    set {_uniqueStorage()._aiSummary = newValue}
   }
   /// Returns true if `aiSummary` has been explicitly set.
-  var hasAiSummary: Bool {self._aiSummary != nil}
+  var hasAiSummary: Bool {_storage._aiSummary != nil}
   /// Clears the value of `aiSummary`. Subsequent reads from it will return its default value.
-  mutating func clearAiSummary() {self._aiSummary = nil}
+  mutating func clearAiSummary() {_uniqueStorage()._aiSummary = nil}
 
   var aiSummaryModified: SwiftProtobuf.Google_Protobuf_Int64Value {
-    get {_aiSummaryModified ?? SwiftProtobuf.Google_Protobuf_Int64Value()}
-    set {_aiSummaryModified = newValue}
+    get {_storage._aiSummaryModified ?? SwiftProtobuf.Google_Protobuf_Int64Value()}
+    set {_uniqueStorage()._aiSummaryModified = newValue}
   }
   /// Returns true if `aiSummaryModified` has been explicitly set.
-  var hasAiSummaryModified: Bool {self._aiSummaryModified != nil}
+  var hasAiSummaryModified: Bool {_storage._aiSummaryModified != nil}
   /// Clears the value of `aiSummaryModified`. Subsequent reads from it will return its default value.
-  mutating func clearAiSummaryModified() {self._aiSummaryModified = nil}
+  mutating func clearAiSummaryModified() {_uniqueStorage()._aiSummaryModified = nil}
 
   /// Fork: smart-highlight enrichment (iOS Bookmark migration-80 columns).
   var excerpt: SwiftProtobuf.Google_Protobuf_StringValue {
-    get {_excerpt ?? SwiftProtobuf.Google_Protobuf_StringValue()}
-    set {_excerpt = newValue}
+    get {_storage._excerpt ?? SwiftProtobuf.Google_Protobuf_StringValue()}
+    set {_uniqueStorage()._excerpt = newValue}
   }
   /// Returns true if `excerpt` has been explicitly set.
-  var hasExcerpt: Bool {self._excerpt != nil}
+  var hasExcerpt: Bool {_storage._excerpt != nil}
   /// Clears the value of `excerpt`. Subsequent reads from it will return its default value.
-  mutating func clearExcerpt() {self._excerpt = nil}
+  mutating func clearExcerpt() {_uniqueStorage()._excerpt = nil}
 
   var endTime: SwiftProtobuf.Google_Protobuf_DoubleValue {
-    get {_endTime ?? SwiftProtobuf.Google_Protobuf_DoubleValue()}
-    set {_endTime = newValue}
+    get {_storage._endTime ?? SwiftProtobuf.Google_Protobuf_DoubleValue()}
+    set {_uniqueStorage()._endTime = newValue}
   }
   /// Returns true if `endTime` has been explicitly set.
-  var hasEndTime: Bool {self._endTime != nil}
+  var hasEndTime: Bool {_storage._endTime != nil}
   /// Clears the value of `endTime`. Subsequent reads from it will return its default value.
-  mutating func clearEndTime() {self._endTime = nil}
+  mutating func clearEndTime() {_uniqueStorage()._endTime = nil}
+
+  /// Fork (ADR-0016, iOS migration 87): user-authored trim + tags. A set
+  /// trim_modified marks excerpt/end_time as user-edited: it merges LWW against
+  /// another trim stamp and always beats machine-derived enrichment. Tags merge
+  /// as a whole set, LWW by tags_modified (never per-tag); tags are only
+  /// applied when tags_modified is present.
+  var trimModified: SwiftProtobuf.Google_Protobuf_Int64Value {
+    get {_storage._trimModified ?? SwiftProtobuf.Google_Protobuf_Int64Value()}
+    set {_uniqueStorage()._trimModified = newValue}
+  }
+  /// Returns true if `trimModified` has been explicitly set.
+  var hasTrimModified: Bool {_storage._trimModified != nil}
+  /// Clears the value of `trimModified`. Subsequent reads from it will return its default value.
+  mutating func clearTrimModified() {_uniqueStorage()._trimModified = nil}
+
+  var tags: [String] {
+    get {_storage._tags}
+    set {_uniqueStorage()._tags = newValue}
+  }
+
+  var tagsModified: SwiftProtobuf.Google_Protobuf_Int64Value {
+    get {_storage._tagsModified ?? SwiftProtobuf.Google_Protobuf_Int64Value()}
+    set {_uniqueStorage()._tagsModified = newValue}
+  }
+  /// Returns true if `tagsModified` has been explicitly set.
+  var hasTagsModified: Bool {_storage._tagsModified != nil}
+  /// Clears the value of `tagsModified`. Subsequent reads from it will return its default value.
+  mutating func clearTagsModified() {_uniqueStorage()._tagsModified = nil}
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
 
-  fileprivate var _createdAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
-  fileprivate var _time: SwiftProtobuf.Google_Protobuf_Int32Value? = nil
-  fileprivate var _title: SwiftProtobuf.Google_Protobuf_StringValue? = nil
-  fileprivate var _titleModified: SwiftProtobuf.Google_Protobuf_Int64Value? = nil
-  fileprivate var _isDeleted: SwiftProtobuf.Google_Protobuf_BoolValue? = nil
-  fileprivate var _isDeletedModified: SwiftProtobuf.Google_Protobuf_Int64Value? = nil
-  fileprivate var _aiTitle: SwiftProtobuf.Google_Protobuf_StringValue? = nil
-  fileprivate var _aiTitleModified: SwiftProtobuf.Google_Protobuf_Int64Value? = nil
-  fileprivate var _aiSummary: SwiftProtobuf.Google_Protobuf_StringValue? = nil
-  fileprivate var _aiSummaryModified: SwiftProtobuf.Google_Protobuf_Int64Value? = nil
-  fileprivate var _excerpt: SwiftProtobuf.Google_Protobuf_StringValue? = nil
-  fileprivate var _endTime: SwiftProtobuf.Google_Protobuf_DoubleValue? = nil
+  fileprivate var _storage = _StorageClass.defaultInstance
 }
 
 nonisolated struct Api_PodcastSettings: @unchecked Sendable {
@@ -2567,6 +2593,18 @@ nonisolated struct Api_BookmarkResponse: Sendable {
   var hasCreatedAt: Bool {self._createdAt != nil}
   /// Clears the value of `createdAt`. Subsequent reads from it will return its default value.
   mutating func clearCreatedAt() {self._createdAt = nil}
+
+  /// ---- Fork extensions (>= 1001, ADR-0016): smart-highlight fields so full
+  /// sync restores enrichment, trims and tags. Empty string / 0 = not set. ----
+  var excerpt: String = String()
+
+  var endTime: Double = 0
+
+  var trimModified: Int64 = 0
+
+  var tags: [String] = []
+
+  var tagsModified: Int64 = 0
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -5280,6 +5318,43 @@ nonisolated struct Api_ChangeableSettings: @unchecked Sendable {
   /// Clears the value of `allowCellularAutoDownloads`. Subsequent reads from it will return its default value.
   mutating func clearAllowCellularAutoDownloads() {_uniqueStorage()._allowCellularAutoDownloads = nil}
 
+  /// Highlights program (ADR-0016): capture/editor/prompt-style preferences.
+  var reviewHighlightAfterCapture: Api_BoolSetting {
+    get {_storage._reviewHighlightAfterCapture ?? Api_BoolSetting()}
+    set {_uniqueStorage()._reviewHighlightAfterCapture = newValue}
+  }
+  /// Returns true if `reviewHighlightAfterCapture` has been explicitly set.
+  var hasReviewHighlightAfterCapture: Bool {_storage._reviewHighlightAfterCapture != nil}
+  /// Clears the value of `reviewHighlightAfterCapture`. Subsequent reads from it will return its default value.
+  mutating func clearReviewHighlightAfterCapture() {_uniqueStorage()._reviewHighlightAfterCapture = nil}
+
+  var highlightStylePreset: Api_StringSetting {
+    get {_storage._highlightStylePreset ?? Api_StringSetting()}
+    set {_uniqueStorage()._highlightStylePreset = newValue}
+  }
+  /// Returns true if `highlightStylePreset` has been explicitly set.
+  var hasHighlightStylePreset: Bool {_storage._highlightStylePreset != nil}
+  /// Clears the value of `highlightStylePreset`. Subsequent reads from it will return its default value.
+  mutating func clearHighlightStylePreset() {_uniqueStorage()._highlightStylePreset = nil}
+
+  var highlightStyleCustom: Api_StringSetting {
+    get {_storage._highlightStyleCustom ?? Api_StringSetting()}
+    set {_uniqueStorage()._highlightStyleCustom = newValue}
+  }
+  /// Returns true if `highlightStyleCustom` has been explicitly set.
+  var hasHighlightStyleCustom: Bool {_storage._highlightStyleCustom != nil}
+  /// Clears the value of `highlightStyleCustom`. Subsequent reads from it will return its default value.
+  mutating func clearHighlightStyleCustom() {_uniqueStorage()._highlightStyleCustom = nil}
+
+  var highlightConfirmationStyle: Api_Int32Setting {
+    get {_storage._highlightConfirmationStyle ?? Api_Int32Setting()}
+    set {_uniqueStorage()._highlightConfirmationStyle = newValue}
+  }
+  /// Returns true if `highlightConfirmationStyle` has been explicitly set.
+  var hasHighlightConfirmationStyle: Bool {_storage._highlightConfirmationStyle != nil}
+  /// Clears the value of `highlightConfirmationStyle`. Subsequent reads from it will return its default value.
+  mutating func clearHighlightConfirmationStyle() {_uniqueStorage()._highlightConfirmationStyle = nil}
+
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
   init() {}
@@ -6294,6 +6369,43 @@ nonisolated struct Api_NamedSettingsResponse: @unchecked Sendable {
   var hasAllowCellularAutoDownloads: Bool {_storage._allowCellularAutoDownloads != nil}
   /// Clears the value of `allowCellularAutoDownloads`. Subsequent reads from it will return its default value.
   mutating func clearAllowCellularAutoDownloads() {_uniqueStorage()._allowCellularAutoDownloads = nil}
+
+  /// Highlights program (ADR-0016): capture/editor/prompt-style preferences.
+  var reviewHighlightAfterCapture: Api_BoolSetting {
+    get {_storage._reviewHighlightAfterCapture ?? Api_BoolSetting()}
+    set {_uniqueStorage()._reviewHighlightAfterCapture = newValue}
+  }
+  /// Returns true if `reviewHighlightAfterCapture` has been explicitly set.
+  var hasReviewHighlightAfterCapture: Bool {_storage._reviewHighlightAfterCapture != nil}
+  /// Clears the value of `reviewHighlightAfterCapture`. Subsequent reads from it will return its default value.
+  mutating func clearReviewHighlightAfterCapture() {_uniqueStorage()._reviewHighlightAfterCapture = nil}
+
+  var highlightStylePreset: Api_StringSetting {
+    get {_storage._highlightStylePreset ?? Api_StringSetting()}
+    set {_uniqueStorage()._highlightStylePreset = newValue}
+  }
+  /// Returns true if `highlightStylePreset` has been explicitly set.
+  var hasHighlightStylePreset: Bool {_storage._highlightStylePreset != nil}
+  /// Clears the value of `highlightStylePreset`. Subsequent reads from it will return its default value.
+  mutating func clearHighlightStylePreset() {_uniqueStorage()._highlightStylePreset = nil}
+
+  var highlightStyleCustom: Api_StringSetting {
+    get {_storage._highlightStyleCustom ?? Api_StringSetting()}
+    set {_uniqueStorage()._highlightStyleCustom = newValue}
+  }
+  /// Returns true if `highlightStyleCustom` has been explicitly set.
+  var hasHighlightStyleCustom: Bool {_storage._highlightStyleCustom != nil}
+  /// Clears the value of `highlightStyleCustom`. Subsequent reads from it will return its default value.
+  mutating func clearHighlightStyleCustom() {_uniqueStorage()._highlightStyleCustom = nil}
+
+  var highlightConfirmationStyle: Api_Int32Setting {
+    get {_storage._highlightConfirmationStyle ?? Api_Int32Setting()}
+    set {_uniqueStorage()._highlightConfirmationStyle = newValue}
+  }
+  /// Returns true if `highlightConfirmationStyle` has been explicitly set.
+  var hasHighlightConfirmationStyle: Bool {_storage._highlightConfirmationStyle != nil}
+  /// Clears the value of `highlightConfirmationStyle`. Subsequent reads from it will return its default value.
+  mutating func clearHighlightConfirmationStyle() {_uniqueStorage()._highlightConfirmationStyle = nil}
 
   var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -13609,103 +13721,188 @@ nonisolated extension Api_SyncUserDevice: SwiftProtobuf.Message, SwiftProtobuf._
 
 nonisolated extension Api_SyncUserBookmark: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".SyncUserBookmark"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}bookmark_uuid\0\u{3}podcast_uuid\0\u{3}episode_uuid\0\u{3}created_at\0\u{1}time\0\u{1}title\0\u{3}title_modified\0\u{3}is_deleted\0\u{3}is_deleted_modified\0\u{3}ai_title\0\u{3}ai_title_modified\0\u{3}ai_summary\0\u{3}ai_summary_modified\0\u{2}\\\u{f}excerpt\0\u{3}end_time\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}bookmark_uuid\0\u{3}podcast_uuid\0\u{3}episode_uuid\0\u{3}created_at\0\u{1}time\0\u{1}title\0\u{3}title_modified\0\u{3}is_deleted\0\u{3}is_deleted_modified\0\u{3}ai_title\0\u{3}ai_title_modified\0\u{3}ai_summary\0\u{3}ai_summary_modified\0\u{2}\\\u{f}excerpt\0\u{3}end_time\0\u{3}trim_modified\0\u{1}tags\0\u{3}tags_modified\0")
+
+  fileprivate class _StorageClass {
+    var _bookmarkUuid: String = String()
+    var _podcastUuid: String = String()
+    var _episodeUuid: String = String()
+    var _createdAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+    var _time: SwiftProtobuf.Google_Protobuf_Int32Value? = nil
+    var _title: SwiftProtobuf.Google_Protobuf_StringValue? = nil
+    var _titleModified: SwiftProtobuf.Google_Protobuf_Int64Value? = nil
+    var _isDeleted: SwiftProtobuf.Google_Protobuf_BoolValue? = nil
+    var _isDeletedModified: SwiftProtobuf.Google_Protobuf_Int64Value? = nil
+    var _aiTitle: SwiftProtobuf.Google_Protobuf_StringValue? = nil
+    var _aiTitleModified: SwiftProtobuf.Google_Protobuf_Int64Value? = nil
+    var _aiSummary: SwiftProtobuf.Google_Protobuf_StringValue? = nil
+    var _aiSummaryModified: SwiftProtobuf.Google_Protobuf_Int64Value? = nil
+    var _excerpt: SwiftProtobuf.Google_Protobuf_StringValue? = nil
+    var _endTime: SwiftProtobuf.Google_Protobuf_DoubleValue? = nil
+    var _trimModified: SwiftProtobuf.Google_Protobuf_Int64Value? = nil
+    var _tags: [String] = []
+    var _tagsModified: SwiftProtobuf.Google_Protobuf_Int64Value? = nil
+
+      // This property is used as the initial default value for new instances of the type.
+      // The type itself is protecting the reference to its storage via CoW semantics.
+      // This will force a copy to be made of this reference when the first mutation occurs;
+      // hence, it is safe to mark this as `nonisolated(unsafe)`.
+      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+
+    private init() {}
+
+    init(copying source: _StorageClass) {
+      _bookmarkUuid = source._bookmarkUuid
+      _podcastUuid = source._podcastUuid
+      _episodeUuid = source._episodeUuid
+      _createdAt = source._createdAt
+      _time = source._time
+      _title = source._title
+      _titleModified = source._titleModified
+      _isDeleted = source._isDeleted
+      _isDeletedModified = source._isDeletedModified
+      _aiTitle = source._aiTitle
+      _aiTitleModified = source._aiTitleModified
+      _aiSummary = source._aiSummary
+      _aiSummaryModified = source._aiSummaryModified
+      _excerpt = source._excerpt
+      _endTime = source._endTime
+      _trimModified = source._trimModified
+      _tags = source._tags
+      _tagsModified = source._tagsModified
+    }
+  }
+
+  fileprivate mutating func _uniqueStorage() -> _StorageClass {
+    if !isKnownUniquelyReferenced(&_storage) {
+      _storage = _StorageClass(copying: _storage)
+    }
+    return _storage
+  }
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.bookmarkUuid) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.podcastUuid) }()
-      case 3: try { try decoder.decodeSingularStringField(value: &self.episodeUuid) }()
-      case 4: try { try decoder.decodeSingularMessageField(value: &self._createdAt) }()
-      case 5: try { try decoder.decodeSingularMessageField(value: &self._time) }()
-      case 6: try { try decoder.decodeSingularMessageField(value: &self._title) }()
-      case 7: try { try decoder.decodeSingularMessageField(value: &self._titleModified) }()
-      case 8: try { try decoder.decodeSingularMessageField(value: &self._isDeleted) }()
-      case 9: try { try decoder.decodeSingularMessageField(value: &self._isDeletedModified) }()
-      case 10: try { try decoder.decodeSingularMessageField(value: &self._aiTitle) }()
-      case 11: try { try decoder.decodeSingularMessageField(value: &self._aiTitleModified) }()
-      case 12: try { try decoder.decodeSingularMessageField(value: &self._aiSummary) }()
-      case 13: try { try decoder.decodeSingularMessageField(value: &self._aiSummaryModified) }()
-      case 1001: try { try decoder.decodeSingularMessageField(value: &self._excerpt) }()
-      case 1002: try { try decoder.decodeSingularMessageField(value: &self._endTime) }()
-      default: break
+    _ = _uniqueStorage()
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      while let fieldNumber = try decoder.nextFieldNumber() {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every case branch when no optimizations are
+        // enabled. https://github.com/apple/swift-protobuf/issues/1034
+        switch fieldNumber {
+        case 1: try { try decoder.decodeSingularStringField(value: &_storage._bookmarkUuid) }()
+        case 2: try { try decoder.decodeSingularStringField(value: &_storage._podcastUuid) }()
+        case 3: try { try decoder.decodeSingularStringField(value: &_storage._episodeUuid) }()
+        case 4: try { try decoder.decodeSingularMessageField(value: &_storage._createdAt) }()
+        case 5: try { try decoder.decodeSingularMessageField(value: &_storage._time) }()
+        case 6: try { try decoder.decodeSingularMessageField(value: &_storage._title) }()
+        case 7: try { try decoder.decodeSingularMessageField(value: &_storage._titleModified) }()
+        case 8: try { try decoder.decodeSingularMessageField(value: &_storage._isDeleted) }()
+        case 9: try { try decoder.decodeSingularMessageField(value: &_storage._isDeletedModified) }()
+        case 10: try { try decoder.decodeSingularMessageField(value: &_storage._aiTitle) }()
+        case 11: try { try decoder.decodeSingularMessageField(value: &_storage._aiTitleModified) }()
+        case 12: try { try decoder.decodeSingularMessageField(value: &_storage._aiSummary) }()
+        case 13: try { try decoder.decodeSingularMessageField(value: &_storage._aiSummaryModified) }()
+        case 1001: try { try decoder.decodeSingularMessageField(value: &_storage._excerpt) }()
+        case 1002: try { try decoder.decodeSingularMessageField(value: &_storage._endTime) }()
+        case 1003: try { try decoder.decodeSingularMessageField(value: &_storage._trimModified) }()
+        case 1004: try { try decoder.decodeRepeatedStringField(value: &_storage._tags) }()
+        case 1005: try { try decoder.decodeSingularMessageField(value: &_storage._tagsModified) }()
+        default: break
+        }
       }
     }
   }
 
   func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    if !self.bookmarkUuid.isEmpty {
-      try visitor.visitSingularStringField(value: self.bookmarkUuid, fieldNumber: 1)
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every if/case branch local when no optimizations
+      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+      // https://github.com/apple/swift-protobuf/issues/1182
+      if !_storage._bookmarkUuid.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._bookmarkUuid, fieldNumber: 1)
+      }
+      if !_storage._podcastUuid.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._podcastUuid, fieldNumber: 2)
+      }
+      if !_storage._episodeUuid.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._episodeUuid, fieldNumber: 3)
+      }
+      try { if let v = _storage._createdAt {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+      } }()
+      try { if let v = _storage._time {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+      } }()
+      try { if let v = _storage._title {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
+      } }()
+      try { if let v = _storage._titleModified {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+      } }()
+      try { if let v = _storage._isDeleted {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
+      } }()
+      try { if let v = _storage._isDeletedModified {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
+      } }()
+      try { if let v = _storage._aiTitle {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 10)
+      } }()
+      try { if let v = _storage._aiTitleModified {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 11)
+      } }()
+      try { if let v = _storage._aiSummary {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 12)
+      } }()
+      try { if let v = _storage._aiSummaryModified {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 13)
+      } }()
+      try { if let v = _storage._excerpt {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1001)
+      } }()
+      try { if let v = _storage._endTime {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1002)
+      } }()
+      try { if let v = _storage._trimModified {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1003)
+      } }()
+      if !_storage._tags.isEmpty {
+        try visitor.visitRepeatedStringField(value: _storage._tags, fieldNumber: 1004)
+      }
+      try { if let v = _storage._tagsModified {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1005)
+      } }()
     }
-    if !self.podcastUuid.isEmpty {
-      try visitor.visitSingularStringField(value: self.podcastUuid, fieldNumber: 2)
-    }
-    if !self.episodeUuid.isEmpty {
-      try visitor.visitSingularStringField(value: self.episodeUuid, fieldNumber: 3)
-    }
-    try { if let v = self._createdAt {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
-    } }()
-    try { if let v = self._time {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
-    } }()
-    try { if let v = self._title {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
-    } }()
-    try { if let v = self._titleModified {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
-    } }()
-    try { if let v = self._isDeleted {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
-    } }()
-    try { if let v = self._isDeletedModified {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
-    } }()
-    try { if let v = self._aiTitle {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 10)
-    } }()
-    try { if let v = self._aiTitleModified {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 11)
-    } }()
-    try { if let v = self._aiSummary {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 12)
-    } }()
-    try { if let v = self._aiSummaryModified {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 13)
-    } }()
-    try { if let v = self._excerpt {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1001)
-    } }()
-    try { if let v = self._endTime {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 1002)
-    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
   static func ==(lhs: Api_SyncUserBookmark, rhs: Api_SyncUserBookmark) -> Bool {
-    if lhs.bookmarkUuid != rhs.bookmarkUuid {return false}
-    if lhs.podcastUuid != rhs.podcastUuid {return false}
-    if lhs.episodeUuid != rhs.episodeUuid {return false}
-    if lhs._createdAt != rhs._createdAt {return false}
-    if lhs._time != rhs._time {return false}
-    if lhs._title != rhs._title {return false}
-    if lhs._titleModified != rhs._titleModified {return false}
-    if lhs._isDeleted != rhs._isDeleted {return false}
-    if lhs._isDeletedModified != rhs._isDeletedModified {return false}
-    if lhs._aiTitle != rhs._aiTitle {return false}
-    if lhs._aiTitleModified != rhs._aiTitleModified {return false}
-    if lhs._aiSummary != rhs._aiSummary {return false}
-    if lhs._aiSummaryModified != rhs._aiSummaryModified {return false}
-    if lhs._excerpt != rhs._excerpt {return false}
-    if lhs._endTime != rhs._endTime {return false}
+    if lhs._storage !== rhs._storage {
+      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+        let _storage = _args.0
+        let rhs_storage = _args.1
+        if _storage._bookmarkUuid != rhs_storage._bookmarkUuid {return false}
+        if _storage._podcastUuid != rhs_storage._podcastUuid {return false}
+        if _storage._episodeUuid != rhs_storage._episodeUuid {return false}
+        if _storage._createdAt != rhs_storage._createdAt {return false}
+        if _storage._time != rhs_storage._time {return false}
+        if _storage._title != rhs_storage._title {return false}
+        if _storage._titleModified != rhs_storage._titleModified {return false}
+        if _storage._isDeleted != rhs_storage._isDeleted {return false}
+        if _storage._isDeletedModified != rhs_storage._isDeletedModified {return false}
+        if _storage._aiTitle != rhs_storage._aiTitle {return false}
+        if _storage._aiTitleModified != rhs_storage._aiTitleModified {return false}
+        if _storage._aiSummary != rhs_storage._aiSummary {return false}
+        if _storage._aiSummaryModified != rhs_storage._aiSummaryModified {return false}
+        if _storage._excerpt != rhs_storage._excerpt {return false}
+        if _storage._endTime != rhs_storage._endTime {return false}
+        if _storage._trimModified != rhs_storage._trimModified {return false}
+        if _storage._tags != rhs_storage._tags {return false}
+        if _storage._tagsModified != rhs_storage._tagsModified {return false}
+        return true
+      }
+      if !storagesAreEqual {return false}
+    }
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -14709,7 +14906,7 @@ nonisolated extension Api_BookmarksResponse: SwiftProtobuf.Message, SwiftProtobu
 
 nonisolated extension Api_BookmarkResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".BookmarkResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}bookmark_uuid\0\u{3}podcast_uuid\0\u{3}episode_uuid\0\u{2}\u{2}time\0\u{1}title\0\u{1}createdAt\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}bookmark_uuid\0\u{3}podcast_uuid\0\u{3}episode_uuid\0\u{2}\u{2}time\0\u{1}title\0\u{1}createdAt\0\u{2}b\u{f}excerpt\0\u{3}end_time\0\u{3}trim_modified\0\u{1}tags\0\u{3}tags_modified\0")
 
   mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -14723,6 +14920,11 @@ nonisolated extension Api_BookmarkResponse: SwiftProtobuf.Message, SwiftProtobuf
       case 5: try { try decoder.decodeSingularInt32Field(value: &self.time) }()
       case 6: try { try decoder.decodeSingularStringField(value: &self.title) }()
       case 7: try { try decoder.decodeSingularMessageField(value: &self._createdAt) }()
+      case 1001: try { try decoder.decodeSingularStringField(value: &self.excerpt) }()
+      case 1002: try { try decoder.decodeSingularDoubleField(value: &self.endTime) }()
+      case 1003: try { try decoder.decodeSingularInt64Field(value: &self.trimModified) }()
+      case 1004: try { try decoder.decodeRepeatedStringField(value: &self.tags) }()
+      case 1005: try { try decoder.decodeSingularInt64Field(value: &self.tagsModified) }()
       default: break
       }
     }
@@ -14751,6 +14953,21 @@ nonisolated extension Api_BookmarkResponse: SwiftProtobuf.Message, SwiftProtobuf
     try { if let v = self._createdAt {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
     } }()
+    if !self.excerpt.isEmpty {
+      try visitor.visitSingularStringField(value: self.excerpt, fieldNumber: 1001)
+    }
+    if self.endTime.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.endTime, fieldNumber: 1002)
+    }
+    if self.trimModified != 0 {
+      try visitor.visitSingularInt64Field(value: self.trimModified, fieldNumber: 1003)
+    }
+    if !self.tags.isEmpty {
+      try visitor.visitRepeatedStringField(value: self.tags, fieldNumber: 1004)
+    }
+    if self.tagsModified != 0 {
+      try visitor.visitSingularInt64Field(value: self.tagsModified, fieldNumber: 1005)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -14761,6 +14978,11 @@ nonisolated extension Api_BookmarkResponse: SwiftProtobuf.Message, SwiftProtobuf
     if lhs.time != rhs.time {return false}
     if lhs.title != rhs.title {return false}
     if lhs._createdAt != rhs._createdAt {return false}
+    if lhs.excerpt != rhs.excerpt {return false}
+    if lhs.endTime != rhs.endTime {return false}
+    if lhs.trimModified != rhs.trimModified {return false}
+    if lhs.tags != rhs.tags {return false}
+    if lhs.tagsModified != rhs.tagsModified {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -16913,7 +17135,7 @@ nonisolated extension Api_NamedSettings: SwiftProtobuf.Message, SwiftProtobuf._M
 
 nonisolated extension Api_ChangeableSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".ChangeableSettings"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}grid_layout\0\u{3}grid_order\0\u{3}show_played\0\u{1}theme\0\u{3}skip_forward\0\u{3}skip_back\0\u{3}web_version\0\u{1}language\0\u{3}recommendations_on\0\u{4}\u{2}use_embedded_artwork\0\u{3}playback_speed\0\u{4}\u{2}volume_boost\0\u{1}badges\0\u{3}free_gift_acknowledgement\0\u{3}marketing_opt_in\0\u{3}auto_archive_played_episodes\0\u{3}auto_archive_includes_starred\0\u{1}region\0\u{3}row_action\0\u{3}up_next_swipe\0\u{3}episode_grouping\0\u{3}show_archived\0\u{3}open_links\0\u{3}media_actions\0\u{3}media_actions_order\0\u{3}keep_screen_awake\0\u{3}open_player\0\u{3}intelligent_resumption\0\u{3}play_up_next_on_tap\0\u{3}remote_skip_chapters\0\u{3}playback_actions\0\u{3}legacy_bluetooth\0\u{3}multi_select_gesture\0\u{3}chapter_titles\0\u{1}notifications\0\u{3}notification_actions\0\u{3}play_over_notifications\0\u{3}hide_notification_on_pause\0\u{3}app_badge\0\u{3}app_badge_filter\0\u{3}auto_archive_played\0\u{3}auto_archive_inactive\0\u{3}auto_up_next_limit\0\u{3}auto_up_next_limit_reached\0\u{3}warn_data_usage\0\u{3}files_auto_up_next\0\u{3}files_after_playing_delete_local\0\u{3}files_after_playing_delete_cloud\0\u{3}privacy_analytics\0\u{3}privacy_crash_reports\0\u{3}privacy_link_account\0\u{3}player_shelf\0\u{3}auto_subscribe_to_played\0\u{3}auto_show_played\0\u{3}auto_play_enabled\0\u{3}auto_play_last_list_uuid\0\u{3}trim_silence\0\u{3}show_artwork_on_lock_screen\0\u{3}headphone_controls_next_action\0\u{3}headphone_controls_previous_action\0\u{3}headphone_controls_play_bookmark_confirmation_sound\0\u{3}dark_theme_preference\0\u{3}light_theme_preference\0\u{3}use_system_theme\0\u{3}episode_bookmarks_sort_type\0\u{3}player_bookmarks_sort_type\0\u{3}podcast_bookmarks_sort_type\0\u{3}use_dark_up_next_theme\0\u{3}use_dynamic_colors_for_widget\0\u{3}files_sort_order\0\u{3}background_refresh\0\u{3}auto_download_unmetered_only\0\u{3}auto_download_only_when_charging\0\u{3}auto_download_up_next\0\u{3}cloud_auto_upload\0\u{3}cloud_auto_download\0\u{3}cloud_download_unmetered_only\0\u{3}use_rss_artwork\0\u{3}bookmarks_sort_order\0\u{3}auto_archive_played_episodes_global\0\u{3}auto_archive_includes_starred_global\0\u{3}files_auto_up_next_global\0\u{3}files_after_playing_delete_local_global\0\u{3}files_after_playing_delete_cloud_global\0\u{3}player_shelf_global\0\u{3}row_action_global\0\u{3}use_embedded_artwork_global\0\u{3}recommendations_on_global\0\u{3}grid_layout_global\0\u{3}volume_boost_global\0\u{3}badges_global\0\u{4}\u{2}smart_folders_number_of_times_shown\0\u{3}smart_folders_last_date_shown\0\u{3}save_up_next_on_playlists_play_all\0\u{3}do_not_sell_or_share\0\u{3}live_analytics_url\0\u{3}listening_time_stats\0\u{4}E\u{e}tap_to_play\0\u{3}seek_acceleration\0\u{3}transcription_engine_mode\0\u{3}transcription_battery_policy\0\u{3}transcription_language_override\0\u{3}transcription_remote_provider\0\u{3}transcription_max_speakers\0\u{3}transcription_whisper_model\0\u{3}transcription_allow_cellular_model_downloads\0\u{3}transcription_local_stack\0\u{3}adaptive_effects\0\u{3}allow_cellular_downloads\0\u{3}allow_cellular_auto_downloads\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}grid_layout\0\u{3}grid_order\0\u{3}show_played\0\u{1}theme\0\u{3}skip_forward\0\u{3}skip_back\0\u{3}web_version\0\u{1}language\0\u{3}recommendations_on\0\u{4}\u{2}use_embedded_artwork\0\u{3}playback_speed\0\u{4}\u{2}volume_boost\0\u{1}badges\0\u{3}free_gift_acknowledgement\0\u{3}marketing_opt_in\0\u{3}auto_archive_played_episodes\0\u{3}auto_archive_includes_starred\0\u{1}region\0\u{3}row_action\0\u{3}up_next_swipe\0\u{3}episode_grouping\0\u{3}show_archived\0\u{3}open_links\0\u{3}media_actions\0\u{3}media_actions_order\0\u{3}keep_screen_awake\0\u{3}open_player\0\u{3}intelligent_resumption\0\u{3}play_up_next_on_tap\0\u{3}remote_skip_chapters\0\u{3}playback_actions\0\u{3}legacy_bluetooth\0\u{3}multi_select_gesture\0\u{3}chapter_titles\0\u{1}notifications\0\u{3}notification_actions\0\u{3}play_over_notifications\0\u{3}hide_notification_on_pause\0\u{3}app_badge\0\u{3}app_badge_filter\0\u{3}auto_archive_played\0\u{3}auto_archive_inactive\0\u{3}auto_up_next_limit\0\u{3}auto_up_next_limit_reached\0\u{3}warn_data_usage\0\u{3}files_auto_up_next\0\u{3}files_after_playing_delete_local\0\u{3}files_after_playing_delete_cloud\0\u{3}privacy_analytics\0\u{3}privacy_crash_reports\0\u{3}privacy_link_account\0\u{3}player_shelf\0\u{3}auto_subscribe_to_played\0\u{3}auto_show_played\0\u{3}auto_play_enabled\0\u{3}auto_play_last_list_uuid\0\u{3}trim_silence\0\u{3}show_artwork_on_lock_screen\0\u{3}headphone_controls_next_action\0\u{3}headphone_controls_previous_action\0\u{3}headphone_controls_play_bookmark_confirmation_sound\0\u{3}dark_theme_preference\0\u{3}light_theme_preference\0\u{3}use_system_theme\0\u{3}episode_bookmarks_sort_type\0\u{3}player_bookmarks_sort_type\0\u{3}podcast_bookmarks_sort_type\0\u{3}use_dark_up_next_theme\0\u{3}use_dynamic_colors_for_widget\0\u{3}files_sort_order\0\u{3}background_refresh\0\u{3}auto_download_unmetered_only\0\u{3}auto_download_only_when_charging\0\u{3}auto_download_up_next\0\u{3}cloud_auto_upload\0\u{3}cloud_auto_download\0\u{3}cloud_download_unmetered_only\0\u{3}use_rss_artwork\0\u{3}bookmarks_sort_order\0\u{3}auto_archive_played_episodes_global\0\u{3}auto_archive_includes_starred_global\0\u{3}files_auto_up_next_global\0\u{3}files_after_playing_delete_local_global\0\u{3}files_after_playing_delete_cloud_global\0\u{3}player_shelf_global\0\u{3}row_action_global\0\u{3}use_embedded_artwork_global\0\u{3}recommendations_on_global\0\u{3}grid_layout_global\0\u{3}volume_boost_global\0\u{3}badges_global\0\u{4}\u{2}smart_folders_number_of_times_shown\0\u{3}smart_folders_last_date_shown\0\u{3}save_up_next_on_playlists_play_all\0\u{3}do_not_sell_or_share\0\u{3}live_analytics_url\0\u{3}listening_time_stats\0\u{4}E\u{e}tap_to_play\0\u{3}seek_acceleration\0\u{3}transcription_engine_mode\0\u{3}transcription_battery_policy\0\u{3}transcription_language_override\0\u{3}transcription_remote_provider\0\u{3}transcription_max_speakers\0\u{3}transcription_whisper_model\0\u{3}transcription_allow_cellular_model_downloads\0\u{3}transcription_local_stack\0\u{3}adaptive_effects\0\u{3}allow_cellular_downloads\0\u{3}allow_cellular_auto_downloads\0\u{3}review_highlight_after_capture\0\u{3}highlight_style_preset\0\u{3}highlight_style_custom\0\u{3}highlight_confirmation_style\0")
 
   fileprivate class _StorageClass {
     var _gridLayout: Api_Int32Setting? = nil
@@ -17026,6 +17248,10 @@ nonisolated extension Api_ChangeableSettings: SwiftProtobuf.Message, SwiftProtob
     var _adaptiveEffects: Api_BoolSetting? = nil
     var _allowCellularDownloads: Api_BoolSetting? = nil
     var _allowCellularAutoDownloads: Api_BoolSetting? = nil
+    var _reviewHighlightAfterCapture: Api_BoolSetting? = nil
+    var _highlightStylePreset: Api_StringSetting? = nil
+    var _highlightStyleCustom: Api_StringSetting? = nil
+    var _highlightConfirmationStyle: Api_Int32Setting? = nil
 
       // This property is used as the initial default value for new instances of the type.
       // The type itself is protecting the reference to its storage via CoW semantics.
@@ -17146,6 +17372,10 @@ nonisolated extension Api_ChangeableSettings: SwiftProtobuf.Message, SwiftProtob
       _adaptiveEffects = source._adaptiveEffects
       _allowCellularDownloads = source._allowCellularDownloads
       _allowCellularAutoDownloads = source._allowCellularAutoDownloads
+      _reviewHighlightAfterCapture = source._reviewHighlightAfterCapture
+      _highlightStylePreset = source._highlightStylePreset
+      _highlightStyleCustom = source._highlightStyleCustom
+      _highlightConfirmationStyle = source._highlightConfirmationStyle
     }
   }
 
@@ -17274,6 +17504,10 @@ nonisolated extension Api_ChangeableSettings: SwiftProtobuf.Message, SwiftProtob
         case 1011: try { try decoder.decodeSingularMessageField(value: &_storage._adaptiveEffects) }()
         case 1012: try { try decoder.decodeSingularMessageField(value: &_storage._allowCellularDownloads) }()
         case 1013: try { try decoder.decodeSingularMessageField(value: &_storage._allowCellularAutoDownloads) }()
+        case 1014: try { try decoder.decodeSingularMessageField(value: &_storage._reviewHighlightAfterCapture) }()
+        case 1015: try { try decoder.decodeSingularMessageField(value: &_storage._highlightStylePreset) }()
+        case 1016: try { try decoder.decodeSingularMessageField(value: &_storage._highlightStyleCustom) }()
+        case 1017: try { try decoder.decodeSingularMessageField(value: &_storage._highlightConfirmationStyle) }()
         default: break
         }
       }
@@ -17616,6 +17850,18 @@ nonisolated extension Api_ChangeableSettings: SwiftProtobuf.Message, SwiftProtob
       try { if let v = _storage._allowCellularAutoDownloads {
         try visitor.visitSingularMessageField(value: v, fieldNumber: 1013)
       } }()
+      try { if let v = _storage._reviewHighlightAfterCapture {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1014)
+      } }()
+      try { if let v = _storage._highlightStylePreset {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1015)
+      } }()
+      try { if let v = _storage._highlightStyleCustom {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1016)
+      } }()
+      try { if let v = _storage._highlightConfirmationStyle {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1017)
+      } }()
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -17735,6 +17981,10 @@ nonisolated extension Api_ChangeableSettings: SwiftProtobuf.Message, SwiftProtob
         if _storage._adaptiveEffects != rhs_storage._adaptiveEffects {return false}
         if _storage._allowCellularDownloads != rhs_storage._allowCellularDownloads {return false}
         if _storage._allowCellularAutoDownloads != rhs_storage._allowCellularAutoDownloads {return false}
+        if _storage._reviewHighlightAfterCapture != rhs_storage._reviewHighlightAfterCapture {return false}
+        if _storage._highlightStylePreset != rhs_storage._highlightStylePreset {return false}
+        if _storage._highlightStyleCustom != rhs_storage._highlightStyleCustom {return false}
+        if _storage._highlightConfirmationStyle != rhs_storage._highlightConfirmationStyle {return false}
         return true
       }
       if !storagesAreEqual {return false}
@@ -17746,7 +17996,7 @@ nonisolated extension Api_ChangeableSettings: SwiftProtobuf.Message, SwiftProtob
 
 nonisolated extension Api_NamedSettingsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   static let protoMessageName: String = _protobuf_package + ".NamedSettingsResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}grid_layout\0\u{3}grid_order\0\u{3}show_played\0\u{1}theme\0\u{3}skip_forward\0\u{3}skip_back\0\u{3}web_version\0\u{1}language\0\u{3}recommendations_on\0\u{4}\u{2}use_embedded_artwork\0\u{3}playback_speed\0\u{4}\u{2}volume_boost\0\u{1}badges\0\u{3}free_gift_acknowledgement\0\u{3}marketing_opt_in\0\u{3}auto_archive_played_episodes\0\u{3}auto_archive_includes_starred\0\u{1}region\0\u{3}row_action\0\u{3}up_next_swipe\0\u{3}episode_grouping\0\u{3}show_archived\0\u{3}open_links\0\u{3}media_actions\0\u{3}media_actions_order\0\u{3}keep_screen_awake\0\u{3}open_player\0\u{3}intelligent_resumption\0\u{3}play_up_next_on_tap\0\u{3}remote_skip_chapters\0\u{3}playback_actions\0\u{3}legacy_bluetooth\0\u{3}multi_select_gesture\0\u{3}chapter_titles\0\u{1}notifications\0\u{3}notification_actions\0\u{3}play_over_notifications\0\u{3}hide_notification_on_pause\0\u{3}app_badge\0\u{3}app_badge_filter\0\u{3}auto_archive_played\0\u{3}auto_archive_inactive\0\u{3}auto_up_next_limit\0\u{3}auto_up_next_limit_reached\0\u{3}warn_data_usage\0\u{3}files_auto_up_next\0\u{3}files_after_playing_delete_local\0\u{3}files_after_playing_delete_cloud\0\u{3}privacy_analytics\0\u{3}privacy_crash_reports\0\u{3}privacy_link_account\0\u{3}player_shelf\0\u{3}auto_subscribe_to_played\0\u{3}auto_show_played\0\u{3}auto_play_enabled\0\u{3}auto_play_last_list_uuid\0\u{3}trim_silence\0\u{3}show_artwork_on_lock_screen\0\u{3}headphone_controls_next_action\0\u{3}headphone_controls_previous_action\0\u{3}headphone_controls_play_bookmark_confirmation_sound\0\u{3}dark_theme_preference\0\u{3}light_theme_preference\0\u{3}use_system_theme\0\u{3}episode_bookmarks_sort_type\0\u{3}player_bookmarks_sort_type\0\u{3}podcast_bookmarks_sort_type\0\u{3}use_dark_up_next_theme\0\u{3}use_dynamic_colors_for_widget\0\u{3}files_sort_order\0\u{3}background_refresh\0\u{3}auto_download_unmetered_only\0\u{3}auto_download_only_when_charging\0\u{3}auto_download_up_next\0\u{3}cloud_auto_upload\0\u{3}cloud_auto_download\0\u{3}cloud_download_unmetered_only\0\u{3}use_rss_artwork\0\u{3}bookmarks_sort_order\0\u{3}auto_archive_played_episodes_global\0\u{3}auto_archive_includes_starred_global\0\u{3}files_auto_up_next_global\0\u{3}files_after_playing_delete_local_global\0\u{3}files_after_playing_delete_cloud_global\0\u{3}player_shelf_global\0\u{3}row_action_global\0\u{3}use_embedded_artwork_global\0\u{3}recommendations_on_global\0\u{3}grid_layout_global\0\u{3}volume_boost_global\0\u{3}badges_global\0\u{1}developer\0\u{3}smart_folders_number_of_times_shown\0\u{3}smart_folders_last_date_shown\0\u{3}save_up_next_on_playlists_play_all\0\u{3}do_not_sell_or_share\0\u{3}live_analytics_url\0\u{3}listening_time_stats\0\u{4}E\u{e}tap_to_play\0\u{3}seek_acceleration\0\u{3}transcription_engine_mode\0\u{3}transcription_battery_policy\0\u{3}transcription_language_override\0\u{3}transcription_remote_provider\0\u{3}transcription_max_speakers\0\u{3}transcription_whisper_model\0\u{3}transcription_allow_cellular_model_downloads\0\u{3}transcription_local_stack\0\u{3}adaptive_effects\0\u{3}allow_cellular_downloads\0\u{3}allow_cellular_auto_downloads\0")
+  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}grid_layout\0\u{3}grid_order\0\u{3}show_played\0\u{1}theme\0\u{3}skip_forward\0\u{3}skip_back\0\u{3}web_version\0\u{1}language\0\u{3}recommendations_on\0\u{4}\u{2}use_embedded_artwork\0\u{3}playback_speed\0\u{4}\u{2}volume_boost\0\u{1}badges\0\u{3}free_gift_acknowledgement\0\u{3}marketing_opt_in\0\u{3}auto_archive_played_episodes\0\u{3}auto_archive_includes_starred\0\u{1}region\0\u{3}row_action\0\u{3}up_next_swipe\0\u{3}episode_grouping\0\u{3}show_archived\0\u{3}open_links\0\u{3}media_actions\0\u{3}media_actions_order\0\u{3}keep_screen_awake\0\u{3}open_player\0\u{3}intelligent_resumption\0\u{3}play_up_next_on_tap\0\u{3}remote_skip_chapters\0\u{3}playback_actions\0\u{3}legacy_bluetooth\0\u{3}multi_select_gesture\0\u{3}chapter_titles\0\u{1}notifications\0\u{3}notification_actions\0\u{3}play_over_notifications\0\u{3}hide_notification_on_pause\0\u{3}app_badge\0\u{3}app_badge_filter\0\u{3}auto_archive_played\0\u{3}auto_archive_inactive\0\u{3}auto_up_next_limit\0\u{3}auto_up_next_limit_reached\0\u{3}warn_data_usage\0\u{3}files_auto_up_next\0\u{3}files_after_playing_delete_local\0\u{3}files_after_playing_delete_cloud\0\u{3}privacy_analytics\0\u{3}privacy_crash_reports\0\u{3}privacy_link_account\0\u{3}player_shelf\0\u{3}auto_subscribe_to_played\0\u{3}auto_show_played\0\u{3}auto_play_enabled\0\u{3}auto_play_last_list_uuid\0\u{3}trim_silence\0\u{3}show_artwork_on_lock_screen\0\u{3}headphone_controls_next_action\0\u{3}headphone_controls_previous_action\0\u{3}headphone_controls_play_bookmark_confirmation_sound\0\u{3}dark_theme_preference\0\u{3}light_theme_preference\0\u{3}use_system_theme\0\u{3}episode_bookmarks_sort_type\0\u{3}player_bookmarks_sort_type\0\u{3}podcast_bookmarks_sort_type\0\u{3}use_dark_up_next_theme\0\u{3}use_dynamic_colors_for_widget\0\u{3}files_sort_order\0\u{3}background_refresh\0\u{3}auto_download_unmetered_only\0\u{3}auto_download_only_when_charging\0\u{3}auto_download_up_next\0\u{3}cloud_auto_upload\0\u{3}cloud_auto_download\0\u{3}cloud_download_unmetered_only\0\u{3}use_rss_artwork\0\u{3}bookmarks_sort_order\0\u{3}auto_archive_played_episodes_global\0\u{3}auto_archive_includes_starred_global\0\u{3}files_auto_up_next_global\0\u{3}files_after_playing_delete_local_global\0\u{3}files_after_playing_delete_cloud_global\0\u{3}player_shelf_global\0\u{3}row_action_global\0\u{3}use_embedded_artwork_global\0\u{3}recommendations_on_global\0\u{3}grid_layout_global\0\u{3}volume_boost_global\0\u{3}badges_global\0\u{1}developer\0\u{3}smart_folders_number_of_times_shown\0\u{3}smart_folders_last_date_shown\0\u{3}save_up_next_on_playlists_play_all\0\u{3}do_not_sell_or_share\0\u{3}live_analytics_url\0\u{3}listening_time_stats\0\u{4}E\u{e}tap_to_play\0\u{3}seek_acceleration\0\u{3}transcription_engine_mode\0\u{3}transcription_battery_policy\0\u{3}transcription_language_override\0\u{3}transcription_remote_provider\0\u{3}transcription_max_speakers\0\u{3}transcription_whisper_model\0\u{3}transcription_allow_cellular_model_downloads\0\u{3}transcription_local_stack\0\u{3}adaptive_effects\0\u{3}allow_cellular_downloads\0\u{3}allow_cellular_auto_downloads\0\u{3}review_highlight_after_capture\0\u{3}highlight_style_preset\0\u{3}highlight_style_custom\0\u{3}highlight_confirmation_style\0")
 
   fileprivate class _StorageClass {
     var _gridLayout: Api_Int32Setting? = nil
@@ -17860,6 +18110,10 @@ nonisolated extension Api_NamedSettingsResponse: SwiftProtobuf.Message, SwiftPro
     var _adaptiveEffects: Api_BoolSetting? = nil
     var _allowCellularDownloads: Api_BoolSetting? = nil
     var _allowCellularAutoDownloads: Api_BoolSetting? = nil
+    var _reviewHighlightAfterCapture: Api_BoolSetting? = nil
+    var _highlightStylePreset: Api_StringSetting? = nil
+    var _highlightStyleCustom: Api_StringSetting? = nil
+    var _highlightConfirmationStyle: Api_Int32Setting? = nil
 
       // This property is used as the initial default value for new instances of the type.
       // The type itself is protecting the reference to its storage via CoW semantics.
@@ -17981,6 +18235,10 @@ nonisolated extension Api_NamedSettingsResponse: SwiftProtobuf.Message, SwiftPro
       _adaptiveEffects = source._adaptiveEffects
       _allowCellularDownloads = source._allowCellularDownloads
       _allowCellularAutoDownloads = source._allowCellularAutoDownloads
+      _reviewHighlightAfterCapture = source._reviewHighlightAfterCapture
+      _highlightStylePreset = source._highlightStylePreset
+      _highlightStyleCustom = source._highlightStyleCustom
+      _highlightConfirmationStyle = source._highlightConfirmationStyle
     }
   }
 
@@ -18110,6 +18368,10 @@ nonisolated extension Api_NamedSettingsResponse: SwiftProtobuf.Message, SwiftPro
         case 1011: try { try decoder.decodeSingularMessageField(value: &_storage._adaptiveEffects) }()
         case 1012: try { try decoder.decodeSingularMessageField(value: &_storage._allowCellularDownloads) }()
         case 1013: try { try decoder.decodeSingularMessageField(value: &_storage._allowCellularAutoDownloads) }()
+        case 1014: try { try decoder.decodeSingularMessageField(value: &_storage._reviewHighlightAfterCapture) }()
+        case 1015: try { try decoder.decodeSingularMessageField(value: &_storage._highlightStylePreset) }()
+        case 1016: try { try decoder.decodeSingularMessageField(value: &_storage._highlightStyleCustom) }()
+        case 1017: try { try decoder.decodeSingularMessageField(value: &_storage._highlightConfirmationStyle) }()
         default: break
         }
       }
@@ -18455,6 +18717,18 @@ nonisolated extension Api_NamedSettingsResponse: SwiftProtobuf.Message, SwiftPro
       try { if let v = _storage._allowCellularAutoDownloads {
         try visitor.visitSingularMessageField(value: v, fieldNumber: 1013)
       } }()
+      try { if let v = _storage._reviewHighlightAfterCapture {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1014)
+      } }()
+      try { if let v = _storage._highlightStylePreset {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1015)
+      } }()
+      try { if let v = _storage._highlightStyleCustom {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1016)
+      } }()
+      try { if let v = _storage._highlightConfirmationStyle {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 1017)
+      } }()
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -18575,6 +18849,10 @@ nonisolated extension Api_NamedSettingsResponse: SwiftProtobuf.Message, SwiftPro
         if _storage._adaptiveEffects != rhs_storage._adaptiveEffects {return false}
         if _storage._allowCellularDownloads != rhs_storage._allowCellularDownloads {return false}
         if _storage._allowCellularAutoDownloads != rhs_storage._allowCellularAutoDownloads {return false}
+        if _storage._reviewHighlightAfterCapture != rhs_storage._reviewHighlightAfterCapture {return false}
+        if _storage._highlightStylePreset != rhs_storage._highlightStylePreset {return false}
+        if _storage._highlightStyleCustom != rhs_storage._highlightStyleCustom {return false}
+        if _storage._highlightConfirmationStyle != rhs_storage._highlightConfirmationStyle {return false}
         return true
       }
       if !storagesAreEqual {return false}
