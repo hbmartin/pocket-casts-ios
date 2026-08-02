@@ -226,6 +226,25 @@ final class PlaybackManager {
     /// Highlights Tour reuses the same utility for bridges.
     private lazy var highlightAnnouncer = SpeechAnnouncer()
 
+    /// The Highlights Tour supervisor (S9); nil = no tour this app session.
+    private(set) var tourController: HighlightsTourController?
+
+    /// Starts a Highlights Tour of the current episode (S9). Replaces any
+    /// existing tour; the controller reports progress via typed messages.
+    func startHighlightsTour(length: TourLength) {
+        guard let episode = currentEpisode() else { return }
+        tourController?.cancel(reason: .userCancelled)
+        let controller = HighlightsTourController(episode: episode, length: length, playbackManager: self)
+        tourController = controller
+        controller.start()
+    }
+
+    func cancelHighlightsTour() {
+        tourController?.cancel(reason: .userCancelled)
+    }
+
+    var isTouring: Bool { tourController?.isActive == true }
+
     /// The player we should fallback to
     private var fallbackToPlayer: PlaybackProtocol.Type? = nil
 
@@ -514,6 +533,14 @@ final class PlaybackManager {
     }
 
     func pause(userInitiated: Bool = true) {
+        pause(userInitiated: userInitiated, deactivateSession: true)
+    }
+
+    /// - Parameter deactivateSession: false keeps the audio session active
+    ///   (skips the delayed `deactiveAudioSession()`), for callers about to
+    ///   play more audio immediately — the Highlights Tour pauses, speaks a
+    ///   bridge, and resumes; the 3s deactivation timer would cut the speech.
+    func pause(userInitiated: Bool, deactivateSession: Bool) {
         guard let episode = currentEpisode() else { return }
 
         // Only trigger the event if we are already playing
@@ -537,7 +564,9 @@ final class PlaybackManager {
         catchUpHelper.playbackDidPause(of: episode, playedUpTo: positionTracker.playedUpTo(for: episode))
         NotificationCenter.postOnMainThread(PlaybackPaused())
         cancelUpdateTimer()
-        deactiveAudioSession()
+        if deactivateSession {
+            deactiveAudioSession()
+        }
 
         updateIdleTimer()
     }
@@ -730,7 +759,9 @@ final class PlaybackManager {
         guard let episodeUuid = currentEpisode()?.uuid else { return }
 
         if chapterManager.haveTriedToParseChaptersFor(episodeUuid: episodeUuid), chapterManager.updateCurrentChapter(time: currentTime()) {
-            if currentChapters().visibleChapter?.isPlayable() == false {
+            // A Highlights Tour owns the playhead: deselected-chapter auto-skip
+            // stays suppressed so the two seek drivers can't fight (S9).
+            if currentChapters().visibleChapter?.isPlayable() == false, tourController?.isActive != true {
                 skipToNextChapter()
                 trackChapterSkipped()
             } else {
@@ -778,6 +809,9 @@ final class PlaybackManager {
 
         let currentTime = positionTracker.playedUpTo(for: playingEpisode)
         seekingTo = time
+        // Tour seek attribution: the controller matches its own pending jumps
+        // and treats everything else as the user taking control (S9).
+        tourController?.observeSeek(to: time)
         FileLog.shared.addMessage("seek to \(time) startPlaybackAfterSeek \(startPlaybackAfterSeek)")
 
         let isReadyToPlay = player?.isReadyToPlay() == true
@@ -1850,6 +1884,9 @@ final class PlaybackManager {
         }
 
         checkForChapterChange()
+        // Highlights Tour segment-end detection rides the same 1 Hz tick (it
+        // keeps firing while backgrounded, unlike PlaybackProgressed).
+        tourController?.playbackTicked(time: currentTime(), rate: Double(player.playbackRate()))
         fireProgressNotification()
 
         if updateCount > updatesPerSave {
@@ -2414,7 +2451,7 @@ final class PlaybackManager {
 
     // MARK: - Background Handling
 
-    private func startBackgroundTask() {
+    func startBackgroundTask() {
         if backgroundTask != UIBackgroundTaskIdentifier.invalid { return } // already started
 
         // Playback calls this from its own queues; bridge the UIKit call
@@ -2428,7 +2465,7 @@ final class PlaybackManager {
         backgroundTask = Thread.isMainThread ? begin() : DispatchQueue.main.sync(execute: begin)
     }
 
-    private func endBackgroundTask() {
+    func endBackgroundTask() {
         if backgroundTask == .invalid { return } // already cancelled
 
         let task = backgroundTask

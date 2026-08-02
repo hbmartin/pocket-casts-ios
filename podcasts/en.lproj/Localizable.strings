@@ -4559,6 +4559,45 @@
 /* Accessibility label for dismissing a suggested highlight. */
 "suggested_highlight_dismiss" = "Dismiss suggestion";
 
+/* Player shelf action + sheet title: guided playback of an episode's best moments. */
+"tour_shelf_title" = "Highlights Tour";
+
+/* Tour length option: about five minutes. */
+"tour_length_quick" = "Quick — about 5 minutes";
+
+/* Tour length option: about a quarter of the episode. */
+"tour_length_standard" = "Standard — about 25%";
+
+/* Tour length option: about half of the episode. */
+"tour_length_deep" = "Deep — about half";
+
+/* Toggle for speaking the tour's intro and transitions aloud. */
+"tour_spoken_transitions_toggle" = "Spoken transitions";
+
+/* Shown while the tour analyzes the episode. */
+"tour_preparing" = "Finding the best moments…";
+
+/* Shown when a tour can't be built (no transcript or no segments). */
+"tour_preparation_failed" = "Couldn't build a tour for this episode. It needs a transcript first.";
+
+/* Shown when the tour played its last highlight. */
+"tour_finished" = "That's the tour!";
+
+/* Button that stops the running tour and returns to normal playback. */
+"tour_exit" = "Exit Tour";
+
+/* Tour HUD position, e.g. "Highlight 2 of 6". First placeholder is the current index, second the total. */
+"tour_progress" = "Highlight %1$@ of %2$@";
+
+/* Spoken before jumping to a tour stop. Placeholder is the stop's title. */
+"tour_bridge_line" = "Next: %1$@";
+
+/* Spoken once at tour start. First placeholder is the number of stops, second the episode title. */
+"tour_intro_line" = "Here's your %1$@-highlight tour of %2$@.";
+
+/* Spoken after the last tour stop. */
+"tour_outro_line" = "That's the tour.";
+
 /* Label for displaying the number of bookmarks the user has when the bookmark count is equal to one */
 "bookmarks_count_singular" = "1 bookmark";
 

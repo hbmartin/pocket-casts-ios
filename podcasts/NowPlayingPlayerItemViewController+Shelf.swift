@@ -18,6 +18,7 @@ protocol NowPlayingActionsDelegate: AnyObject {
     func bookmarkTapped()
     func transcriptTapped()
     func catchMeUpTapped()
+    func highlightsTourTapped()
     func downloadTapped()
     func sharedRoutePicker(largeSize: Bool) -> PCRoutePickerView
     func presentManualPlaylistsChooser()
@@ -96,6 +97,17 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
             button.imageView?.tintColor = ThemeColor.playerContrast02()
             button.addTarget(self, action: #selector(catchMeUpTapped(_:)), for: .touchUpInside)
             button.accessibilityLabel = L10n.catchMeUpTitle
+
+            addToShelf(on: button)
+        case .highlightsTour:
+            let button = UIButton(frame: CGRect.zero)
+            button.isPointerInteractionEnabled = true
+            button.setImage(UIImage(named: action.largeIconName(episode: playingEpisode))?.withRenderingMode(.alwaysTemplate), for: .normal)
+            button.imageView?.tintColor = PlaybackManager.shared.isTouring
+                ? PlayerColorHelper.playerHighlightColor01(for: .dark)
+                : ThemeColor.playerContrast02()
+            button.addTarget(self, action: #selector(highlightsTourTapped(_:)), for: .touchUpInside)
+            button.accessibilityLabel = L10n.tourShelfTitle
 
             addToShelf(on: button)
         case .routePicker:
@@ -240,6 +252,15 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
         present(sheet, animated: true)
     }
 
+    func highlightsTourTapped() {
+        let sheet = ThemedHostingController(rootView: TourLengthPickerView())
+        if let presentation = sheet.sheetPresentationController {
+            presentation.detents = [.medium()]
+            presentation.prefersGrabberVisible = true
+        }
+        present(sheet, animated: true)
+    }
+
     func routePickerTapped(from _: PlayerAction) {
         isPresentingOverflowRoutePicker = true
         Task { @MainActor [weak self] in
@@ -379,6 +400,11 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
     @objc private func catchMeUpTapped(_ _: UIButton) {
         shelfButtonTapped(.catchMeUp)
         catchMeUpTapped()
+    }
+
+    @objc private func highlightsTourTapped(_ _: UIButton) {
+        shelfButtonTapped(.highlightsTour)
+        highlightsTourTapped()
     }
 
     @objc private func effectsBtnTapped(_ sender: UIButton) {

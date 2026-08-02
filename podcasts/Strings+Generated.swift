@@ -5401,6 +5401,38 @@ nonisolated internal enum L10n {
   internal static var today: String { return L10n.tr("Localizable", "today", fallback: "Today") }
   /// A common string used throughout the app. Title option to place the item at the top of the queue.
   internal static var top: String { return L10n.tr("Localizable", "top", fallback: "Top") }
+  /// Spoken before jumping to a tour stop. Placeholder is the stop's title.
+  internal static func tourBridgeLine(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "tour_bridge_line", String(describing: p1), fallback: "Next: %1$@")
+  }
+  /// Button that stops the running tour and returns to normal playback.
+  internal static var tourExit: String { return L10n.tr("Localizable", "tour_exit", fallback: "Exit Tour") }
+  /// Shown when the tour played its last highlight.
+  internal static var tourFinished: String { return L10n.tr("Localizable", "tour_finished", fallback: "That's the tour!") }
+  /// Spoken once at tour start. First placeholder is the number of stops, second the episode title.
+  internal static func tourIntroLine(_ p1: Any, _ p2: Any) -> String {
+    return L10n.tr("Localizable", "tour_intro_line", String(describing: p1), String(describing: p2), fallback: "Here's your %1$@-highlight tour of %2$@.")
+  }
+  /// Tour length option: about half of the episode.
+  internal static var tourLengthDeep: String { return L10n.tr("Localizable", "tour_length_deep", fallback: "Deep — about half") }
+  /// Tour length option: about five minutes.
+  internal static var tourLengthQuick: String { return L10n.tr("Localizable", "tour_length_quick", fallback: "Quick — about 5 minutes") }
+  /// Tour length option: about a quarter of the episode.
+  internal static var tourLengthStandard: String { return L10n.tr("Localizable", "tour_length_standard", fallback: "Standard — about 25%") }
+  /// Spoken after the last tour stop.
+  internal static var tourOutroLine: String { return L10n.tr("Localizable", "tour_outro_line", fallback: "That's the tour.") }
+  /// Shown when a tour can't be built (no transcript or no segments).
+  internal static var tourPreparationFailed: String { return L10n.tr("Localizable", "tour_preparation_failed", fallback: "Couldn't build a tour for this episode. It needs a transcript first.") }
+  /// Shown while the tour analyzes the episode.
+  internal static var tourPreparing: String { return L10n.tr("Localizable", "tour_preparing", fallback: "Finding the best moments…") }
+  /// Tour HUD position, e.g. "Highlight 2 of 6". First placeholder is the current index, second the total.
+  internal static func tourProgress(_ p1: Any, _ p2: Any) -> String {
+    return L10n.tr("Localizable", "tour_progress", String(describing: p1), String(describing: p2), fallback: "Highlight %1$@ of %2$@")
+  }
+  /// Player shelf action + sheet title: guided playback of an episode's best moments.
+  internal static var tourShelfTitle: String { return L10n.tr("Localizable", "tour_shelf_title", fallback: "Highlights Tour") }
+  /// Toggle for speaking the tour's intro and transitions aloud.
+  internal static var tourSpokenTransitionsToggle: String { return L10n.tr("Localizable", "tour_spoken_transitions_toggle", fallback: "Spoken transitions") }
   /// A common string used throughout the app. Often refers to the Transcript tab in the player.
   internal static var transcript: String { return L10n.tr("Localizable", "transcript", fallback: "Transcript") }
   /// Transcript error message when transcript is empty

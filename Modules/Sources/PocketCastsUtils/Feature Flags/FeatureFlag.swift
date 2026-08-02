@@ -185,6 +185,11 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// generation per episode also feeds the Highlights Tour (S9).
     case suggestedHighlights
 
+    /// The Highlights Tour (Highlights program S9, ADR-0018): DJ-style guided
+    /// playback of an episode's top salient segments by length budget, with
+    /// spoken transitions (pause → speak → seek → resume). Player shelf action.
+    case highlightsTour
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -283,6 +288,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             BuildEnvironment.current != .appStore
         case .suggestedHighlights:
             BuildEnvironment.current != .appStore
+        case .highlightsTour:
+            BuildEnvironment.current != .appStore
         }
     }
 
@@ -378,6 +385,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             "Choose how AI writes highlight titles: presets (atomic note, question-first, quote-only, punchy) plus an optional free-text style preference. Only affects highlight titling. Low risk."
         case .suggestedHighlights:
             "Scans episodes you finish for their best moments on device and suggests them as highlights to keep or dismiss. Battery-policy gated. Medium risk."
+        case .highlightsTour:
+            "Highlights Tour on the player shelf: a guided, optionally narrated jump through an episode's best moments at your chosen length. Needs a transcript. Medium risk."
         }
     }
 

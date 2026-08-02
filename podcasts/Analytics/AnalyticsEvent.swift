@@ -865,6 +865,9 @@ enum AnalyticsEvent: String {
     case suggestedHighlightsGenerated
     case suggestedHighlightAccepted
     case suggestedHighlightDismissed
+    case highlightsTourStarted
+    case highlightsTourCompleted
+    case highlightsTourCancelled
 
     // MARK: - People Directory
 

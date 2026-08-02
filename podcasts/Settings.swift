@@ -1188,6 +1188,18 @@ nonisolated class Settings: NSObject {
         }
     }
 
+    /// Highlights Tour (S9): whether bridges/intro/outro are spoken. Off falls
+    /// back to tone-only jump marking.
+    static var tourSpokenTransitionsEnabled: Bool {
+        get {
+            Constants.UserDefaults.bookmarks.tourSpokenTransitions.value
+        }
+
+        set {
+            Constants.UserDefaults.bookmarks.tourSpokenTransitions.save(newValue)
+        }
+    }
+
     static var darkUpNextTheme: Bool {
         get {
             if FeatureFlag.newSettingsStorage.enabled {
