@@ -2395,6 +2395,10 @@ nonisolated internal enum L10n {
   internal static var peopleDirectoryEpisodeCountSingular: String { return L10n.tr("Localizable", "people_directory_episode_count_singular", fallback: "1 episode") }
   /// Title of the People directory screen listing renamed transcript speakers
   internal static var peopleDirectoryTitle: String { return L10n.tr("Localizable", "people_directory_title", fallback: "People") }
+  /// Button that follows a person for new-appearance notifications.
+  internal static var personFollowButton: String { return L10n.tr("Localizable", "person_follow_button", fallback: "Notify Me") }
+  /// Button state when a person is already followed.
+  internal static var personFollowingButton: String { return L10n.tr("Localizable", "person_following_button", fallback: "Notifying") }
   /// A common string used throughout the app. Used to reference a phone.
   internal static var phone: String { return L10n.tr("Localizable", "phone", fallback: "Phone") }
   /// A common string used throughout the app. Prompt to start playback.

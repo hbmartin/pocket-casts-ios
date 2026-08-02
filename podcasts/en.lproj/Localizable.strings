@@ -4625,6 +4625,12 @@
 /* Appearance subtitle with the mention's timestamp. Placeholder is a play time like 34:12. */
 "entity_detail_mentioned_at" = "Mentioned at %1$@";
 
+/* Button that follows a person for new-appearance notifications. */
+"person_follow_button" = "Notify Me";
+
+/* Button state when a person is already followed. */
+"person_following_button" = "Notifying";
+
 /* Label for displaying the number of bookmarks the user has when the bookmark count is equal to one */
 "bookmarks_count_singular" = "1 bookmark";
 

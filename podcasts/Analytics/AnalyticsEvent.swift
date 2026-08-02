@@ -870,6 +870,8 @@ enum AnalyticsEvent: String {
     case highlightsTourCancelled
     case bookDirectoryShown
     case entityDetailAppearanceTapped
+    case personFollowed
+    case personUnfollowed
 
     // MARK: - People Directory
 

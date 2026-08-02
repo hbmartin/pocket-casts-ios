@@ -190,6 +190,12 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// spoken transitions (pause → speak → seek → resume). Player shelf action.
     case highlightsTour
 
+    /// Person follows (Highlights program S12, ADR-0017): follow a person
+    /// (host/guest) and get a push when they appear on any newly ingested
+    /// episode, catalog-wide. Ships DARK — backend milestone B2 must be live
+    /// in production first (remote key `person_follows` is the kill switch).
+    case personFollows
+
     /// The Mentioned Entity substrate (Highlights program S10): persists
     /// entity appearances (feed credits, renamed speakers, transcript
     /// mentions) under one folding rule so library-wide books/people
@@ -299,6 +305,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             BuildEnvironment.current != .appStore
         case .mentionedEntityIndex:
             BuildEnvironment.current != .appStore
+        case .personFollows:
+            BuildEnvironment.current != .appStore
         }
     }
 
@@ -398,6 +406,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             "Highlights Tour on the player shelf: a guided, optionally narrated jump through an episode's best moments at your chosen length. Needs a transcript. Medium risk."
         case .mentionedEntityIndex:
             "Builds a local index of people and books from episode credits, renamed speakers and transcript mentions, powering library-wide directories. Low risk."
+        case .personFollows:
+            "Follow people (hosts, guests) and get notified when they appear on any show the server ingests. Ships dark - requires backend milestone B2 in production; enabling early will fail. Medium risk."
         }
     }
 
