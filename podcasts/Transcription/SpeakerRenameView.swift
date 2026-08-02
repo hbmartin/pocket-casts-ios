@@ -127,6 +127,14 @@ struct SpeakerRenameView: View {
             : (try? JSONEncoder().encode(custom)).flatMap { String(data: $0, encoding: .utf8) }
         DataManager.sharedManager.transcriptions.setSpeakerNames(episodeUuid: episodeUuid, namesJSON: json)
 
+        // Library-wide person substrate (S10): renamed speakers become
+        // aggregatable appearances; clearing names clears the rows.
+        let podcastUuid = DataManager.sharedManager.findBaseEpisode(uuid: episodeUuid)
+            .flatMap { ($0 as? Episode)?.podcastUuid }
+        MentionedEntityIngester.ingest(speakerNames: Array(custom.values),
+                                       episodeUuid: episodeUuid,
+                                       podcastUuid: podcastUuid)
+
         Analytics.track(.transcriptionSpeakerRenamed, properties: [
             "speaker_count": speakerCount,
             "renamed_count": custom.count

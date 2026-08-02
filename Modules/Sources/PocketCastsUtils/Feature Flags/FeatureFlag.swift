@@ -190,6 +190,13 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// spoken transitions (pause → speak → seek → resume). Player shelf action.
     case highlightsTour
 
+    /// The Mentioned Entity substrate (Highlights program S10): persists
+    /// entity appearances (feed credits, renamed speakers, transcript
+    /// mentions) under one folding rule so library-wide books/people
+    /// aggregates (S11) and person follows (S12) have real storage instead of
+    /// purgeable caches.
+    case mentionedEntityIndex
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -290,6 +297,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             BuildEnvironment.current != .appStore
         case .highlightsTour:
             BuildEnvironment.current != .appStore
+        case .mentionedEntityIndex:
+            BuildEnvironment.current != .appStore
         }
     }
 
@@ -387,6 +396,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             "Scans episodes you finish for their best moments on device and suggests them as highlights to keep or dismiss. Battery-policy gated. Medium risk."
         case .highlightsTour:
             "Highlights Tour on the player shelf: a guided, optionally narrated jump through an episode's best moments at your chosen length. Needs a transcript. Medium risk."
+        case .mentionedEntityIndex:
+            "Builds a local index of people and books from episode credits, renamed speakers and transcript mentions, powering library-wide directories. Low risk."
         }
     }
 

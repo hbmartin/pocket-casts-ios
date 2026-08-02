@@ -414,6 +414,45 @@ class DatabaseHelper {
                 segmentCount INTEGER NOT NULL DEFAULT 0
             );
             """, values: nil)
+        },
+
+        // Highlights program S10: the Mentioned Entity substrate — a persisted,
+        // library-wide record that an entity (person/book/product/…) appears in
+        // an episode, from one of three sources: a feed credit, a named
+        // transcript speaker, or a transcript mention. Until now these lived in
+        // purgeable caches (mentions: Caches JSON; credits: URLCache only), so
+        // no aggregate ("books across your library") could be built on them.
+        // One shared name-folding rule produces canonicalKey. Device-local,
+        // never syncs; regeneration replaces an episode+source's rows whole.
+        SchemaMigration(toVersion: 89) { db in
+            try db.executeUpdate("""
+            CREATE TABLE IF NOT EXISTS MentionedEntity (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                kind TEXT NOT NULL,
+                canonicalKey TEXT NOT NULL,
+                displayName TEXT NOT NULL,
+                episodeUuid TEXT NOT NULL,
+                podcastUuid TEXT,
+                startTime REAL,
+                source TEXT NOT NULL,
+                role TEXT,
+                createdAt REAL NOT NULL DEFAULT 0
+            );
+            """, values: nil)
+            // Library-wide aggregates group on (kind, canonicalKey).
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS mentioned_entity_key
+            ON MentionedEntity (kind, canonicalKey);
+            """, values: nil)
+            // Per-show "most cited" and per-episode replace-on-regenerate.
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS mentioned_entity_podcast
+            ON MentionedEntity (kind, podcastUuid);
+            """, values: nil)
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS mentioned_entity_episode
+            ON MentionedEntity (episodeUuid, source);
+            """, values: nil)
         }
     ]
 

@@ -133,6 +133,9 @@ extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFS
             if FeatureFlag.episodeCredits.enabled,
                let persons = (try? await ShowInfoCoordinator.shared.loadShowInfo(podcastUuid: parentIdentifier, episodeUuid: episodeUUID))?.persons,
                !persons.isEmpty {
+                MentionedEntityIngester.ingest(credits: persons,
+                                               episodeUuid: episodeUUID,
+                                               podcastUuid: parentIdentifier)
                 await MainActor.run { [weak self] in
                     self?.attachCreditsCardIfNeeded(persons: persons)
                 }
@@ -261,6 +264,11 @@ extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFS
     /// entities means no card.
     private func loadMentionsCard(episodeUuid: String) async {
         guard let payload = await episodeMentionsCardPayload(episodeUuid: episodeUuid) else { return }
+        // Persist into the library-wide substrate (S10) so aggregates outlive
+        // the purgeable per-episode cache.
+        MentionedEntityIngester.ingest(mentions: payload.mentions,
+                                       episodeUuid: episodeUuid,
+                                       podcastUuid: episode.parentIdentifier())
         attachMentionsCardIfNeeded(mentions: payload.mentions, method: payload.method)
     }
 
