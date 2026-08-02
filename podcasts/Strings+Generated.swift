@@ -4091,6 +4091,24 @@ nonisolated internal enum L10n {
   internal static var settingsHighlightConfirmationFooter: String { return L10n.tr("Localizable", "settings_highlight_confirmation_footer", fallback: "Choose how saving a highlight is confirmed while listening. A gentle haptic always plays.") }
   /// Label for the setting that picks how a saved highlight is confirmed (sound, spoken, both, or nothing).
   internal static var settingsHighlightConfirmationStyle: String { return L10n.tr("Localizable", "settings_highlight_confirmation_style", fallback: "Capture Confirmation") }
+  /// Title of the Highlights settings screen (capture behavior + Markdown export).
+  internal static var settingsHighlights: String { return L10n.tr("Localizable", "settings_highlights", fallback: "Highlights") }
+  /// Section header for capture-behavior options on the Highlights settings screen.
+  internal static var settingsHighlightsCaptureSection: String { return L10n.tr("Localizable", "settings_highlights_capture_section", fallback: "Capture") }
+  /// Button that starts choosing a folder for the Markdown export.
+  internal static var settingsHighlightsExportChooseFolder: String { return L10n.tr("Localizable", "settings_highlights_export_choose_folder", fallback: "Choose Export Folder…") }
+  /// Button that turns the folder export off.
+  internal static var settingsHighlightsExportDisable: String { return L10n.tr("Localizable", "settings_highlights_export_disable", fallback: "Stop Exporting") }
+  /// Row showing the currently selected export folder.
+  internal static var settingsHighlightsExportFolder: String { return L10n.tr("Localizable", "settings_highlights_export_folder", fallback: "Folder") }
+  /// Footer explaining the Markdown folder export.
+  internal static var settingsHighlightsExportFooter: String { return L10n.tr("Localizable", "settings_highlights_export_footer", fallback: "Writes one Markdown file per episode into the folder you choose — works great with Obsidian, Logseq, or any notes vault. Files are updated automatically as you capture and edit highlights.") }
+  /// Button that immediately re-exports every episode's highlights.
+  internal static var settingsHighlightsExportNow: String { return L10n.tr("Localizable", "settings_highlights_export_now", fallback: "Export All Now") }
+  /// Section header for the Markdown folder export on the Highlights settings screen.
+  internal static var settingsHighlightsExportSection: String { return L10n.tr("Localizable", "settings_highlights_export_section", fallback: "Markdown Export") }
+  /// Toggle: open the highlight editor right after each in-app capture.
+  internal static var settingsHighlightsReviewAfterCapture: String { return L10n.tr("Localizable", "settings_highlights_review_after_capture", fallback: "Review After Capture") }
   /// Title for the screen that manages the importing and exporting of podcasts.
   internal static var settingsImportExport: String { return L10n.tr("Localizable", "settings_import_export", fallback: "Import / Export") }
   /// Informs the user that the current podcast is included in one filter. '%1$@' is a placeholder for the number of filters this podcast is included in.

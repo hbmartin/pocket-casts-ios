@@ -4478,6 +4478,33 @@
 /* Tag-filter option that clears the filter and shows every bookmark. */
 "bookmarks_filter_all_tags" = "All Tags";
 
+/* Title of the Highlights settings screen (capture behavior + Markdown export). */
+"settings_highlights" = "Highlights";
+
+/* Section header for capture-behavior options on the Highlights settings screen. */
+"settings_highlights_capture_section" = "Capture";
+
+/* Toggle: open the highlight editor right after each in-app capture. */
+"settings_highlights_review_after_capture" = "Review After Capture";
+
+/* Section header for the Markdown folder export on the Highlights settings screen. */
+"settings_highlights_export_section" = "Markdown Export";
+
+/* Row showing the currently selected export folder. */
+"settings_highlights_export_folder" = "Folder";
+
+/* Button that starts choosing a folder for the Markdown export. */
+"settings_highlights_export_choose_folder" = "Choose Export Folder…";
+
+/* Button that immediately re-exports every episode's highlights. */
+"settings_highlights_export_now" = "Export All Now";
+
+/* Button that turns the folder export off. */
+"settings_highlights_export_disable" = "Stop Exporting";
+
+/* Footer explaining the Markdown folder export. */
+"settings_highlights_export_footer" = "Writes one Markdown file per episode into the folder you choose — works great with Obsidian, Logseq, or any notes vault. Files are updated automatically as you capture and edit highlights.";
+
 /* Label for displaying the number of bookmarks the user has when the bookmark count is equal to one */
 "bookmarks_count_singular" = "1 bookmark";
 

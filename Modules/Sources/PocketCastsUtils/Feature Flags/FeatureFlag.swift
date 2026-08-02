@@ -163,6 +163,11 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// flow. Replaces the title-only edit sheet.
     case highlightEditor
 
+    /// PKM export (Highlights program S5): Markdown auto-export of highlights
+    /// into a user-picked folder (Obsidian vault, iCloud Drive), plus the
+    /// Get Highlights App Intent for Shortcuts pipelines.
+    case pkmExport
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -253,6 +258,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             BuildEnvironment.current != .appStore
         case .highlightEditor:
             BuildEnvironment.current != .appStore
+        case .pkmExport:
+            BuildEnvironment.current != .appStore
         }
     }
 
@@ -340,6 +347,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             "Eyes-free highlight capture: haptic plus a configurable sound or spoken confirmation on every capture, a Save Highlight Siri shortcut (replaces Open Filter) and a Control Center control. Low risk."
         case .highlightEditor:
             "Highlight editor: trim the transcript excerpt window with audio preview, add free-form tags with filtering, and optionally review each capture as it happens. Replaces the title-only bookmark edit sheet. Medium risk."
+        case .pkmExport:
+            "Auto-exports highlights as Markdown into a folder you pick (Obsidian vault, iCloud Drive), one file per episode, and adds a Get Highlights action to Shortcuts. Low risk."
         }
     }
 

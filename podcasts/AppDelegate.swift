@@ -112,6 +112,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // yet (also the lazy re-embed path after an OS model bump)
         TranscriptEmbeddingBackfill.shared.kickAfterLaunch()
 
+        // Markdown folder auto-export (Highlights S5): observe highlight
+        // changes once a folder has been picked; no-op otherwise.
+        HighlightFolderExporter.shared.startObservingIfNeeded()
+
         NotificationsHelper.shared.register(checkToken: false)
 
         DispatchQueue.global().async { [weak self] in
