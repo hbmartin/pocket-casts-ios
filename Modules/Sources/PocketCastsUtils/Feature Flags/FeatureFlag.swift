@@ -173,6 +173,12 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// lives in the Keychain and survives sign-out.
     case readwiseSync
 
+    /// Custom prompt styles (Highlights program S7): presets + a capped
+    /// free-text preference shaping highlight-family generation only
+    /// (auto-titles, suggested-highlight titles). Output validation is never
+    /// weakened; other generators keep fixed prompts.
+    case highlightPromptStyles
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -267,6 +273,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             BuildEnvironment.current != .appStore
         case .readwiseSync:
             BuildEnvironment.current != .appStore
+        case .highlightPromptStyles:
+            BuildEnvironment.current != .appStore
         }
     }
 
@@ -358,6 +366,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             "Auto-exports highlights as Markdown into a folder you pick (Obsidian vault, iCloud Drive), one file per episode, and adds a Get Highlights action to Shortcuts. Low risk."
         case .readwiseSync:
             "Pushes new and edited highlights to your Readwise account (token entered in Settings > Highlights, stored in the Keychain). Low risk."
+        case .highlightPromptStyles:
+            "Choose how AI writes highlight titles: presets (atomic note, question-first, quote-only, punchy) plus an optional free-text style preference. Only affects highlight titling. Low risk."
         }
     }
 

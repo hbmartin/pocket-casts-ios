@@ -40,6 +40,23 @@ struct HighlightsSettingsView: View {
                 }
                 .font(style: .body)
             }
+            if FeatureFlag.highlightPromptStyles.enabled {
+                Picker(L10n.settingsHighlightsPromptStyle, selection: $model.promptStyle) {
+                    ForEach(HighlightPromptStyle.allCases, id: \.self) { style in
+                        Text(style.displayableTitle).tag(style)
+                    }
+                }
+                .font(style: .body)
+
+                TextField(L10n.settingsHighlightsPromptCustomPlaceholder, text: $model.promptCustomText, axis: .vertical)
+                    .font(style: .body)
+                    .lineLimit(1...3)
+                    .onChange(of: model.promptCustomText) { _, newValue in
+                        if newValue.count > PromptStyleLibrary.customStyleCharacterCap {
+                            model.promptCustomText = String(newValue.prefix(PromptStyleLibrary.customStyleCharacterCap))
+                        }
+                    }
+            }
         } header: {
             Text(L10n.settingsHighlightsCaptureSection)
                 .font(style: .footnote, weight: .semibold)
@@ -141,6 +158,14 @@ final class HighlightsSettingsViewModel: ObservableObject {
         didSet { Settings.highlightConfirmationStyle = confirmationStyle }
     }
 
+    @Published var promptStyle: HighlightPromptStyle {
+        didSet { SettingsStore.appSettings.highlightStylePreset = promptStyle.rawValue }
+    }
+
+    @Published var promptCustomText: String {
+        didSet { SettingsStore.appSettings.highlightStyleCustom = promptCustomText }
+    }
+
     @Published var readwiseTokenInput = ""
     @Published private(set) var readwiseConnected: Bool
     @Published private(set) var readwiseValidating = false
@@ -154,6 +179,8 @@ final class HighlightsSettingsViewModel: ObservableObject {
         self.readwise = readwise
         self.reviewAfterCapture = SettingsStore.appSettings.reviewHighlightAfterCapture
         self.confirmationStyle = Settings.highlightConfirmationStyle
+        self.promptStyle = HighlightPromptStyle(rawValue: SettingsStore.appSettings.highlightStylePreset) ?? .standard
+        self.promptCustomText = SettingsStore.appSettings.highlightStyleCustom
         self.exportFolderName = exporter.isEnabled ? exporter.folderDisplayName : nil
         self.readwiseConnected = readwise.isEnabled
     }

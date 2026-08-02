@@ -1815,6 +1815,16 @@ nonisolated internal enum L10n {
   internal static var highlightQuoteShareStyle: String { return L10n.tr("Localizable", "highlight_quote_share_style", fallback: "Quote") }
   /// Short spoken confirmation after a highlight is captured hands-free. Keep it to one word if possible.
   internal static var highlightSavedAnnouncement: String { return L10n.tr("Localizable", "highlight_saved_announcement", fallback: "Saved") }
+  /// Highlight title style: a self-contained claim that stands alone (Zettelkasten).
+  internal static var highlightStyleAtomicNote: String { return L10n.tr("Localizable", "highlight_style_atomic_note", fallback: "Atomic Note") }
+  /// Highlight title style: as short and punchy as possible.
+  internal static var highlightStylePunchy: String { return L10n.tr("Localizable", "highlight_style_punchy", fallback: "Punchy") }
+  /// Highlight title style: phrased as the question the moment answers.
+  internal static var highlightStyleQuestionFirst: String { return L10n.tr("Localizable", "highlight_style_question_first", fallback: "Question") }
+  /// Highlight title style: no AI title; the quote itself is the note.
+  internal static var highlightStyleQuoteOnly: String { return L10n.tr("Localizable", "highlight_style_quote_only", fallback: "Quote Only") }
+  /// Highlight title style: the default balanced titling.
+  internal static var highlightStyleStandard: String { return L10n.tr("Localizable", "highlight_style_standard", fallback: "Standard") }
   /// Toast action that opens the highlight editor right after a capture.
   internal static var highlightToastEdit: String { return L10n.tr("Localizable", "highlight_toast_edit", fallback: "Edit") }
   /// Prompt to clear the full listening history for the user.
@@ -4107,6 +4117,10 @@ nonisolated internal enum L10n {
   internal static var settingsHighlightsExportNow: String { return L10n.tr("Localizable", "settings_highlights_export_now", fallback: "Export All Now") }
   /// Section header for the Markdown folder export on the Highlights settings screen.
   internal static var settingsHighlightsExportSection: String { return L10n.tr("Localizable", "settings_highlights_export_section", fallback: "Markdown Export") }
+  /// Placeholder for the optional free-text style preference for AI highlight titles.
+  internal static var settingsHighlightsPromptCustomPlaceholder: String { return L10n.tr("Localizable", "settings_highlights_prompt_custom_placeholder", fallback: "Optional style preference (e.g. \"always name the speaker\")") }
+  /// Picker label for how AI writes highlight titles.
+  internal static var settingsHighlightsPromptStyle: String { return L10n.tr("Localizable", "settings_highlights_prompt_style", fallback: "Title Style") }
   /// Button that validates and saves the Readwise token.
   internal static var settingsHighlightsReadwiseConnect: String { return L10n.tr("Localizable", "settings_highlights_readwise_connect", fallback: "Connect") }
   /// Row confirming the Readwise account is connected.

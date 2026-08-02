@@ -119,7 +119,14 @@ final class HighlightEnricher {
     /// bookmark in the meantime (the edit sheet pops right after creation, so a
     /// rename can easily race the enrichment).
     private func applyAutoTitleIfUnrenamed(bookmarkUuid: String, excerpt: String) async {
-        guard let title = await titleGenerator.title(for: excerpt) else { return }
+        // Style is a main-actor read (settings); captured before generation.
+        let style = PromptStyleLibrary.currentStyle()
+        let styleSuffix = PromptStyleLibrary.styleSuffix()
+        guard let title = await titleGenerator.title(
+            for: excerpt,
+            styleSuffix: styleSuffix,
+            useModel: !style.skipsModelTitling
+        ) else { return }
 
         guard let current = dataManager.bookmarks.bookmark(for: bookmarkUuid),
               Self.shouldApplyAutoTitle(currentTitle: current.title) else {

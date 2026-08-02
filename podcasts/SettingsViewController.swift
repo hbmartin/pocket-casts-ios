@@ -23,7 +23,8 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             case .transcription:
                 FeatureFlag.diarizedTranscription.enabled
             case .highlights:
-                FeatureFlag.pkmExport.enabled
+                FeatureFlag.pkmExport.enabled || FeatureFlag.highlightCapture.enabled
+                    || FeatureFlag.highlightEditor.enabled || FeatureFlag.highlightPromptStyles.enabled
             default:
                 true
             }

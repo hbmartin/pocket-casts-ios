@@ -29,13 +29,22 @@ nonisolated struct HighlightTitleGenerator: Sendable {
 
     /// The title to apply for `excerpt`: the validated model output when available,
     /// otherwise the deterministic fallback. Returns nil for an empty excerpt.
-    func title(for excerpt: String) async -> String? {
+    ///
+    /// - Parameters:
+    ///   - styleSuffix: The user's prompt-style suffix (Highlights S7,
+    ///     `PromptStyleLibrary.styleSuffix()`), captured by the caller on the
+    ///     main actor. Appended to the fixed instructions; output validation
+    ///     applies unchanged after it.
+    ///   - useModel: false (quote-only style) skips model titling entirely and
+    ///     goes straight to the deterministic fallback.
+    func title(for excerpt: String, styleSuffix: String = "", useModel: Bool = true) async -> String? {
         let trimmedExcerpt = excerpt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedExcerpt.isEmpty else { return nil }
 
-        if case .available = intelligence.availability(),
+        if useModel,
+           case .available = intelligence.availability(),
            let generated = try? await intelligence.respond(
-               instructions: Self.instructions,
+               instructions: Self.instructions + styleSuffix,
                prompt: Self.prompt(excerpt: trimmedExcerpt),
                generating: GeneratedHighlightTitle.self
            ),

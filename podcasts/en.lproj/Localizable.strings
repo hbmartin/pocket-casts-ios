@@ -4529,6 +4529,27 @@
 /* Footer explaining the Readwise integration. */
 "settings_highlights_readwise_footer" = "New and edited highlights are pushed to your Readwise account, which can forward them to Notion, Roam, and more. Your token is stored securely on this device.";
 
+/* Picker label for how AI writes highlight titles. */
+"settings_highlights_prompt_style" = "Title Style";
+
+/* Placeholder for the optional free-text style preference for AI highlight titles. */
+"settings_highlights_prompt_custom_placeholder" = "Optional style preference (e.g. \"always name the speaker\")";
+
+/* Highlight title style: the default balanced titling. */
+"highlight_style_standard" = "Standard";
+
+/* Highlight title style: a self-contained claim that stands alone (Zettelkasten). */
+"highlight_style_atomic_note" = "Atomic Note";
+
+/* Highlight title style: phrased as the question the moment answers. */
+"highlight_style_question_first" = "Question";
+
+/* Highlight title style: no AI title; the quote itself is the note. */
+"highlight_style_quote_only" = "Quote Only";
+
+/* Highlight title style: as short and punchy as possible. */
+"highlight_style_punchy" = "Punchy";
+
 /* Label for displaying the number of bookmarks the user has when the bookmark count is equal to one */
 "bookmarks_count_singular" = "1 bookmark";
 
