@@ -54,10 +54,13 @@ final class HighlightEnricher {
     // MARK: - Pipeline
 
     private func enrich(bookmarkUuid: String) async {
-        // Dedupe guard: enrichment is write-once, so a bookmark that already has an
-        // excerpt (local run or file-sync) is left alone.
+        // Dedupe guard: the auto path is write-once, so a bookmark that already has
+        // an excerpt (local run or sync) is left alone — and a user-trimmed window
+        // (trimModified set) is authoritative and never regenerated (ADR-0016).
+        // `updateEnrichment` re-checks the trim stamp at the write itself.
         guard let bookmark = dataManager.bookmarks.bookmark(for: bookmarkUuid),
-              bookmark.excerpt == nil else {
+              bookmark.excerpt == nil,
+              bookmark.trimModified == nil else {
             return
         }
 
@@ -180,7 +183,7 @@ final class HighlightEnricher {
             usedTimeMapping = true
         }
 
-        guard let excerpt = HighlightExcerptBuilder.excerpt(
+        guard let excerpt = HighlightExcerptBuilder.smartExcerpt(
             around: anchor,
             cues: transcript.cues,
             plainText: transcript.plainText

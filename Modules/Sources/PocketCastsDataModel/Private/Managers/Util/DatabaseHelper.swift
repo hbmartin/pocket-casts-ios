@@ -353,6 +353,28 @@ class DatabaseHelper {
         SchemaMigration(toVersion: 86) { db in
             try db.executeUpdate("ALTER TABLE SJFilteredPlaylist ADD COLUMN sharedListId INTEGER", values: nil)
             try db.executeUpdate("ALTER TABLE SJFilteredPlaylist ADD COLUMN sharedRole INTEGER NOT NULL DEFAULT 0", values: nil)
+        },
+
+        // Highlights program S1 (ADR-0016): user-authored trim + tags on bookmarks.
+        // trimModified marks the excerpt window as user-edited (a set stamp beats
+        // machine re-enrichment everywhere); tagsModified stamps whole-set tag
+        // merges. Both sync over account sync (fork fields >= 1003) and file sync
+        // once the S2 wiring lands; until then they ride the existing bookmark
+        // sync_status without leaving the device.
+        SchemaMigration(toVersion: 87) { db in
+            try db.executeUpdate("ALTER TABLE Bookmark ADD COLUMN trimModified REAL;", values: nil)
+            try db.executeUpdate("ALTER TABLE Bookmark ADD COLUMN tagsModified REAL;", values: nil)
+            try db.executeUpdate("""
+            CREATE TABLE IF NOT EXISTS BookmarkTag (
+                bookmarkUuid TEXT NOT NULL,
+                tag TEXT NOT NULL,
+                PRIMARY KEY (bookmarkUuid, tag)
+            );
+            """, values: nil)
+            // Tag-first lookups: autocomplete vocabulary and "highlights tagged X".
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS bookmark_tag_tag ON BookmarkTag (tag);
+            """, values: nil)
         }
     ]
 

@@ -22,13 +22,55 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
   rebuilds and lives in its own table.
 
 - **Highlight** — a Bookmark enriched with a transcript excerpt and end time;
-  the user-curated "hot segment" of an episode. Enrichment is write-once and
-  best-effort: no transcript means a plain bookmark.
+  the user-curated "hot segment" of an episode. Enrichment is best-effort and
+  machine-derived until the user trims: a user trim (a stamped edit of the
+  excerpt window) is authoritative and is never overwritten by re-enrichment.
+  No transcript means a plain bookmark.
 - **Quote Link** — a timestamped share link whose payload carries the transcript
   sentence(s) at the timestamp: in the share text and in the URL's `q`
   parameter. The quote is display/deep-link data only — the canonical
   transcript is unchanged, and a link without a resolvable quote is exactly a
   plain timestamped link.
+
+## Highlights & capture
+
+- **Tag** — a free-form, flat, case-insensitively-unique label on a Highlight.
+  A highlight's tag set syncs as a whole (last writer wins by its modified
+  stamp); there is no hierarchy and no curated vocabulary.
+- **Salient Segment** — a ranked `[start, end, title]` span of an episode the
+  on-device model judges worth revisiting. One generation per episode is the
+  single source for both the Highlights Tour and Suggested Highlights.
+- **Suggested Highlight** — a machine-proposed Salient Segment pending the
+  user's review. Device-local, never syncs; becomes a Highlight only on
+  acceptance (which creates a Bookmark); a dismissal is remembered forever so
+  the suggestion never resurfaces.
+- **Highlights Tour** — DJ-style guided playback of an episode's top Salient
+  Segments under a listening-time budget. The tour controls the player (seek,
+  pause) and never edits audio; its state dies with the app process.
+- **Bridge** — the short spoken transition (on-device synthesized voice) before
+  each tour jump, plus the tour's intro and outro lines. Bridges are composed
+  deterministically from segment titles — never model-generated at runtime —
+  and degrade to a tone when speech is off or unavailable.
+- **Prompt Style** — the user's preset or capped free-text instruction shaping
+  highlight-family generation only (auto-titles, suggested-highlight titles and
+  notes). A style can never weaken a generator's output validation.
+
+## People & entities
+
+- **Mentioned Entity** — a persisted, library-wide record that an entity
+  (person, book, product, website, place, organization) appears in an episode,
+  from one of three sources: a feed credit, a named transcript speaker, or a
+  transcript mention. All sources share one name-folding rule
+  (case- and diacritic-insensitive); device-local, never syncs.
+- **Person** — on the client (v1): a distinct folded display name — two humans
+  who share a name merge into one entry, a documented limitation. On the
+  server: a numeric `person.id` with alias and external-reference records
+  (wikidata and similar), where the folded name is only the v1 dedupe
+  heuristic — same-named humans can be distinct persons.
+- **Person Follow** — a private, account-level subscription to a Person,
+  matched server-side at feed ingest and delivered as a push when the person
+  appears on a newly ingested episode. Not a social edge: it requires a
+  logged-in account but no joined profile, and is never publicly visible.
 
 ## Transcript crowdsourcing
 
