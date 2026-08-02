@@ -1,6 +1,8 @@
 import Foundation
 import Combine
 import PocketCastsDataModel
+import PocketCastsServer
+import PocketCastsUtils
 
 /// Wraps the SwiftUI view in a `PlayerItemViewController` and adds some basic listeners
 class BookmarksPlayerTabController: PlayerItemViewController {
@@ -81,7 +83,40 @@ class BookmarksPlayerTabController: PlayerItemViewController {
             return
         }
 
+        if FeatureFlag.highlightEditor.enabled {
+            // Capture is fire-and-forget unless the user opted into reviewing
+            // each capture (Highlights program S4, synced setting).
+            if SettingsStore.appSettings.reviewHighlightAfterCapture {
+                present(HighlightEditorPresenter.controller(
+                    manager: bookmarkManager,
+                    bookmark: bookmark,
+                    source: viewModel.analyticsSource
+                ), animated: true)
+            } else {
+                showCapturedToast(for: bookmark)
+            }
+            return
+        }
+
         showBookmarkEdit(isNew: !isDuplicate, bookmark: bookmark)
+    }
+
+    /// Non-interrupting confirmation with an Edit escape hatch (Highlights S4).
+    private func showCapturedToast(for bookmark: Bookmark) {
+        let message = bookmark.title == L10n.bookmarkDefaultTitle
+            ? L10n.bookmarkAdded
+            : L10n.bookmarkAddedNotification(bookmark.title)
+
+        let action = Toast.Action(title: L10n.highlightToastEdit) { [weak self] in
+            guard let self else { return }
+            self.present(HighlightEditorPresenter.controller(
+                manager: self.bookmarkManager,
+                bookmark: bookmark,
+                source: self.viewModel.analyticsSource
+            ), animated: true)
+        }
+
+        Toast.show(message, actions: [action], theme: .playerTheme)
     }
 
     private func showBookmarkEdit(isNew: Bool, bookmark: Bookmark) {

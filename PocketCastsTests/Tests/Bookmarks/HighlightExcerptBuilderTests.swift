@@ -117,6 +117,51 @@ final class HighlightExcerptBuilderTests: XCTestCase {
         XCTAssertNil(HighlightExcerptBuilder.smartExcerpt(around: 10, cues: transcript.cues, plainText: transcript.plainText))
     }
 
+    // MARK: - Stored-window recovery (trim editor open path)
+
+    func testRecoveredWindowMatchesMultiCueExcerpt() {
+        let transcript = makeTranscript([
+            (0, 5, "Before the window. "),
+            (10, 15, "First stored piece. "),
+            (15.2, 20, "Second stored piece. "),
+            (25, 30, "After the window. ")
+        ])
+
+        let window = HighlightExcerptBuilder.recoveredWindow(
+            excerpt: "First stored piece. Second stored piece.",
+            endTime: 20,
+            cues: transcript.cues,
+            plainText: transcript.plainText
+        )
+
+        XCTAssertEqual(window, 10...20)
+    }
+
+    func testRecoveredWindowToleratesEndTimeDrift() {
+        // Sync round-trips endTime through ms; sub-second drift must not break recovery.
+        let transcript = makeTranscript([(10, 15, "Only piece.")])
+
+        let window = HighlightExcerptBuilder.recoveredWindow(
+            excerpt: "Only piece.",
+            endTime: 15.4,
+            cues: transcript.cues,
+            plainText: transcript.plainText
+        )
+
+        XCTAssertEqual(window, 10...15)
+    }
+
+    func testRecoveredWindowFailsWhenTranscriptChanged() {
+        let transcript = makeTranscript([(10, 15, "Completely different words now.")])
+
+        XCTAssertNil(HighlightExcerptBuilder.recoveredWindow(
+            excerpt: "The excerpt that once existed.",
+            endTime: 15,
+            cues: transcript.cues,
+            plainText: transcript.plainText
+        ), "an unreproducible window must fall back rather than guess")
+    }
+
     // MARK: - Explicit range (trim editor save path)
 
     func testRangeExcerptSelectsIntersectingCues() {

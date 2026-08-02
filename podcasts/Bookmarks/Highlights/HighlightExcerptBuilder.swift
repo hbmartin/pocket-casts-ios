@@ -128,6 +128,50 @@ nonisolated enum HighlightExcerptBuilder {
         return assemble(intersecting, fullText: plainText as NSString, fallbackTime: range.lowerBound)
     }
 
+    /// Recovers the stored excerpt's cue window `[start, end]` from the pieces a
+    /// bookmark actually persists (excerpt text + window end): starting at the
+    /// cue whose end matches `endTime`, cues are walked backwards while their
+    /// accumulated text stays a suffix of the stored excerpt, until it matches
+    /// exactly. Deterministic against the same transcript; nil when the
+    /// transcript changed enough that no window reproduces the text (the trim
+    /// editor then falls back to the anchor-based default window).
+    static func recoveredWindow(
+        excerpt: String,
+        endTime: TimeInterval,
+        cues: [TranscriptCue],
+        plainText: String
+    ) -> ClosedRange<TimeInterval>? {
+        let target = normalizedWhitespace(excerpt)
+        guard !target.isEmpty else { return nil }
+
+        let ordered = cues.sorted { $0.startTime < $1.startTime }
+        let fullText = plainText as NSString
+
+        // The window's last cue: the one whose end lands on the stored endTime
+        // (small tolerance for float round-trips through sync).
+        let exactMatch = ordered.lastIndex { abs($0.endTime - endTime) < 1.5 }
+        let looseMatch = ordered.lastIndex { $0.endTime <= endTime + 1.5 }
+        guard let endIndex = exactMatch ?? looseMatch else { return nil }
+
+        var accumulated = ""
+        var index = endIndex
+        while true {
+            let cue = ordered[index]
+            guard cue.characterRange.location != NSNotFound,
+                  NSMaxRange(cue.characterRange) <= fullText.length else {
+                return nil
+            }
+            let piece = normalizedWhitespace(fullText.substring(with: cue.characterRange))
+            accumulated = piece.isEmpty ? accumulated : (accumulated.isEmpty ? piece : "\(piece) \(accumulated)")
+
+            if accumulated == target {
+                return cue.startTime...ordered[endIndex].endTime
+            }
+            guard target.hasSuffix(accumulated), index > ordered.startIndex else { return nil }
+            index = ordered.index(before: index)
+        }
+    }
+
     /// True when the cue's text ends a sentence (terminal punctuation, optionally
     /// followed by closing quotes/brackets).
     static func endsSentence(_ cue: TranscriptCue, in fullText: NSString) -> Bool {

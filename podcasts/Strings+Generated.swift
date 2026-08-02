@@ -526,6 +526,10 @@ nonisolated internal enum L10n {
   internal static var bookmarksExportUnknownEpisode: String { return L10n.tr("Localizable", "bookmarks_export_unknown_episode", fallback: "Unknown Episode") }
   /// Heading used in the bookmark Markdown export when a podcast no longer exists
   internal static var bookmarksExportUnknownPodcast: String { return L10n.tr("Localizable", "bookmarks_export_unknown_podcast", fallback: "Unknown Podcast") }
+  /// Tag-filter option that clears the filter and shows every bookmark.
+  internal static var bookmarksFilterAllTags: String { return L10n.tr("Localizable", "bookmarks_filter_all_tags", fallback: "All Tags") }
+  /// Bookmark list menu option that filters the list to a single tag.
+  internal static var bookmarksFilterByTag: String { return L10n.tr("Localizable", "bookmarks_filter_by_tag", fallback: "Filter by Tag") }
   /// A message informing the user a feature is locked. %1$@ is the name of the tier (Plus or Patron)
   internal static func bookmarksLockedMessage(_ p1: Any) -> String {
     return L10n.tr("Localizable", "bookmarks_locked_message", String(describing: p1), fallback: "Unlock this feature and many more with Pocket Casts %1$@ and save timestamps of your favorite episodes.")
@@ -1791,6 +1795,16 @@ nonisolated internal enum L10n {
   internal static var highlightConfirmationSoundSpoken: String { return L10n.tr("Localizable", "highlight_confirmation_sound_spoken", fallback: "Sound and Spoken") }
   /// Confirmation style option: speak a short confirmation only.
   internal static var highlightConfirmationSpoken: String { return L10n.tr("Localizable", "highlight_confirmation_spoken", fallback: "Spoken") }
+  /// Shown in the highlight editor when the episode has no transcript, so only title and tags can be edited.
+  internal static var highlightEditorNoTranscript: String { return L10n.tr("Localizable", "highlight_editor_no_transcript", fallback: "No transcript available for this episode — the excerpt can't be trimmed.") }
+  /// Placeholder for the tag input field in the highlight editor.
+  internal static var highlightEditorTagPlaceholder: String { return L10n.tr("Localizable", "highlight_editor_tag_placeholder", fallback: "Add a tag") }
+  /// Section label above the tag editor in the highlight editor.
+  internal static var highlightEditorTagsSection: String { return L10n.tr("Localizable", "highlight_editor_tags_section", fallback: "Tags") }
+  /// Title of the highlight editor sheet (trim the excerpt window, edit title and tags).
+  internal static var highlightEditorTitle: String { return L10n.tr("Localizable", "highlight_editor_title", fallback: "Edit Highlight") }
+  /// Section label above the excerpt trim control in the highlight editor.
+  internal static var highlightEditorTrimSection: String { return L10n.tr("Localizable", "highlight_editor_trim_section", fallback: "Excerpt") }
   /// Shown on the shareable quote card when a bookmark has no transcript excerpt
   internal static var highlightExcerptUnavailable: String { return L10n.tr("Localizable", "highlight_excerpt_unavailable", fallback: "No transcript excerpt available") }
   /// Accessibility label for the shareable quote card. %1$@ is the transcript excerpt shown on the card.
@@ -1801,6 +1815,8 @@ nonisolated internal enum L10n {
   internal static var highlightQuoteShareStyle: String { return L10n.tr("Localizable", "highlight_quote_share_style", fallback: "Quote") }
   /// Short spoken confirmation after a highlight is captured hands-free. Keep it to one word if possible.
   internal static var highlightSavedAnnouncement: String { return L10n.tr("Localizable", "highlight_saved_announcement", fallback: "Saved") }
+  /// Toast action that opens the highlight editor right after a capture.
+  internal static var highlightToastEdit: String { return L10n.tr("Localizable", "highlight_toast_edit", fallback: "Edit") }
   /// Prompt to clear the full listening history for the user.
   internal static var historyClearAll: String { return L10n.tr("Localizable", "history_clear_all", fallback: "Clear All") }
   /// Title for the details prompt to confirm the user wants to clear their listening history.

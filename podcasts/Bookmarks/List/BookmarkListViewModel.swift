@@ -24,12 +24,19 @@ class BookmarkListViewModel: SearchableListViewModel<Bookmark> {
         [.newestToOldest, .oldestToNewest, .timestamp]
     }
 
+    /// When set, only bookmarks carrying this tag are listed (Highlights S4).
+    @Published var tagFilter: String? = nil
+
     var bookmarks: [Bookmark] {
-        isSearching ? filteredItems : items
+        let base = isSearching ? filteredItems : items
+        guard let tagFilter else { return base }
+        return base.filter { bookmark in
+            bookmark.tags.contains { $0.caseInsensitiveCompare(tagFilter) == .orderedSame }
+        }
     }
 
     var bookmarkCount: Int {
-        isSearching ? numberOfFilteredItems : numberOfItems
+        tagFilter == nil ? (isSearching ? numberOfFilteredItems : numberOfItems) : bookmarks.count
     }
 
     var cancellables = Set<AnyCancellable>()
@@ -104,7 +111,16 @@ extension BookmarkListViewModel {
 
     func editSelectedBookmarks() {
         guard let bookmark = selectedItems.first else { return }
-        router?.bookmarkEdit(bookmark)
+        if FeatureFlag.highlightEditor.enabled {
+            // The full editor (trim + tags + title) supersedes the title-only sheet.
+            router?.presentBookmarkController(HighlightEditorPresenter.controller(
+                manager: bookmarkManager,
+                bookmark: bookmark,
+                source: analyticsSource
+            ))
+        } else {
+            router?.bookmarkEdit(bookmark)
+        }
         toggleMultiSelection()
     }
 
@@ -156,6 +172,31 @@ extension BookmarkListViewModel {
                 self?.exportAllAsMarkdown()
             }
         ])
+
+        // Tag filter (Highlights S4): only offered once a vocabulary exists.
+        if FeatureFlag.highlightEditor.enabled {
+            let tags = bookmarkManager.allTags()
+            if !tags.isEmpty {
+                optionPicker.addAction(action: OptionAction(label: L10n.bookmarksFilterByTag, secondaryLabel: tagFilter, icon: "podcast-filter", action: { [weak self] in
+                    self?.showTagFilterOptions(tags: tags)
+                }))
+            }
+        }
+
+        optionPicker.show(statusBarStyle: AppTheme.defaultStatusBarStyle())
+    }
+
+    private func showTagFilterOptions(tags: [String]) {
+        let optionPicker = OptionsPicker(title: L10n.bookmarksFilterByTag)
+
+        optionPicker.addAction(action: OptionAction(label: L10n.bookmarksFilterAllTags, selected: tagFilter == nil, action: { [weak self] in
+            self?.tagFilter = nil
+        }))
+        optionPicker.addActions(tags.map { tag in
+            OptionAction(label: tag, selected: tagFilter?.caseInsensitiveCompare(tag) == .orderedSame, action: { [weak self] in
+                self?.tagFilter = tag
+            })
+        })
 
         optionPicker.show(statusBarStyle: AppTheme.defaultStatusBarStyle())
     }

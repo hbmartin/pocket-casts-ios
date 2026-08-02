@@ -4454,6 +4454,30 @@
 /* Action title for saving a highlight at the current playback position (Siri shortcut, Control Center control). */
 "save_highlight" = "Save Highlight";
 
+/* Title of the highlight editor sheet (trim the excerpt window, edit title and tags). */
+"highlight_editor_title" = "Edit Highlight";
+
+/* Section label above the excerpt trim control in the highlight editor. */
+"highlight_editor_trim_section" = "Excerpt";
+
+/* Section label above the tag editor in the highlight editor. */
+"highlight_editor_tags_section" = "Tags";
+
+/* Placeholder for the tag input field in the highlight editor. */
+"highlight_editor_tag_placeholder" = "Add a tag";
+
+/* Shown in the highlight editor when the episode has no transcript, so only title and tags can be edited. */
+"highlight_editor_no_transcript" = "No transcript available for this episode — the excerpt can't be trimmed.";
+
+/* Toast action that opens the highlight editor right after a capture. */
+"highlight_toast_edit" = "Edit";
+
+/* Bookmark list menu option that filters the list to a single tag. */
+"bookmarks_filter_by_tag" = "Filter by Tag";
+
+/* Tag-filter option that clears the filter and shows every bookmark. */
+"bookmarks_filter_all_tags" = "All Tags";
+
 /* Label for displaying the number of bookmarks the user has when the bookmark count is equal to one */
 "bookmarks_count_singular" = "1 bookmark";
 

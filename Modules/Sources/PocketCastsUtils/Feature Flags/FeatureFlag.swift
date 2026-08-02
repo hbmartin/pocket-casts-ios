@@ -157,6 +157,12 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// Control Center control.
     case highlightCapture
 
+    /// The highlight editor (Highlights program S4): trim the excerpt window
+    /// against the transcript with looping preview, free-form tags with
+    /// autocomplete + list filtering, and the synced "review after capture"
+    /// flow. Replaces the title-only edit sheet.
+    case highlightEditor
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -245,6 +251,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             BuildEnvironment.current != .appStore
         case .highlightCapture:
             BuildEnvironment.current != .appStore
+        case .highlightEditor:
+            BuildEnvironment.current != .appStore
         }
     }
 
@@ -330,6 +338,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             "Syncs highlight excerpts, trims and tags on bookmarks with your account. Requires backend milestone B1 to be live; until then these fields stay device-local while titles keep syncing. Medium risk."
         case .highlightCapture:
             "Eyes-free highlight capture: haptic plus a configurable sound or spoken confirmation on every capture, a Save Highlight Siri shortcut (replaces Open Filter) and a Control Center control. Low risk."
+        case .highlightEditor:
+            "Highlight editor: trim the transcript excerpt window with audio preview, add free-form tags with filtering, and optionally review each capture as it happens. Replaces the title-only bookmark edit sheet. Medium risk."
         }
     }
 
