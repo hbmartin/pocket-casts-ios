@@ -22,6 +22,8 @@ nonisolated enum NotificationType: String {
 
     case newFeatureSuggestedFolders
 
+    case highlightResurfacing
+
     var title: String {
         switch self {
         case .onboardingSignUp:
@@ -46,6 +48,8 @@ nonisolated enum NotificationType: String {
             return L10n.notificationsRecommendationsYouMightLikeTitle
         case .newFeatureSuggestedFolders:
             return L10n.notificationsNewFeatureSuggestedFoldersTitle
+        case .highlightResurfacing:
+            return L10n.notificationsHighlightResurfacingTitle
         }
     }
 
@@ -73,6 +77,8 @@ nonisolated enum NotificationType: String {
             return L10n.notificationsRecommendationsYouMightLikeBody
         case .newFeatureSuggestedFolders:
             return L10n.notificationsNewFeatureSuggestedFoldersBody
+        case .highlightResurfacing:
+            return NotificationsCoordinator.shared.resurfacedHighlightBody() ?? L10n.notificationsHighlightResurfacingBodyFallback
         }
     }
 
@@ -104,6 +110,8 @@ nonisolated enum NotificationType: String {
             return "thcast://discover/recommendations_user"
         case .newFeatureSuggestedFolders:
             return "thcast://features/suggestedFolders"
+        case .highlightResurfacing:
+            return "thcast://profile/bookmarks"
         }
     }
 
@@ -120,6 +128,9 @@ nonisolated enum NotificationType: String {
                 return Settings.suggestedFoldersUpsellCount < 2 && Settings.appVersion() == "7.90"
             case .reengagementDownloads:
                 return NotificationsCoordinator.shared.numberOfDownloadsAvailable() > 0
+            case .highlightResurfacing:
+                // Only when there's something worth resurfacing.
+                return NotificationsCoordinator.shared.resurfacedHighlightBody() != nil
             default:
                 return true
         }
@@ -130,7 +141,8 @@ nonisolated enum NotificationType: String {
             case .reengagementWeekly,
                  .reengagementDownloads,
                  .recommendationsTrending,
-                 .recommendationsYouMightLike:
+                 .recommendationsYouMightLike,
+                 .highlightResurfacing:
                 return true
             default:
                 return false
@@ -146,6 +158,8 @@ nonisolated enum NotificationsGroup: CaseIterable {
     case newFeaturesAndTips
     // Reserved to keep the offers notification preference stable.
     case offers
+    /// Opt-in weekly resurfacing of an old highlight (Highlights program).
+    case fromYourHighlights
 
     var notifications: [NotificationType] {
         switch self {
@@ -159,6 +173,8 @@ nonisolated enum NotificationsGroup: CaseIterable {
                 return [.newFeatureSuggestedFolders, .reengagementWeekly, .reengagementDownloads]
             case .offers:
                 return []
+            case .fromYourHighlights:
+                return [.highlightResurfacing]
         }
     }
 
@@ -175,6 +191,8 @@ nonisolated enum NotificationsGroup: CaseIterable {
             case .offers:
                 // Reserved for possible future local offer notifications.
                 return 14
+            case .fromYourHighlights:
+                return 18
         }
     }
 
@@ -190,6 +208,8 @@ nonisolated enum NotificationsGroup: CaseIterable {
                 return Settings.notificationsNewFeaturesAndTips
             case .offers:
                 return Settings.notificationsOffers
+            case .fromYourHighlights:
+                return Settings.notificationsFromYourHighlights
         }
     }
 
@@ -213,6 +233,8 @@ nonisolated enum NotificationsGroup: CaseIterable {
                 Settings.notificationsNewFeaturesAndTips = newValue
             case .offers:
                 Settings.notificationsOffers = newValue
+            case .fromYourHighlights:
+                Settings.notificationsFromYourHighlights = newValue
         }
     }
 
@@ -233,6 +255,8 @@ nonisolated enum NotificationsGroup: CaseIterable {
             case .offers:
                 // Reserved for possible future local offer notifications.
                 return Self.speedUpNotifications ? 120.seconds: 2.week
+            case .fromYourHighlights:
+                return Self.speedUpNotifications ? 60.seconds: 1.week
         }
     }
 
@@ -267,6 +291,14 @@ nonisolated enum NotificationsGroup: CaseIterable {
             case .offers:
                 return makeTrigger(
                     days: maxWeekDays - order - 1,
+                    from: .now,
+                    calendar: calendar,
+                    repeats: notification.isRepeatable
+                )
+
+            case .fromYourHighlights:
+                return makeTrigger(
+                    days: maxWeekDays - 1,
                     from: .now,
                     calendar: calendar,
                     repeats: notification.isRepeatable
@@ -434,5 +466,26 @@ nonisolated final class NotificationsCoordinator: @unchecked Sendable {
         episodesDataManager.downloadedEpisodes().reduce(0) { partialResult, list in
             return partialResult + list.elements.count
         }
+    }
+
+    /// The resurfacing notification's body (Highlights program): a highlight
+    /// at least a week old, chosen pseudo-randomly per day so repeat schedules
+    /// don't pin the same one. nil = nothing old enough to resurface.
+    func resurfacedHighlightBody() -> String? {
+        guard FeatureFlag.highlightEditor.enabled else { return nil }
+
+        let cutoff = Date().addingTimeInterval(-7 * 24 * 60 * 60)
+        let eligible = DataManager.sharedManager.bookmarks
+            .allBookmarks(includeDeleted: false)
+            .filter { $0.created < cutoff }
+        guard !eligible.isEmpty else { return nil }
+
+        let dayIndex = Int(Date().timeIntervalSince1970 / 86_400)
+        let pick = eligible[dayIndex % eligible.count]
+
+        if let excerpt = pick.excerpt, !excerpt.isEmpty {
+            return "\u{201C}\(excerpt.prefix(120))\u{201D}"
+        }
+        return pick.title
     }
 }

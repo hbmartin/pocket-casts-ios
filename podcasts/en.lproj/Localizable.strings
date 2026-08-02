@@ -4631,6 +4631,15 @@
 /* Button state when a person is already followed. */
 "person_following_button" = "Notifying";
 
+/* Toggle for the weekly notification resurfacing an old highlight. */
+"settings_highlights_resurfacing" = "Weekly Highlight Reminder";
+
+/* Title of the notification that resurfaces an old highlight. */
+"notifications_highlight_resurfacing_title" = "From your highlights";
+
+/* Fallback body when the resurfaced highlight has no excerpt or title. */
+"notifications_highlight_resurfacing_body_fallback" = "Revisit a moment you saved.";
+
 /* Label for displaying the number of bookmarks the user has when the bookmark count is equal to one */
 "bookmarks_count_singular" = "1 bookmark";
 

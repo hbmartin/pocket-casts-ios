@@ -143,6 +143,7 @@ nonisolated struct Constants {
             static let newFeaturesAndTips = "notifications.newFeaturesAndTips"
             static let recommendations = "notifications.recommendations"
             static let offers = "notifications.offers"
+            static let fromYourHighlights = "notifications.fromYourHighlights"
             static let triggerDates = "notifications.triggerDates"
         }
 

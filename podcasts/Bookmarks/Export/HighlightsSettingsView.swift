@@ -31,6 +31,8 @@ struct HighlightsSettingsView: View {
             if FeatureFlag.highlightEditor.enabled {
                 Toggle(L10n.settingsHighlightsReviewAfterCapture, isOn: $model.reviewAfterCapture)
                     .font(style: .body)
+                Toggle(L10n.settingsHighlightsResurfacing, isOn: $model.resurfacingEnabled)
+                    .font(style: .body)
             }
             if FeatureFlag.highlightCapture.enabled {
                 Picker(L10n.settingsHighlightConfirmationStyle, selection: $model.confirmationStyle) {
@@ -154,6 +156,18 @@ final class HighlightsSettingsViewModel: ObservableObject {
         didSet { SettingsStore.appSettings.reviewHighlightAfterCapture = reviewAfterCapture }
     }
 
+    /// The weekly "from your highlights" notification (opt-in, device-local).
+    @Published var resurfacingEnabled: Bool {
+        didSet {
+            NotificationsGroup.fromYourHighlights.setEnabled(resurfacingEnabled)
+            if resurfacingEnabled {
+                NotificationsCoordinator.shared.setupNotifications(for: .fromYourHighlights)
+            } else {
+                NotificationsCoordinator.shared.disableNotifications(for: .fromYourHighlights)
+            }
+        }
+    }
+
     @Published var confirmationStyle: HighlightConfirmationStyle {
         didSet { Settings.highlightConfirmationStyle = confirmationStyle }
     }
@@ -178,6 +192,7 @@ final class HighlightsSettingsViewModel: ObservableObject {
         self.exporter = exporter
         self.readwise = readwise
         self.reviewAfterCapture = SettingsStore.appSettings.reviewHighlightAfterCapture
+        self.resurfacingEnabled = Settings.notificationsFromYourHighlights
         self.confirmationStyle = Settings.highlightConfirmationStyle
         self.promptStyle = HighlightPromptStyle(rawValue: SettingsStore.appSettings.highlightStylePreset) ?? .standard
         self.promptCustomText = SettingsStore.appSettings.highlightStyleCustom

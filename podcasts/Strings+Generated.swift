@@ -2140,6 +2140,10 @@ nonisolated internal enum L10n {
   internal static var notOnWifi: String { return L10n.tr("Localizable", "not_on_wifi", fallback: "You're not on WiFi") }
   /// Settings to control sending of daily reminders notifications
   internal static var notificationsDailyReminders: String { return L10n.tr("Localizable", "notifications_daily_reminders", fallback: "Daily Reminders") }
+  /// Fallback body when the resurfaced highlight has no excerpt or title.
+  internal static var notificationsHighlightResurfacingBodyFallback: String { return L10n.tr("Localizable", "notifications_highlight_resurfacing_body_fallback", fallback: "Revisit a moment you saved.") }
+  /// Title of the notification that resurfaces an old highlight.
+  internal static var notificationsHighlightResurfacingTitle: String { return L10n.tr("Localizable", "notifications_highlight_resurfacing_title", fallback: "From your highlights") }
   /// Notification body for new feature Suggested folders
   internal static var notificationsNewFeatureSuggestedFoldersBody: String { return L10n.tr("Localizable", "notifications_new_feature_suggested_folders_body", fallback: "Try Plus and automatically organize your shows with folders.") }
   /// Notification title for new feature Suggested folders
@@ -4165,6 +4169,8 @@ nonisolated internal enum L10n {
   internal static var settingsHighlightsReadwiseTokenPlaceholder: String { return L10n.tr("Localizable", "settings_highlights_readwise_token_placeholder", fallback: "Access token") }
   /// Button label while the Readwise token is being validated.
   internal static var settingsHighlightsReadwiseValidating: String { return L10n.tr("Localizable", "settings_highlights_readwise_validating", fallback: "Validating…") }
+  /// Toggle for the weekly notification resurfacing an old highlight.
+  internal static var settingsHighlightsResurfacing: String { return L10n.tr("Localizable", "settings_highlights_resurfacing", fallback: "Weekly Highlight Reminder") }
   /// Toggle: open the highlight editor right after each in-app capture.
   internal static var settingsHighlightsReviewAfterCapture: String { return L10n.tr("Localizable", "settings_highlights_review_after_capture", fallback: "Review After Capture") }
   /// Title for the screen that manages the importing and exporting of podcasts.

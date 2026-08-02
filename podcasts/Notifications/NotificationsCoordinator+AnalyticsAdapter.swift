@@ -80,6 +80,10 @@ nonisolated extension NotificationType {
             possibleConditions = [.suggestedFoldersPageShown]
         case .reengagementDownloads:
             possibleConditions = [.downloadsShown]
+        case .highlightResurfacing:
+            // Repeatable and content-driven: no analytics event cancels it
+            // (turning the toggle off cancels the schedule instead).
+            possibleConditions = []
         }
         let eventMatch = possibleConditions.contains {
             $0.rawValue.toSnakeCaseFromCamelCase() == name

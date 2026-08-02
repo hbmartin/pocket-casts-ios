@@ -1467,6 +1467,16 @@ nonisolated class Settings: NSObject {
         }
     }
 
+    /// Opt-in weekly "from your highlights" resurfacing (default OFF).
+    static var notificationsFromYourHighlights: Bool {
+        get {
+            UserDefaults.standard.value(forKey: Constants.UserDefaults.notifications.fromYourHighlights) as? Bool ?? false
+        }
+        set {
+            UserDefaults.standard.setValue(newValue, forKey: Constants.UserDefaults.notifications.fromYourHighlights)
+        }
+    }
+
     static var notificationsLastTriggerDate: [String: Date] {
         get {
             UserDefaults.standard.value(forKey: Constants.UserDefaults.notifications.triggerDates) as? [String: Date] ?? [:]
