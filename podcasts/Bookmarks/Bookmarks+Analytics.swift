@@ -10,6 +10,10 @@ enum BookmarkAnalyticsSource: String, AnalyticsDescribable {
     case files
     case headphones
     case whatsNew = "whats_new"
+    /// Save Highlight App Intent: Siri phrase, Action Button, Shortcuts.
+    case intent = "app_intent"
+    /// The Control Center / Lock Screen Save Highlight control.
+    case control = "control_center"
 
     case unknown
 

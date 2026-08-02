@@ -11,6 +11,8 @@ enum PlaybackControlAction: String, AppEnum, CaseIterable {
     /// Starts a 15-minute sleep timer when none is running; extends the
     /// running one by 15 minutes otherwise.
     case sleepTimer
+    /// Saves a highlight at the current playback position (Highlights S3).
+    case saveHighlight
 
     static var typeDisplayRepresentation: TypeDisplayRepresentation {
         TypeDisplayRepresentation(name: "Playback Action")
@@ -23,7 +25,8 @@ enum PlaybackControlAction: String, AppEnum, CaseIterable {
             .skipForward: DisplayRepresentation(title: "Skip Forward"),
             .nextChapter: DisplayRepresentation(title: "Next Chapter"),
             .playUpNext: DisplayRepresentation(title: "Play Next Episode"),
-            .sleepTimer: DisplayRepresentation(title: "Sleep Timer")
+            .sleepTimer: DisplayRepresentation(title: "Sleep Timer"),
+            .saveHighlight: DisplayRepresentation(title: "Save Highlight")
         ]
     }
 }
@@ -37,8 +40,9 @@ nonisolated enum PlaybackControlKind {
     static let nextChapter = "au.com.shiftyjelly.pocketcasts.control.nextChapter"
     static let playUpNext = "au.com.shiftyjelly.pocketcasts.control.playUpNext"
     static let sleepTimer = "au.com.shiftyjelly.pocketcasts.control.sleepTimer"
+    static let saveHighlight = "au.com.shiftyjelly.pocketcasts.control.saveHighlight"
 
-    static let all = [playPause, skipBack, skipForward, nextChapter, playUpNext, sleepTimer]
+    static let all = [playPause, skipBack, skipForward, nextChapter, playUpNext, sleepTimer, saveHighlight]
 }
 
 /// Drives the Control Center / Lock Screen playback controls. As an

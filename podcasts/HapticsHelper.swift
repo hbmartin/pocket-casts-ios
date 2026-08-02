@@ -13,6 +13,12 @@ class HapticsHelper {
         triggerSuccessHaptic()
     }
 
+    /// Fires on every highlight capture (Highlights program S3) so eyes-free
+    /// saves are felt even when the audible confirmation is off.
+    class func triggerHighlightCapturedHaptic() {
+        triggerSuccessHaptic()
+    }
+
     class func triggerStarHaptic() {
         triggerImpactOccurredHaptic(style: .light)
     }

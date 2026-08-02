@@ -18,6 +18,10 @@ extension Api_ChangeableSettings {
         playUpNextOnTap.update(settings.$playUpNextOnTap)
         tapToPlay.update(settings.$tapToPlay) // FORK: field 1001
         seekAcceleration.update(settings.$seekAcceleration) // FORK: field 1002
+        reviewHighlightAfterCapture.update(settings.$reviewHighlightAfterCapture) // FORK: field 1014
+        highlightStylePreset.update(settings.$highlightStylePreset) // FORK: field 1015
+        highlightStyleCustom.update(settings.$highlightStyleCustom) // FORK: field 1016
+        highlightConfirmationStyle.update(settings.$highlightConfirmationStyle) // FORK: field 1017
         playbackActions.update(settings.$playbackActions)
         legacyBluetooth.update(settings.$legacyBluetooth)
         multiSelectGesture.update(settings.$multiSelectGesture)
@@ -76,6 +80,10 @@ extension AppSettings {
         $playUpNextOnTap.update(setting: settings.playUpNextOnTap)
         $tapToPlay.update(setting: settings.tapToPlay) // FORK: field 1001
         $seekAcceleration.update(setting: settings.seekAcceleration) // FORK: field 1002
+        $reviewHighlightAfterCapture.update(setting: settings.reviewHighlightAfterCapture) // FORK: field 1014
+        $highlightStylePreset.update(setting: settings.highlightStylePreset) // FORK: field 1015
+        $highlightStyleCustom.update(setting: settings.highlightStyleCustom) // FORK: field 1016
+        $highlightConfirmationStyle.update(setting: settings.highlightConfirmationStyle) // FORK: field 1017
         $playbackActions.update(setting: settings.playbackActions)
         $legacyBluetooth.update(setting: settings.legacyBluetooth)
         $multiSelectGesture.update(setting: settings.multiSelectGesture)

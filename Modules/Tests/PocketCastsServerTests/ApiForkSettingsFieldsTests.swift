@@ -97,6 +97,52 @@ final class ApiForkSettingsFieldsTests: XCTestCase {
         XCTAssertNotEqual(lhs, rhs)
     }
 
+    // MARK: - Highlights program fields (1014-1017, ADR-0016)
+
+    func testHighlightSettingsFieldsRoundTripBothMessages() throws {
+        var changeable = Api_ChangeableSettings()
+        changeable.reviewHighlightAfterCapture.value.value = true
+        changeable.highlightStylePreset.value.value = "atomic"
+        changeable.highlightStyleCustom.value.value = "always start with a verb"
+        changeable.highlightConfirmationStyle.value.value = 2
+
+        let decodedChangeable = try Api_ChangeableSettings(serializedBytes: changeable.serializedData())
+        XCTAssertTrue(decodedChangeable.reviewHighlightAfterCapture.value.value)
+        XCTAssertEqual(decodedChangeable.highlightStylePreset.value.value, "atomic")
+        XCTAssertEqual(decodedChangeable.highlightStyleCustom.value.value, "always start with a verb")
+        XCTAssertEqual(decodedChangeable.highlightConfirmationStyle.value.value, 2)
+        XCTAssertEqual(decodedChangeable, changeable)
+
+        let json = try changeable.jsonString()
+        XCTAssertTrue(json.contains("reviewHighlightAfterCapture"), json)
+        XCTAssertTrue(json.contains("highlightConfirmationStyle"), json)
+
+        var response = Api_NamedSettingsResponse()
+        response.reviewHighlightAfterCapture.value.value = true
+        response.highlightStylePreset.value.value = "atomic"
+        let decodedResponse = try Api_NamedSettingsResponse(serializedBytes: response.serializedData())
+        XCTAssertEqual(decodedResponse, response)
+    }
+
+    func testHighlightSettingsSyncThroughAppSettings() {
+        var appSettings = AppSettings.defaults
+        appSettings.reviewHighlightAfterCapture = true
+        appSettings.highlightConfirmationStyle = 1
+
+        var changeable = Api_ChangeableSettings()
+        changeable.update(with: appSettings)
+        XCTAssertTrue(changeable.hasReviewHighlightAfterCapture)
+        XCTAssertTrue(changeable.reviewHighlightAfterCapture.value.value)
+        XCTAssertEqual(changeable.highlightConfirmationStyle.value.value, 1)
+
+        var response = Api_NamedSettingsResponse()
+        response.highlightStyleCustom.value.value = "question form"
+        response.highlightStyleCustom.modifiedAt = Google_Protobuf_Timestamp(date: Date())
+        var applied = AppSettings.defaults
+        applied.update(with: response)
+        XCTAssertEqual(applied.highlightStyleCustom, "question form")
+    }
+
     // MARK: - AppSettings wiring
 
     func testAppSettingsUpdatePopulatesForkFields() {

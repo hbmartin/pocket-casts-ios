@@ -1783,6 +1783,14 @@ nonisolated internal enum L10n {
   internal static var groupEpisodes: String { return L10n.tr("Localizable", "group_episodes", fallback: "Group Episodes") }
   /// Displayed when doing a heavy task the user has to wait
   internal static var hangOn: String { return L10n.tr("Localizable", "hang_on", fallback: "Hang on!") }
+  /// Confirmation style option: no audible confirmation.
+  internal static var highlightConfirmationNone: String { return L10n.tr("Localizable", "highlight_confirmation_none", fallback: "None") }
+  /// Confirmation style option: play the confirmation tone only.
+  internal static var highlightConfirmationSound: String { return L10n.tr("Localizable", "highlight_confirmation_sound", fallback: "Sound") }
+  /// Confirmation style option: play the tone and speak a short confirmation.
+  internal static var highlightConfirmationSoundSpoken: String { return L10n.tr("Localizable", "highlight_confirmation_sound_spoken", fallback: "Sound and Spoken") }
+  /// Confirmation style option: speak a short confirmation only.
+  internal static var highlightConfirmationSpoken: String { return L10n.tr("Localizable", "highlight_confirmation_spoken", fallback: "Spoken") }
   /// Shown on the shareable quote card when a bookmark has no transcript excerpt
   internal static var highlightExcerptUnavailable: String { return L10n.tr("Localizable", "highlight_excerpt_unavailable", fallback: "No transcript excerpt available") }
   /// Accessibility label for the shareable quote card. %1$@ is the transcript excerpt shown on the card.
@@ -1791,6 +1799,8 @@ nonisolated internal enum L10n {
   }
   /// Name of the quote-card style offered when sharing a highlight (a bookmark enriched with a transcript excerpt)
   internal static var highlightQuoteShareStyle: String { return L10n.tr("Localizable", "highlight_quote_share_style", fallback: "Quote") }
+  /// Short spoken confirmation after a highlight is captured hands-free. Keep it to one word if possible.
+  internal static var highlightSavedAnnouncement: String { return L10n.tr("Localizable", "highlight_saved_announcement", fallback: "Saved") }
   /// Prompt to clear the full listening history for the user.
   internal static var historyClearAll: String { return L10n.tr("Localizable", "history_clear_all", fallback: "Clear All") }
   /// Title for the details prompt to confirm the user wants to clear their listening history.
@@ -3639,6 +3649,8 @@ nonisolated internal enum L10n {
   internal static var retryDownload: String { return L10n.tr("Localizable", "retry_download", fallback: "Retry download") }
   /// Title of a button that allows the user to save their changes
   internal static var saveBookmark: String { return L10n.tr("Localizable", "save_bookmark", fallback: "Save Bookmark") }
+  /// Action title for saving a highlight at the current playback position (Siri shortcut, Control Center control).
+  internal static var saveHighlight: String { return L10n.tr("Localizable", "save_highlight", fallback: "Save Highlight") }
   /// A common string used throughout the app. Placeholder text used in search boxes.
   internal static var search: String { return L10n.tr("Localizable", "search", fallback: "Search") }
   /// A placeholder used when searching bookmarks.
@@ -4059,6 +4071,10 @@ nonisolated internal enum L10n {
   internal static var settingsHeadphoneControlsFooter: String { return L10n.tr("Localizable", "settings_headphone_controls_footer", fallback: "Customise the actions done by the most common headphone controls.") }
   /// A common string used throughout the app. Refers to the Help & Feedback settings menu
   internal static var settingsHelp: String { return L10n.tr("Localizable", "settings_help", fallback: "Help & Feedback") }
+  /// Settings section subtitle explaining the highlight capture confirmation options. A haptic always plays.
+  internal static var settingsHighlightConfirmationFooter: String { return L10n.tr("Localizable", "settings_highlight_confirmation_footer", fallback: "Choose how saving a highlight is confirmed while listening. A gentle haptic always plays.") }
+  /// Label for the setting that picks how a saved highlight is confirmed (sound, spoken, both, or nothing).
+  internal static var settingsHighlightConfirmationStyle: String { return L10n.tr("Localizable", "settings_highlight_confirmation_style", fallback: "Capture Confirmation") }
   /// Title for the screen that manages the importing and exporting of podcasts.
   internal static var settingsImportExport: String { return L10n.tr("Localizable", "settings_import_export", fallback: "Import / Export") }
   /// Informs the user that the current podcast is included in one filter. '%1$@' is a placeholder for the number of filters this podcast is included in.

@@ -64,6 +64,16 @@ private enum PlaybackControlLocalization {
         defaultValue: "Start a 15 minute sleep timer, or extend the running one.",
         table: "Localizable"
     )
+    static let saveHighlightDisplayName = LocalizedStringResource(
+        "widget_playback_control_save_highlight_display_name",
+        defaultValue: "Save Highlight",
+        table: "Localizable"
+    )
+    static let saveHighlightDescription = LocalizedStringResource(
+        "widget_playback_control_save_highlight_description",
+        defaultValue: "Save a highlight at the current playback position.",
+        table: "Localizable"
+    )
 }
 
 /// Control Center / Lock Screen control that toggles play/pause. It reads the
@@ -142,6 +152,20 @@ struct PlaybackSleepTimerControl: ControlWidget {
         }
         .displayName(PlaybackControlLocalization.sleepTimerDisplayName)
         .description(PlaybackControlLocalization.sleepTimerDescription)
+    }
+}
+
+/// Control Center / Lock Screen control that saves a highlight at the current
+/// playback position (Highlights program S3).
+struct PlaybackSaveHighlightControl: ControlWidget {
+    var body: some ControlWidgetConfiguration {
+        StaticControlConfiguration(kind: PlaybackControlKind.saveHighlight) {
+            ControlWidgetButton(action: PlaybackControlIntent(.saveHighlight)) {
+                Label(L10n.saveHighlight, systemImage: "bookmark.fill")
+            }
+        }
+        .displayName(PlaybackControlLocalization.saveHighlightDisplayName)
+        .description(PlaybackControlLocalization.saveHighlightDescription)
     }
 }
 

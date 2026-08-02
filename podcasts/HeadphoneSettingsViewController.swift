@@ -1,10 +1,12 @@
 import Combine
+import PocketCastsUtils
 import UIKit
 
 class HeadphoneSettingsViewController: PCTableViewController {
     private var allSections: [TableSection] = [
         .init(rows: [.previousAction, .nextAction], footer: L10n.settingsHeadphoneControlsFooter),
-        .init(rows: [.bookmarkSound], footer: L10n.settingsBookmarkSoundFooter)
+        .init(rows: [.bookmarkSound], footer: L10n.settingsBookmarkSoundFooter),
+        .init(rows: [.confirmationStyle], footer: L10n.settingsHighlightConfirmationFooter)
     ]
 
     private var visibleSections: [TableSection] = []
@@ -54,6 +56,8 @@ class HeadphoneSettingsViewController: PCTableViewController {
             if let cell = tableView.cellForRow(at: indexPath) as? SwitchCell {
                 cell.cellSwitch.setOn(enabled, animated: true)
             }
+        case .confirmationStyle:
+            showConfirmationStylePicker()
         }
     }
 
@@ -83,6 +87,13 @@ class HeadphoneSettingsViewController: PCTableViewController {
 
             cell.cellSwitch.removeTarget(self, action: nil, for: .valueChanged)
             cell.cellSwitch.addTarget(self, action: #selector(bookmarkSoundToggled(_:)), for: .valueChanged)
+            return cell
+
+        case .confirmationStyle:
+            let cell = tableView.dequeueReusableCell(DisclosureCell.self, for: indexPath)
+            cell.cellLabel.text = L10n.settingsHighlightConfirmationStyle
+            cell.setImage(imageName: nil)
+            cell.cellSecondaryLabel.text = Settings.highlightConfirmationStyle.displayableTitle
             return cell
         }
     }
@@ -117,6 +128,24 @@ class HeadphoneSettingsViewController: PCTableViewController {
         if enabled {
             bookmarksManager.playTone()
         }
+    }
+
+    // MARK: - Capture Confirmation Style (Highlights program S3)
+
+    private func showConfirmationStylePicker() {
+        let picker = OptionsPicker(title: L10n.settingsHighlightConfirmationStyle)
+        let current = Settings.highlightConfirmationStyle
+        picker.addActions(HighlightConfirmationStyle.allCases.map { style in
+            OptionAction(label: style.displayableTitle, selected: current == style) { [weak self] in
+                Settings.highlightConfirmationStyle = style
+                // Preview the audible layer so the choice is understood in place.
+                if style.playsSound {
+                    self?.bookmarksManager.playTone()
+                }
+                self?.reloadData()
+            }
+        })
+        picker.present(from: self)
     }
 
     // MARK: - Headphone Option
@@ -163,12 +192,17 @@ class HeadphoneSettingsViewController: PCTableViewController {
         enum Row {
             case previousAction, nextAction
             case bookmarkSound
+            case confirmationStyle
 
             var visible: Bool {
                 switch self {
                 case .bookmarkSound:
-                    // Only show this option if the user has selected addBookmark as one of the options
-                    return Settings.isPlayBookmarkCreationSoundAvailable
+                    // The legacy sound toggle: only when addBookmark is one of the
+                    // headphone actions, and only until the richer confirmation
+                    // style (below) replaces it.
+                    return Settings.isPlayBookmarkCreationSoundAvailable && !FeatureFlag.highlightCapture.enabled
+                case .confirmationStyle:
+                    return FeatureFlag.highlightCapture.enabled
                 default:
                     return true
                 }

@@ -30,6 +30,8 @@ nonisolated protocol PlaybackFacade: Sendable {
     func loadTopEpisode(forPodcastUuid uuid: String) -> Bool
     func setSleepTimer(seconds: TimeInterval)
     func extendSleepTimer(bySeconds seconds: TimeInterval)
+    /// Saves a highlight at the current position; false when nothing is playing.
+    func saveHighlight(source: BookmarkAnalyticsSource) -> Bool
     func refreshWidgets()
 }
 
@@ -68,8 +70,19 @@ nonisolated struct PlaybackIntentActionHandler {
             } else {
                 facade.setSleepTimer(seconds: Self.sleepTimerStepSeconds)
             }
+        case .saveHighlight:
+            _ = facade.saveHighlight(source: .control)
         }
         facade.refreshWidgets()
+    }
+
+    // MARK: Save Highlight (Highlights program S3)
+
+    /// Backs `SaveHighlightIntent`; false (→ intent error dialog) when nothing
+    /// is playing.
+    @discardableResult
+    func saveHighlight() -> Bool {
+        facade.saveHighlight(source: .intent)
     }
 
     /// The Control Center sleep-timer button has no duration parameter: it
@@ -245,6 +258,10 @@ nonisolated struct LivePlaybackFacade: PlaybackFacade {
     func extendSleepTimer(bySeconds seconds: TimeInterval) {
         PlaybackManager.onMainSync { $0.sleepTimeRemaining += seconds }
         NotificationCenter.postOnMainThread(SleepTimerChanged())
+    }
+
+    func saveHighlight(source: BookmarkAnalyticsSource) -> Bool {
+        PlaybackManager.onMainSync { $0.bookmark(source: source) }
     }
 
     func refreshWidgets() {

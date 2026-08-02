@@ -151,6 +151,12 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// (remote key `highlight_account_sync` is the kill switch); see ADR-0016.
     case highlightAccountSync
 
+    /// Eyes-free highlight capture (Highlights program S3): haptic + tiered
+    /// confirmation (sound / spoken "Saved") on every capture, the
+    /// Save Highlight App Intent (Siri phrase, Action Button, Shortcuts) and
+    /// Control Center control.
+    case highlightCapture
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -237,6 +243,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             BuildEnvironment.current != .appStore
         case .highlightAccountSync:
             BuildEnvironment.current != .appStore
+        case .highlightCapture:
+            BuildEnvironment.current != .appStore
         }
     }
 
@@ -320,6 +328,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             "Social identity foundation: opt-in public profiles with an immutable @handle (pca.st/u/<handle>), per-field privacy, and block/mute/report. Ships dark — requires the social backend to be live in production; enabling early will fail. High risk."
         case .highlightAccountSync:
             "Syncs highlight excerpts, trims and tags on bookmarks with your account. Requires backend milestone B1 to be live; until then these fields stay device-local while titles keep syncing. Medium risk."
+        case .highlightCapture:
+            "Eyes-free highlight capture: haptic plus a configurable sound or spoken confirmation on every capture, a Save Highlight Siri shortcut (replaces Open Filter) and a Control Center control. Low risk."
         }
     }
 

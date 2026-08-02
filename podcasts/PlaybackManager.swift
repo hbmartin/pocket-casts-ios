@@ -222,6 +222,10 @@ final class PlaybackManager {
 
     private lazy var sleepTimerManager = SleepTimerManager()
 
+    /// Speaks the "Saved" capture confirmation (Highlights program S3); the
+    /// Highlights Tour reuses the same utility for bridges.
+    private lazy var highlightAnnouncer = SpeechAnnouncer()
+
     /// The player we should fallback to
     private var fallbackToPlayer: PlaybackProtocol.Type? = nil
 
@@ -2682,28 +2686,62 @@ extension PlaybackManager {
         true
     }
 
-    func bookmark(source: BookmarkAnalyticsSource) {
+    @discardableResult
+    func bookmark(source: BookmarkAnalyticsSource) -> Bool {
         guard bookmarksEnabled, let episode = currentEpisode() else {
-            return
+            return false
         }
 
         let currentTime = currentTime()
         bookmarkManager.add(to: episode, at: currentTime)
 
-        playBookmarkCreationSoundIfNeeded(source: source)
+        confirmHighlightCapture(source: source)
 
         Analytics.track(.bookmarkCreated, source: source, properties: [
             "episode_uuid": episode.uuid,
             "podcast_uuid": (episode as? Episode)?.podcastUuid ?? "user_file",
             "time": Int(currentTime)
         ])
+        return true
+    }
+
+    /// Eyes-free capture confirmation (Highlights program S3): a haptic on
+    /// every capture, plus the user's audible layer (tone / spoken "Saved")
+    /// for hands-free sources. With the flag off, the legacy headphone-tone
+    /// behavior is unchanged.
+    private func confirmHighlightCapture(source: BookmarkAnalyticsSource) {
+        guard FeatureFlag.highlightCapture.enabled else {
+            legacyPlayBookmarkCreationSoundIfNeeded(source: source)
+            return
+        }
+
+        HapticsHelper.triggerHighlightCapturedHaptic()
+
+        // In-app captures already confirm visually (toast); the audible layer
+        // is for hands-free sources where the screen isn't in play.
+        guard source == .headphones || source == .intent || source == .control else { return }
+
+        let style = Settings.highlightConfirmationStyle
+        if style.playsSound {
+            bookmarkManager.playTone()
+        }
+        if style.speaks {
+            let announcer = highlightAnnouncer
+            Task { @MainActor in
+                if await announcer.speak(L10n.highlightSavedAnnouncement) == .unavailable, !style.playsSound {
+                    // No voice for the locale: fall back to the tone so the
+                    // capture is never silent when the user asked for audio.
+                    self.bookmarkManager.playTone()
+                }
+            }
+        }
     }
 
     /// Plays the bookmark creation sound only if:
     /// - The source is from the headphones
     /// - The user has the addBookmark option enabled in the Headphone Controls setting
     /// - The bookmark sound setting is enabled
-    private func playBookmarkCreationSoundIfNeeded(source: BookmarkAnalyticsSource) {
+    private func legacyPlayBookmarkCreationSoundIfNeeded(source: BookmarkAnalyticsSource) {
         guard source == .headphones, Settings.shouldPlayBookmarkSound else {
             return
         }
