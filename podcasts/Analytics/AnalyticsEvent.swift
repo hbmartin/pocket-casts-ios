@@ -859,6 +859,9 @@ enum AnalyticsEvent: String {
     case highlightExportFolderEnabled
     case highlightExportFolderDisabled
     case highlightExportWritten
+    case readwiseEnabled
+    case readwiseDisabled
+    case readwisePushed
 
     // MARK: - People Directory
 

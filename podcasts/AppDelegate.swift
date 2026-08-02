@@ -116,6 +116,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // changes once a folder has been picked; no-op otherwise.
         HighlightFolderExporter.shared.startObservingIfNeeded()
 
+        // Readwise push (Highlights S6): no-op until a token is stored.
+        ReadwiseSyncManager.shared.startObservingIfNeeded()
+
         NotificationsHelper.shared.register(checkToken: false)
 
         DispatchQueue.global().async { [weak self] in

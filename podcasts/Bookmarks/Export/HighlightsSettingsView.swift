@@ -13,6 +13,9 @@ struct HighlightsSettingsView: View {
         List {
             captureSection
             exportSection
+            if FeatureFlag.readwiseSync.enabled {
+                readwiseSection
+            }
         }
         .scrollContentBackground(.hidden)
         .background(AppTheme.color(for: .primaryUi04, theme: theme).ignoresSafeArea())
@@ -83,6 +86,46 @@ struct HighlightsSettingsView: View {
         }
         .listRowBackground(AppTheme.color(for: .primaryUi01, theme: theme))
     }
+
+    @ViewBuilder private var readwiseSection: some View {
+        Section {
+            if model.readwiseConnected {
+                HStack {
+                    Text(L10n.settingsHighlightsReadwiseConnected)
+                        .font(style: .body)
+                    Spacer()
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(AppTheme.color(for: .support02, theme: theme))
+                }
+                Button(L10n.settingsHighlightsReadwiseDisconnect, role: .destructive) {
+                    Task { await model.disconnectReadwise() }
+                }
+                .font(style: .body)
+            } else {
+                SecureField(L10n.settingsHighlightsReadwiseTokenPlaceholder, text: $model.readwiseTokenInput)
+                    .font(style: .body)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                Button(model.readwiseValidating ? L10n.settingsHighlightsReadwiseValidating : L10n.settingsHighlightsReadwiseConnect) {
+                    Task { await model.connectReadwise() }
+                }
+                .font(style: .body)
+                .disabled(model.readwiseValidating || model.readwiseTokenInput.trim().isEmpty)
+                if model.readwiseValidationFailed {
+                    Text(L10n.settingsHighlightsReadwiseInvalidToken)
+                        .font(style: .caption)
+                        .foregroundStyle(AppTheme.color(for: .support05, theme: theme))
+                }
+            }
+        } header: {
+            Text(L10n.settingsHighlightsReadwiseSection)
+                .font(style: .footnote, weight: .semibold)
+        } footer: {
+            Text(L10n.settingsHighlightsReadwiseFooter)
+                .font(style: .caption)
+        }
+        .listRowBackground(AppTheme.color(for: .primaryUi01, theme: theme))
+    }
 }
 
 @MainActor
@@ -98,13 +141,39 @@ final class HighlightsSettingsViewModel: ObservableObject {
         didSet { Settings.highlightConfirmationStyle = confirmationStyle }
     }
 
-    private let exporter: HighlightFolderExporter
+    @Published var readwiseTokenInput = ""
+    @Published private(set) var readwiseConnected: Bool
+    @Published private(set) var readwiseValidating = false
+    @Published private(set) var readwiseValidationFailed = false
 
-    init(exporter: HighlightFolderExporter = .shared) {
+    private let exporter: HighlightFolderExporter
+    private let readwise: ReadwiseSyncManager
+
+    init(exporter: HighlightFolderExporter = .shared, readwise: ReadwiseSyncManager = .shared) {
         self.exporter = exporter
+        self.readwise = readwise
         self.reviewAfterCapture = SettingsStore.appSettings.reviewHighlightAfterCapture
         self.confirmationStyle = Settings.highlightConfirmationStyle
         self.exportFolderName = exporter.isEnabled ? exporter.folderDisplayName : nil
+        self.readwiseConnected = readwise.isEnabled
+    }
+
+    func connectReadwise() async {
+        readwiseValidating = true
+        readwiseValidationFailed = false
+        let accepted = await readwise.updateToken(readwiseTokenInput)
+        readwiseValidating = false
+        if accepted {
+            readwiseConnected = true
+            readwiseTokenInput = ""
+        } else {
+            readwiseValidationFailed = true
+        }
+    }
+
+    func disconnectReadwise() async {
+        _ = await readwise.updateToken(nil)
+        readwiseConnected = false
     }
 
     func folderPicked(_ url: URL) {

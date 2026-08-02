@@ -4505,6 +4505,30 @@
 /* Footer explaining the Markdown folder export. */
 "settings_highlights_export_footer" = "Writes one Markdown file per episode into the folder you choose — works great with Obsidian, Logseq, or any notes vault. Files are updated automatically as you capture and edit highlights.";
 
+/* Section header for the Readwise integration on the Highlights settings screen. */
+"settings_highlights_readwise_section" = "Readwise";
+
+/* Placeholder for the Readwise access-token field. */
+"settings_highlights_readwise_token_placeholder" = "Access token";
+
+/* Button that validates and saves the Readwise token. */
+"settings_highlights_readwise_connect" = "Connect";
+
+/* Button label while the Readwise token is being validated. */
+"settings_highlights_readwise_validating" = "Validating…";
+
+/* Row confirming the Readwise account is connected. */
+"settings_highlights_readwise_connected" = "Connected";
+
+/* Button that removes the stored Readwise token. */
+"settings_highlights_readwise_disconnect" = "Disconnect";
+
+/* Error shown when the Readwise token is rejected by the API. */
+"settings_highlights_readwise_invalid_token" = "That token wasn't accepted. Copy it from readwise.io/access_token and try again.";
+
+/* Footer explaining the Readwise integration. */
+"settings_highlights_readwise_footer" = "New and edited highlights are pushed to your Readwise account, which can forward them to Notion, Roam, and more. Your token is stored securely on this device.";
+
 /* Label for displaying the number of bookmarks the user has when the bookmark count is equal to one */
 "bookmarks_count_singular" = "1 bookmark";
 

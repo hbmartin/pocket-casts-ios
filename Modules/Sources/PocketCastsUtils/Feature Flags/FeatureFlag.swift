@@ -168,6 +168,11 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// Get Highlights App Intent for Shortcuts pipelines.
     case pkmExport
 
+    /// Readwise sync (Highlights program S6): pushes new/edited highlights to
+    /// the user's Readwise account (their gateway to Notion/Roam/etc.). Token
+    /// lives in the Keychain and survives sign-out.
+    case readwiseSync
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -260,6 +265,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             BuildEnvironment.current != .appStore
         case .pkmExport:
             BuildEnvironment.current != .appStore
+        case .readwiseSync:
+            BuildEnvironment.current != .appStore
         }
     }
 
@@ -349,6 +356,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             "Highlight editor: trim the transcript excerpt window with audio preview, add free-form tags with filtering, and optionally review each capture as it happens. Replaces the title-only bookmark edit sheet. Medium risk."
         case .pkmExport:
             "Auto-exports highlights as Markdown into a folder you pick (Obsidian vault, iCloud Drive), one file per episode, and adds a Get Highlights action to Shortcuts. Low risk."
+        case .readwiseSync:
+            "Pushes new and edited highlights to your Readwise account (token entered in Settings > Highlights, stored in the Keychain). Low risk."
         }
     }
 

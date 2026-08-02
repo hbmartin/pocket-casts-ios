@@ -4107,6 +4107,22 @@ nonisolated internal enum L10n {
   internal static var settingsHighlightsExportNow: String { return L10n.tr("Localizable", "settings_highlights_export_now", fallback: "Export All Now") }
   /// Section header for the Markdown folder export on the Highlights settings screen.
   internal static var settingsHighlightsExportSection: String { return L10n.tr("Localizable", "settings_highlights_export_section", fallback: "Markdown Export") }
+  /// Button that validates and saves the Readwise token.
+  internal static var settingsHighlightsReadwiseConnect: String { return L10n.tr("Localizable", "settings_highlights_readwise_connect", fallback: "Connect") }
+  /// Row confirming the Readwise account is connected.
+  internal static var settingsHighlightsReadwiseConnected: String { return L10n.tr("Localizable", "settings_highlights_readwise_connected", fallback: "Connected") }
+  /// Button that removes the stored Readwise token.
+  internal static var settingsHighlightsReadwiseDisconnect: String { return L10n.tr("Localizable", "settings_highlights_readwise_disconnect", fallback: "Disconnect") }
+  /// Footer explaining the Readwise integration.
+  internal static var settingsHighlightsReadwiseFooter: String { return L10n.tr("Localizable", "settings_highlights_readwise_footer", fallback: "New and edited highlights are pushed to your Readwise account, which can forward them to Notion, Roam, and more. Your token is stored securely on this device.") }
+  /// Error shown when the Readwise token is rejected by the API.
+  internal static var settingsHighlightsReadwiseInvalidToken: String { return L10n.tr("Localizable", "settings_highlights_readwise_invalid_token", fallback: "That token wasn't accepted. Copy it from readwise.io/access_token and try again.") }
+  /// Section header for the Readwise integration on the Highlights settings screen.
+  internal static var settingsHighlightsReadwiseSection: String { return L10n.tr("Localizable", "settings_highlights_readwise_section", fallback: "Readwise") }
+  /// Placeholder for the Readwise access-token field.
+  internal static var settingsHighlightsReadwiseTokenPlaceholder: String { return L10n.tr("Localizable", "settings_highlights_readwise_token_placeholder", fallback: "Access token") }
+  /// Button label while the Readwise token is being validated.
+  internal static var settingsHighlightsReadwiseValidating: String { return L10n.tr("Localizable", "settings_highlights_readwise_validating", fallback: "Validating…") }
   /// Toggle: open the highlight editor right after each in-app capture.
   internal static var settingsHighlightsReviewAfterCapture: String { return L10n.tr("Localizable", "settings_highlights_review_after_capture", fallback: "Review After Capture") }
   /// Title for the screen that manages the importing and exporting of podcasts.
