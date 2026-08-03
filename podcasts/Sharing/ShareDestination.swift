@@ -239,11 +239,20 @@ extension ShareDestination {
             if FeatureFlag.clipCaptions.enabled {
                 let transcriptManager = TranscriptManager(episodeUUID: episode.uuid, podcastUUID: episode.parentIdentifier())
                 if let model = try? await transcriptManager.loadTranscript(), !model.cues.isEmpty {
+                    let mapsReferenceTime = transcriptManager.isDisplayingGeneratedTranscript
+                        && !transcriptManager.isDisplayingLocalTranscription
                     captions = CaptionOverlayBuilder.captions(
                         cues: model.cues,
                         plainText: model.plainText,
                         clipStart: CMTimeGetSeconds(startTime),
-                        clipDuration: CMTimeGetSeconds(duration)
+                        clipDuration: CMTimeGetSeconds(duration),
+                        cueTimeToPlaybackTime: { cueTime in
+                            guard mapsReferenceTime else { return cueTime }
+                            return FingerprintTimingManager.shared.playbackTime(
+                                forReferenceTime: cueTime,
+                                episodeUuid: episode.uuid
+                            )
+                        }
                     )
                 }
             }

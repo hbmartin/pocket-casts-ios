@@ -16,12 +16,17 @@ nonisolated enum ReadwiseKeyStore {
         return value
     }
 
-    static func setToken(_ token: String?) {
+    @discardableResult
+    static func setToken(_ token: String?) -> Bool {
         let trimmed = token?.trimmingCharacters(in: .whitespacesAndNewlines)
         if let trimmed, !trimmed.isEmpty {
-            _ = KeychainHelper.save(string: trimmed, key: key, accessibility: kSecAttrAccessibleAfterFirstUnlock)
+            return KeychainHelper.save(
+                string: trimmed,
+                key: key,
+                accessibility: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+            )
         } else {
-            _ = KeychainHelper.removeKey(key)
+            return KeychainHelper.removeKey(key)
         }
     }
 }

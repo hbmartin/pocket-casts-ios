@@ -1,6 +1,7 @@
 import AppIntents
 import Foundation
 import PocketCastsDataModel
+import PocketCastsUtils
 
 // MARK: - Playback control App Intents
 //
@@ -148,6 +149,9 @@ struct SaveHighlightIntent: AudioPlaybackIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
+        guard FeatureFlag.highlightCapture.enabled else {
+            throw PlaybackIntentError.actionFailed
+        }
         try requireSuccessfulPlaybackAction(PlaybackIntentActionHandler.shared.saveHighlight())
         return .result()
     }

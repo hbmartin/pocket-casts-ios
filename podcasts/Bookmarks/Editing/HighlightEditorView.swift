@@ -45,6 +45,18 @@ struct HighlightEditorView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(L10n.fileUploadSave) { model.save() }
                         .fontWeight(.semibold)
+                        .disabled(model.isSaving)
+                }
+            }
+            .overlay(alignment: .bottom) {
+                if model.saveFailed {
+                    Text(L10n.pleaseTryAgainLater)
+                        .font(style: .footnote, weight: .medium)
+                        .foregroundStyle(AppTheme.color(for: .support05, theme: theme))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(AppTheme.color(for: .primaryUi02, theme: theme), in: Capsule())
+                        .padding(.bottom, 12)
                 }
             }
         }
@@ -105,8 +117,14 @@ struct HighlightEditorView: View {
     /// The clip player's playhead, surfaced for the scrubber's indicator.
     private var playheadBinding: Binding<TimeInterval> {
         Binding(
-            get: { ClipPlaybackManager.shared.currentTime ?? model.selectionStart },
-            set: { ClipPlaybackManager.shared.seek(to: CMTime(seconds: $0, preferredTimescale: 600)) }
+            get: {
+                guard let playbackTime = ClipPlaybackManager.shared.currentTime else { return model.selectionStart }
+                return model.transcriptTime(forPlaybackTime: playbackTime) ?? model.selectionStart
+            },
+            set: { transcriptTime in
+                guard let playbackTime = model.playbackTime(forTranscriptTime: transcriptTime) else { return }
+                ClipPlaybackManager.shared.seek(to: CMTime(seconds: playbackTime, preferredTimescale: 600))
+            }
         )
     }
 
@@ -115,9 +133,11 @@ struct HighlightEditorView: View {
             get: { ClipPlaybackManager.shared.isPlaying },
             set: { playing in
                 if playing {
-                    clipTime.start = model.selectionStart
-                    clipTime.end = model.selectionEnd
-                    clipTime.playback = model.selectionStart
+                    guard let start = model.playbackTime(forTranscriptTime: model.selectionStart),
+                          let end = model.playbackTime(forTranscriptTime: model.selectionEnd) else { return }
+                    clipTime.start = start
+                    clipTime.end = end
+                    clipTime.playback = start
                     ClipPlaybackManager.shared.play(episode: episode, clipTime: ObservedObject(wrappedValue: clipTime))
                 } else {
                     ClipPlaybackManager.shared.stop()

@@ -78,4 +78,18 @@ final class CaptionOverlayBuilderTests: XCTestCase {
             clipStart: 100, clipDuration: 20
         ).isEmpty)
     }
+
+    func testReferenceTimelineCuesMapIntoPlaybackClip() {
+        let transcript = makeTranscript([(100, 104, "Mapped.")])
+
+        let captions = CaptionOverlayBuilder.captions(
+            cues: transcript.cues,
+            plainText: transcript.plainText,
+            clipStart: 130,
+            clipDuration: 10,
+            cueTimeToPlaybackTime: { $0 + 30 }
+        )
+
+        XCTAssertEqual(captions, [.init(start: 0, duration: 4, text: "Mapped.")])
+    }
 }

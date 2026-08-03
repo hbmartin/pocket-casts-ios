@@ -79,8 +79,17 @@ nonisolated struct HighlightMarkdownRenderer {
         return lines.joined(separator: "\n")
     }
 
-    /// `<Podcast>/<Episode>.md`, sanitized for the file system.
+    /// `<Podcast>/<Episode>--<Episode UUID>.md`, sanitized for the file
+    /// system. The UUID prevents two episodes with the same title from
+    /// overwriting each other.
     func relativePath(for export: EpisodeExport) -> String {
+        "\(sanitized(export.podcastTitle))/\(sanitized(export.episodeTitle))--\(sanitized(export.episodeUuid)).md"
+    }
+
+    /// Path used by the first version of folder export. Kept only so the
+    /// exporter can migrate app-owned files after a successful UUID-based
+    /// write.
+    func legacyRelativePath(for export: EpisodeExport) -> String {
         "\(sanitized(export.podcastTitle))/\(sanitized(export.episodeTitle)).md"
     }
 

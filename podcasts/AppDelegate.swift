@@ -123,6 +123,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         SuggestedHighlightScanner.shared.kickAfterLaunch()
 
         NotificationsHelper.shared.register(checkToken: false)
+        if NotificationsGroup.fromYourHighlights.isEnabled {
+            NotificationsCoordinator.shared.refreshHighlightNotificationsIfNeeded()
+        }
 
         DispatchQueue.global().async { [weak self] in
             guard let self else {

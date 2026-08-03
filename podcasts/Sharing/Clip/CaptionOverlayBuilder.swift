@@ -24,27 +24,33 @@ nonisolated enum CaptionOverlayBuilder {
         cues: [TranscriptCue],
         plainText: String,
         clipStart: TimeInterval,
-        clipDuration: TimeInterval
+        clipDuration: TimeInterval,
+        cueTimeToPlaybackTime: (TimeInterval) -> TimeInterval? = { $0 }
     ) -> [Caption] {
         let clipEnd = clipStart + clipDuration
         let fullText = plainText as NSString
 
-        let intersecting = cues
-            .filter { $0.endTime > clipStart && $0.startTime < clipEnd }
-            .sorted { $0.startTime < $1.startTime }
+        let intersecting = cues.compactMap { cue -> (cue: TranscriptCue, start: TimeInterval, end: TimeInterval)? in
+            guard let start = cueTimeToPlaybackTime(cue.startTime),
+                  let end = cueTimeToPlaybackTime(cue.endTime),
+                  end > clipStart,
+                  start < clipEnd else { return nil }
+            return (cue, start, end)
+        }.sorted { $0.start < $1.start }
 
         var out: [Caption] = []
-        for (index, cue) in intersecting.enumerated() {
+        for (index, item) in intersecting.enumerated() {
+            let cue = item.cue
             guard cue.characterRange.location != NSNotFound,
                   NSMaxRange(cue.characterRange) <= fullText.length else { continue }
             let text = HighlightExcerptBuilder.normalizedWhitespace(fullText.substring(with: cue.characterRange))
             guard !text.isEmpty else { continue }
 
-            let start = max(0, cue.startTime - clipStart)
-            var end = min(clipDuration, cue.endTime - clipStart)
+            let start = max(0, item.start - clipStart)
+            var end = min(clipDuration, item.end - clipStart)
             // Readability floor: extend short cues into the following gap.
             let nextStart = index + 1 < intersecting.count
-                ? max(0, intersecting[index + 1].startTime - clipStart)
+                ? max(0, intersecting[index + 1].start - clipStart)
                 : clipDuration
             end = min(max(end, start + minimumDisplay), nextStart, clipDuration)
             guard end > start else { continue }

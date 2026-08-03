@@ -12,19 +12,49 @@ public struct ServerPerson: Sendable, Equatable {
     public let displayName: String
 }
 
-// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; state is configured before enqueue and touched only during the operation's serial execution.
-class PersonFollowTask: ApiBaseTask, @unchecked Sendable {
-    var completion: ((Bool) -> Void)?
+enum PersonRequest: Sendable {
+    case follow(personId: Int64, unfollow: Bool)
+    case search(query: String)
+    case followedPersons
+}
 
-    private let personId: Int64
-    private let unfollow: Bool
+enum PersonResponse: Sendable {
+    case mutation(Bool)
+    case persons([ServerPerson]?)
+}
 
-    init(personId: Int64, unfollow: Bool) {
-        self.personId = personId
-        self.unfollow = unfollow
+/// The operation owns immutable request data and invokes its completion once.
+// @unchecked Sendable: completion is configured before enqueue and touched only during serial operation work.
+final class PersonTask: ApiBaseTask, @unchecked Sendable {
+    var completion: ((PersonResponse) -> Void)?
+
+    private let request: PersonRequest
+
+    init(request: PersonRequest) {
+        self.request = request
     }
 
     override func apiTokenAcquired(token: String) {
+        switch request {
+        case let .follow(personId, unfollow):
+            performFollow(personId: personId, unfollow: unfollow, token: token)
+        case let .search(query):
+            performSearch(query: query, token: token)
+        case .followedPersons:
+            performFollowedPersons(token: token)
+        }
+    }
+
+    override func apiTokenAcquisitionFailed() {
+        switch request {
+        case .follow:
+            completion?(.mutation(false))
+        case .search, .followedPersons:
+            completion?(.persons(nil))
+        }
+    }
+
+    private func performFollow(personId: Int64, unfollow: Bool, token: String) {
         do {
             var request = Api_PersonFollowRequest()
             request.personID = personId
@@ -34,27 +64,16 @@ class PersonFollowTask: ApiBaseTask, @unchecked Sendable {
             let (_, httpStatus) = postToServer(url: "\(ServerConstants.Urls.api())\(path)", token: token, data: data)
             let success = httpStatus == ServerConstants.HttpConstants.ok
             if !success {
-                FileLog.shared.addMessage("PersonFollowTask \(path) failed for \(personId), http status \(httpStatus)")
+                FileLog.shared.addMessage("PersonTask \(path) failed for \(personId), http status \(httpStatus)")
             }
-            completion?(success)
+            completion?(.mutation(success))
         } catch {
-            FileLog.shared.addMessage("PersonFollowTask serialize error \(error.localizedDescription)")
-            completion?(false)
+            FileLog.shared.addMessage("PersonTask serialize error \(error.localizedDescription)")
+            completion?(.mutation(false))
         }
     }
-}
 
-// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; state is configured before enqueue and touched only during the operation's serial execution.
-class PersonSearchTask: ApiBaseTask, @unchecked Sendable {
-    var completion: (([ServerPerson]?) -> Void)?
-
-    private let query: String
-
-    init(query: String) {
-        self.query = query
-    }
-
-    override func apiTokenAcquired(token: String) {
+    private func performSearch(query: String, token: String) {
         do {
             var request = Api_PersonSearchRequest()
             request.query = query
@@ -62,29 +81,24 @@ class PersonSearchTask: ApiBaseTask, @unchecked Sendable {
 
             let (response, httpStatus) = postToServer(url: "\(ServerConstants.Urls.api())person/search", token: token, data: data)
             guard let responseData = response, httpStatus == ServerConstants.HttpConstants.ok else {
-                completion?(nil)
+                completion?(.persons(nil))
                 return
             }
             let result = try Api_PersonListResponse(serializedBytes: responseData)
-            completion?(result.persons.map { ServerPerson(id: $0.id, displayName: $0.displayName) })
+            completion?(.persons(result.persons.map { ServerPerson(id: $0.id, displayName: $0.displayName) }))
         } catch {
-            FileLog.shared.addMessage("PersonSearchTask error \(error.localizedDescription)")
-            completion?(nil)
+            FileLog.shared.addMessage("PersonTask search error \(error.localizedDescription)")
+            completion?(.persons(nil))
         }
     }
-}
 
-// @unchecked Sendable: Operation subclass restating the inherited unchecked conformance; state is configured before enqueue and touched only during the operation's serial execution.
-class PersonFollowsListTask: ApiBaseTask, @unchecked Sendable {
-    var completion: (([ServerPerson]?) -> Void)?
-
-    override func apiTokenAcquired(token: String) {
+    private func performFollowedPersons(token: String) {
         let (response, httpStatus) = postToServer(url: "\(ServerConstants.Urls.api())person/follows", token: token, data: Data())
         guard let responseData = response, httpStatus == ServerConstants.HttpConstants.ok,
               let result = try? Api_PersonListResponse(serializedBytes: responseData) else {
-            completion?(nil)
+            completion?(.persons(nil))
             return
         }
-        completion?(result.persons.map { ServerPerson(id: $0.id, displayName: $0.displayName) })
+        completion?(.persons(result.persons.map { ServerPerson(id: $0.id, displayName: $0.displayName) }))
     }
 }

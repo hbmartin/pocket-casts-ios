@@ -75,8 +75,26 @@ final class HighlightMarkdownRendererTests: XCTestCase {
 
         let path = renderer.relativePath(for: export)
 
-        XCTAssertEqual(path, "Slash Colon  Show/What  is   this  really.md")
+        XCTAssertEqual(path, "Slash Colon  Show/What  is   this  really--ep-2.md")
         XCTAssertFalse(path.dropFirst().contains(":"))
+    }
+
+    func testRelativePathDistinguishesEpisodesWithTheSameTitle() {
+        let first = HighlightMarkdownRenderer.EpisodeExport(
+            podcastTitle: "The Show",
+            episodeTitle: "Trailer",
+            episodeUuid: "first-uuid",
+            highlights: []
+        )
+        let second = HighlightMarkdownRenderer.EpisodeExport(
+            podcastTitle: "The Show",
+            episodeTitle: "Trailer",
+            episodeUuid: "second-uuid",
+            highlights: []
+        )
+
+        XCTAssertNotEqual(renderer.relativePath(for: first), renderer.relativePath(for: second))
+        XCTAssertEqual(renderer.legacyRelativePath(for: first), "The Show/Trailer.md")
     }
 
     func testYamlEscapesQuotesInTitles() {

@@ -2736,7 +2736,9 @@ extension PlaybackManager {
         }
 
         let currentTime = currentTime()
-        bookmarkManager.add(to: episode, at: currentTime)
+        guard bookmarkManager.add(to: episode, at: currentTime) != nil else {
+            return false
+        }
 
         confirmHighlightCapture(source: source)
 

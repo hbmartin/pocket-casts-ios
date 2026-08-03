@@ -246,9 +246,7 @@ class SyncTask: ApiBaseTask, @unchecked Sendable {
             DataManager.sharedManager.markAllPlaylistsSynced()
             DataManager.sharedManager.markAllFoldersSynced()
 
-            Task {
-                await dataManager.bookmarks.markAllBookmarksAsSynced()
-            }
+            dataManager.bookmarks.markAllBookmarksAsSynced()
 
             let response = try Api_SyncUpdateResponse(serializedBytes: responseData)
             processServerData(response: response)
@@ -256,6 +254,8 @@ class SyncTask: ApiBaseTask, @unchecked Sendable {
             StatsManager.shared.setSyncStatus(.synced)
 
             UserDefaults.standard.set(Date(), forKey: ServerConstants.UserDefaults.lastSyncTime)
+            UserDefaults.standard.set(FeatureFlag.highlightAccountSync.enabled,
+                                      forKey: ServerConstants.UserDefaults.highlightAccountSyncCompleted)
             if response.lastModified > 0 {
                 UserDefaults.standard.set("\(response.lastModified)", forKey: ServerConstants.UserDefaults.lastModifiedServerDate)
             }
@@ -288,6 +288,7 @@ class SyncTask: ApiBaseTask, @unchecked Sendable {
             records.append(statsChanges)
         }
 
+        prepareHighlightAccountSyncTransition()
         if let bookmarks = changedBookmarks() {
             records += bookmarks
             FileLog.shared.addMessage("SyncTask: Number of changed bookmarks: \(bookmarks.count)")
@@ -323,5 +324,16 @@ class SyncTask: ApiBaseTask, @unchecked Sendable {
         } catch {}
 
         return nil
+    }
+
+    /// A bookmark synced while the highlight wire fields are dark is marked
+    /// synced for its base fields. Requeue all highlight-bearing bookmarks the
+    /// first time a later successful-sync generation observes the flag enabled.
+    func prepareHighlightAccountSyncTransition() {
+        guard FeatureFlag.highlightAccountSync.enabled,
+              !UserDefaults.standard.bool(forKey: ServerConstants.UserDefaults.highlightAccountSyncCompleted) else {
+            return
+        }
+        dataManager.bookmarks.markHighlightBookmarksAsUnsynced()
     }
 }

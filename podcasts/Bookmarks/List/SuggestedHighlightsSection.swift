@@ -7,20 +7,29 @@ import SwiftUI
 /// Self-contained — drops into every `BookmarksListView` surface and hides
 /// itself when the flag is off or nothing is pending.
 struct SuggestedHighlightsSection<ListStyle: BookmarksStyle>: View {
+    enum Scope {
+        case all
+        case episode(String?)
+    }
+
     @ObservedObject var style: ListStyle
     @StateObject private var model = SuggestedHighlightsSectionModel()
 
-    /// Restricts the strip to one episode's suggestions (player/episode surfaces).
-    var episodeUuid: String? = nil
+    /// Restricts player/episode surfaces even while their episode is loading.
+    var scope: Scope = .all
+
+    private var suggestions: [SalientSegmentRecord] {
+        model.suggestions(for: scope)
+    }
 
     var body: some View {
-        if FeatureFlag.suggestedHighlights.enabled, !model.suggestions(for: episodeUuid).isEmpty {
+        if FeatureFlag.suggestedHighlights.enabled, !suggestions.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 Text(L10n.suggestedHighlightsTitle)
                     .font(style: .footnote, weight: .semibold)
                     .foregroundStyle(style.secondaryText)
 
-                ForEach(model.suggestions(for: episodeUuid), id: \.id) { suggestion in
+                ForEach(suggestions, id: \.id) { suggestion in
                     HStack(alignment: .top, spacing: 8) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(suggestion.title)
@@ -66,27 +75,26 @@ struct SuggestedHighlightsSection<ListStyle: BookmarksStyle>: View {
 final class SuggestedHighlightsSectionModel: ObservableObject {
     @Published private(set) var pending: [SalientSegmentRecord] = []
 
-    private var updateToken: NotificationCenter.ObservationToken?
+    private let updateToken = ObservationTokenBox()
     private let manager = SuggestedHighlightsManager()
     private let dataManager: DataManager
 
     init(dataManager: DataManager = .sharedManager) {
         self.dataManager = dataManager
-        updateToken = NotificationCenter.default.addObserver(for: SuggestedHighlightsUpdated.self) { [weak self] _ in
+        updateToken.token = NotificationCenter.default.addObserver(for: SuggestedHighlightsUpdated.self) { [weak self] _ in
             self?.reload()
         }
         reload()
     }
 
-    isolated deinit {
-        if let updateToken {
-            NotificationCenter.default.removeObserver(updateToken)
+    func suggestions<ListStyle>(for scope: SuggestedHighlightsSection<ListStyle>.Scope) -> [SalientSegmentRecord] {
+        switch scope {
+        case .all:
+            return pending
+        case .episode(let episodeUuid):
+            guard let episodeUuid else { return [] }
+            return pending.filter { $0.episodeUuid == episodeUuid }
         }
-    }
-
-    func suggestions(for episodeUuid: String?) -> [SalientSegmentRecord] {
-        guard let episodeUuid else { return pending }
-        return pending.filter { $0.episodeUuid == episodeUuid }
     }
 
     func reload() {

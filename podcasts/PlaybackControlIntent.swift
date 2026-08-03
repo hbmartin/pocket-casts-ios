@@ -1,6 +1,10 @@
 import AppIntents
 import PocketCastsUtils
 
+private enum PlaybackControlIntentError: Error {
+    case featureUnavailable
+}
+
 /// Background playback actions surfaced by the WidgetKit controls.
 enum PlaybackControlAction: String, AppEnum, CaseIterable {
     case playPause
@@ -71,6 +75,9 @@ struct PlaybackControlIntent: AudioPlaybackIntent {
     @MainActor
     func perform() async throws -> some IntentResult {
         FileLog.shared.addMessage("PlaybackControlIntent perform called for \(action.rawValue)")
+        guard action != .saveHighlight || FeatureFlag.highlightCapture.enabled else {
+            throw PlaybackControlIntentError.featureUnavailable
+        }
         performPlaybackControlAction(action)
         return .result()
     }

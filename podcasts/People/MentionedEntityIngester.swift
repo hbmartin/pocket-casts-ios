@@ -42,7 +42,6 @@ nonisolated enum MentionedEntityIngester {
             record.createdAt = now
             return record
         }
-        guard !records.isEmpty else { return }
         DataManager.sharedManager.mentionedEntities.replace(
             episodeUuid: episodeUuid, source: .credit, entities: records)
     }

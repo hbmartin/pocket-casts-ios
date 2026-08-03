@@ -77,9 +77,9 @@ public struct SalientSegmentDataManager: Sendable {
             _ = try SalientSegmentRecord
                 .filter(SalientSegmentRecord.Columns.episodeUuid == episodeUuid)
                 .deleteAll(db)
-            for (index, var segment) in segments.enumerated() {
+            for var segment in segments {
                 segment.episodeUuid = episodeUuid
-                if index < markPendingTop, segment.status == .candidate {
+                if segment.rank < Int32(markPendingTop), segment.status == .candidate {
                     segment.status = .pending
                 }
                 try segment.insert(db)

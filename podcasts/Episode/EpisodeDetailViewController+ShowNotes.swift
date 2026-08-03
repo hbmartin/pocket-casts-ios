@@ -131,13 +131,14 @@ extension EpisodeDetailViewController: WKNavigationDelegate, @preconcurrency SFS
             // credits card costs no extra request; it never attaches when the
             // episode has no credits (the card "self-hides when empty").
             if FeatureFlag.episodeCredits.enabled,
-               let persons = (try? await ShowInfoCoordinator.shared.loadShowInfo(podcastUuid: parentIdentifier, episodeUuid: episodeUUID))?.persons,
-               !persons.isEmpty {
+               let persons = (try? await ShowInfoCoordinator.shared.loadShowInfo(podcastUuid: parentIdentifier, episodeUuid: episodeUUID))?.persons {
                 MentionedEntityIngester.ingest(credits: persons,
                                                episodeUuid: episodeUUID,
                                                podcastUuid: parentIdentifier)
-                await MainActor.run { [weak self] in
-                    self?.attachCreditsCardIfNeeded(persons: persons)
+                if !persons.isEmpty {
+                    await MainActor.run { [weak self] in
+                        self?.attachCreditsCardIfNeeded(persons: persons)
+                    }
                 }
             }
 

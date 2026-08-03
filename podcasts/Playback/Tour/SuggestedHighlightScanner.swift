@@ -14,6 +14,7 @@ final class SuggestedHighlightScanner {
     static let suggestionsPerEpisode = 3
     private static let queueKey = "suggestedHighlights.pendingEpisodes"
     private static let maxPerDrain = 5
+    private static let retryInterval: TimeInterval = 5 * 60
 
     private var drainTask: Task<Void, Never>?
     private let dataManager: DataManager
@@ -55,7 +56,11 @@ final class SuggestedHighlightScanner {
             NotificationCenter.postOnMainThread(SuggestedHighlightsUpdated())
             return
         }
-        await scan(episodeUuid: episodeUuid, markPending: true)
+        let completed = await scan(episodeUuid: episodeUuid, markPending: true)
+        if !completed {
+            requeue(episodeUuid)
+            scheduleDrain(after: Self.retryInterval)
+        }
     }
 
     func kickAfterLaunch(delay: TimeInterval = 45) {
@@ -73,9 +78,16 @@ final class SuggestedHighlightScanner {
     private func scheduleDrain(after delay: TimeInterval) {
         guard drainTask == nil else { return }
         drainTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(delay))
+            do {
+                try await Task.sleep(for: .seconds(delay))
+            } catch {
+                return
+            }
             await self?.drain()
             self?.drainTask = nil
+            if let self, FeatureFlag.suggestedHighlights.enabled, !self.pendingEpisodes.isEmpty {
+                self.scheduleDrain(after: Self.retryInterval)
+            }
         }
     }
 
@@ -89,27 +101,45 @@ final class SuggestedHighlightScanner {
             queue.removeFirst()
             pendingEpisodes = queue
 
-            await scan(episodeUuid: episodeUuid, markPending: true)
+            let completed = await scan(episodeUuid: episodeUuid, markPending: true)
+            if !completed {
+                requeue(episodeUuid)
+            }
             drained += 1
 
             if isDeferred() { break }
         }
     }
 
+    private func requeue(_ episodeUuid: String) {
+        var queue = pendingEpisodes
+        guard !queue.contains(episodeUuid) else { return }
+        queue.append(episodeUuid)
+        pendingEpisodes = queue
+    }
+
     /// Loads the transcript and runs one generation. Transient failures
     /// re-queue implicitly (no meta row is written, so a later trigger retries).
-    private func scan(episodeUuid: String, markPending: Bool) async {
-        guard let episode = dataManager.findBaseEpisode(uuid: episodeUuid) else { return }
+    @discardableResult
+    private func scan(episodeUuid: String, markPending: Bool) async -> Bool {
+        guard let episode = dataManager.findBaseEpisode(uuid: episodeUuid) else { return true }
         let podcastUuid = (episode as? Episode)?.podcastUuid
         let duration = episode.duration
 
         let transcriptManager = TranscriptManager(episodeUUID: episodeUuid, podcastUUID: podcastUuid ?? "")
-        guard let model = try? await transcriptManager.loadTranscript(), !model.cues.isEmpty else {
+        let model: TranscriptModel
+        do {
+            model = try await transcriptManager.loadTranscript()
+        } catch {
+            FileLog.shared.addMessage("SuggestedHighlightScanner: transcript load failed for \(episodeUuid), will retry: \(error)")
+            return false
+        }
+        guard !model.cues.isEmpty else {
             // No transcript is a durable verdict for this episode today.
             dataManager.salientSegments.replaceGeneration(
                 episodeUuid: episodeUuid, podcastUuid: podcastUuid,
                 transcriptSource: "", generatedAt: Date(), segments: [])
-            return
+            return true
         }
 
         // Locally generated transcripts are playback-aligned ("generated");
@@ -135,6 +165,10 @@ final class SuggestedHighlightScanner {
                 "count": segments.count
             ])
         }
+        // The generator deliberately leaves no meta row for transient model
+        // failures. Keep the episode durable in the queue until a terminal
+        // generation (segments or no-segments) exists.
+        return dataManager.salientSegments.hasGeneration(episodeUuid: episodeUuid)
     }
 }
 

@@ -101,19 +101,13 @@ final class TourViewModel: ObservableObject {
         didSet { Settings.tourSpokenTransitionsEnabled = spokenTransitions }
     }
 
-    private var stateToken: NotificationCenter.ObservationToken?
+    private let stateToken = ObservationTokenBox()
 
     init() {
         spokenTransitions = Settings.tourSpokenTransitionsEnabled
         phase = PlaybackManager.shared.isTouring ? .touring : .pick
-        stateToken = NotificationCenter.default.addObserver(for: HighlightsTourStateChanged.self) { [weak self] _ in
+        stateToken.token = NotificationCenter.default.addObserver(for: HighlightsTourStateChanged.self) { [weak self] _ in
             self?.refresh()
-        }
-    }
-
-    isolated deinit {
-        if let stateToken {
-            NotificationCenter.default.removeObserver(stateToken)
         }
     }
 

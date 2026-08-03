@@ -57,7 +57,10 @@ final class ReadwiseSyncManager {
     /// Returns true when the token is accepted.
     func updateToken(_ token: String?) async -> Bool {
         guard let token, !token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            ReadwiseKeyStore.setToken(nil)
+            guard ReadwiseKeyStore.setToken(nil) else {
+                FileLog.shared.addMessage("[Readwise] failed to remove token from Keychain")
+                return false
+            }
             cancellables.removeAll()
             drainTask?.cancel()
             Analytics.track(.readwiseDisabled)
@@ -70,7 +73,10 @@ final class ReadwiseSyncManager {
             return false
         }
 
-        ReadwiseKeyStore.setToken(token)
+        guard ReadwiseKeyStore.setToken(token) else {
+            FileLog.shared.addMessage("[Readwise] failed to save token to Keychain")
+            return false
+        }
         startObservingIfNeeded()
         pushAll()
         Analytics.track(.readwiseEnabled)

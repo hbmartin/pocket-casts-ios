@@ -235,6 +235,7 @@ public enum ServerConstants {
         static let lastRefreshStartTime = "LastRefreshStartTime"
         static let lastRefreshEndTime = "SJLastRefreshDate"
         static let lastSyncTime = "SJLastSyncDate"
+        static let highlightAccountSyncCompleted = "HighlightsAccountSyncCompleted"
         static let syncingEmailLegacy = "SJSyncingEmail"
         static let historyServerLastModified = "SJHistoryServerLastModified"
         static let upNextServerLastModified = "SJUpNextServerLastModified"

@@ -306,11 +306,29 @@ public struct BookmarkDataManager: Sendable {
     }
 
     @discardableResult
-    public func markAllBookmarksAsSynced() async -> Bool {
+    public func markAllBookmarksAsSynced() -> Bool {
         let success = dbQueue.write { db in
             _ = try BookmarkRow.updateAll(db, BookmarkRow.Columns.syncStatus.set(to: SyncStatus.synced.rawValue))
         }
         if !success { FileLog.shared.addMessage("BookmarkManager.markAllBookmarksAsSynced failed") }
+        return success
+    }
+
+    /// Requeues bookmarks that carry fork-owned highlight metadata when the
+    /// account-sync rollout transitions from disabled to enabled.
+    @discardableResult
+    public func markHighlightBookmarksAsUnsynced() -> Bool {
+        let success = dbQueue.write { db in
+            _ = try BookmarkRow
+                .filter(
+                    BookmarkRow.Columns.excerpt != nil ||
+                        BookmarkRow.Columns.endTime != nil ||
+                        BookmarkRow.Columns.trimModified != nil ||
+                        BookmarkRow.Columns.tagsModified != nil
+                )
+                .updateAll(db, BookmarkRow.Columns.syncStatus.set(to: SyncStatus.notSynced.rawValue))
+        }
+        if !success { FileLog.shared.addMessage("BookmarkManager.markHighlightBookmarksAsUnsynced failed") }
         return success
     }
 

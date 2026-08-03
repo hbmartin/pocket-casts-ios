@@ -84,4 +84,18 @@ final class SalientSegmentDataManagerTests: DataManagerTestCase {
                            "\(impl): dismissed rows never resurface as pending")
         }
     }
+
+    func testReplaceGenerationMarksPendingByRankNotArrayPosition() throws {
+        try runWithBothImplementations { dataManager, impl in
+            dataManager.salientSegments.replaceGeneration(
+                episodeUuid: "ep-rank", podcastUuid: nil, transcriptSource: "generated",
+                generatedAt: Date(),
+                segments: [segment(rank: 3), segment(rank: 0), segment(rank: 2), segment(rank: 1)],
+                markPendingTop: 2
+            )
+
+            XCTAssertEqual(dataManager.salientSegments.pendingSuggestions().map(\.rank), [0, 1],
+                           "\(impl): rank, not input order, defines the top suggestions")
+        }
+    }
 }

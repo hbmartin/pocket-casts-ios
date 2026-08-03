@@ -37,34 +37,27 @@ final class HighlightsTourController {
     private var transcriptSource = ""
 
     private var cancellables = Set<AnyCancellable>()
-    private var pauseToken: NotificationCenter.ObservationToken?
-    private var playToken: NotificationCenter.ObservationToken?
-    private var trackToken: NotificationCenter.ObservationToken?
+    private let observationTokens = ObservationTokenBox()
 
     init(episode: BaseEpisode, length: TourLength, playbackManager: PlaybackManager) {
         self.episode = episode
         self.length = length
         self.playbackManager = playbackManager
 
-        pauseToken = NotificationCenter.default.addObserver(for: PlaybackPaused.self) { [weak self] _ in
+        let pauseToken = NotificationCenter.default.addObserver(for: PlaybackPaused.self) { [weak self] _ in
             guard let self, !self.isBridging else { return }
             self.dispatch(.userPaused)
         }
-        playToken = NotificationCenter.default.addObserver(for: PlaybackStarted.self) { [weak self] _ in
+        let playToken = NotificationCenter.default.addObserver(for: PlaybackStarted.self) { [weak self] _ in
             guard let self, !self.isBridging else { return }
             if case .suspended = self.machine?.state {
                 self.dispatch(.userResumed)
             }
         }
-        trackToken = NotificationCenter.default.addObserver(for: PlaybackTrackChanged.self) { [weak self] _ in
-            self?.dispatch(.episodeChanged)
+        let trackToken = NotificationCenter.default.addObserver(for: PlaybackTrackChanged.self) { [weak self] _ in
+            self?.episodeDidChange()
         }
-    }
-
-    isolated deinit {
-        for token in [pauseToken, playToken, trackToken].compactMap({ $0 }) {
-            NotificationCenter.default.removeObserver(token)
-        }
+        observationTokens.tokens = [pauseToken, playToken, trackToken]
     }
 
     // MARK: - Public surface
@@ -93,6 +86,12 @@ final class HighlightsTourController {
         if isActive {
             Analytics.track(.highlightsTourCancelled, properties: ["episode_uuid": episode.uuid])
         }
+        if machine == nil {
+            machine = TourStateMachine(
+                plan: TourPlan(stops: [], introLine: "", outroLine: ""),
+                spokenTransitions: false
+            )
+        }
         dispatch(.cancelRequested)
     }
 
@@ -119,9 +118,11 @@ final class HighlightsTourController {
 
         let transcriptManager = TranscriptManager(episodeUUID: episodeUuid, podcastUUID: podcastUuid ?? "")
         guard let model = try? await transcriptManager.loadTranscript(), !model.cues.isEmpty else {
+            guard !Task.isCancelled else { return }
             dispatchPrepareFailure()
             return
         }
+        guard !Task.isCancelled else { return }
         transcriptSource = transcriptManager.isDisplayingLocalTranscription ? "generated" : "provided"
 
         let cues = SummaryTakeawayGenerator.timedCues(from: model)
@@ -147,6 +148,17 @@ final class HighlightsTourController {
 
         machine = TourStateMachine(plan: plan, spokenTransitions: Settings.tourSpokenTransitionsEnabled)
         dispatch(.planReady)
+    }
+
+    private func episodeDidChange() {
+        prepareTask?.cancel()
+        if machine == nil {
+            machine = TourStateMachine(
+                plan: TourPlan(stops: [], introLine: "", outroLine: ""),
+                spokenTransitions: false
+            )
+        }
+        dispatch(.episodeChanged)
     }
 
     private func dispatchPrepareFailure() {

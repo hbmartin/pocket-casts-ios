@@ -9,8 +9,14 @@ public extension ApiServerHandler {
     /// search server-side). nil on transport failure, [] for no matches.
     func searchPersons(query: String) async -> [ServerPerson]? {
         await withCheckedContinuation { continuation in
-            let operation = PersonSearchTask(query: query)
-            operation.completion = { continuation.resume(returning: $0) }
+            let operation = PersonTask(request: .search(query: query))
+            operation.completion = {
+                guard case let .persons(persons) = $0 else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                continuation.resume(returning: persons)
+            }
             apiQueue.addOperation(operation)
         }
     }
@@ -19,8 +25,14 @@ public extension ApiServerHandler {
     /// ingested episode. Idempotent.
     func followPerson(id: Int64) async -> Bool {
         await withCheckedContinuation { continuation in
-            let operation = PersonFollowTask(personId: id, unfollow: false)
-            operation.completion = { continuation.resume(returning: $0) }
+            let operation = PersonTask(request: .follow(personId: id, unfollow: false))
+            operation.completion = {
+                guard case let .mutation(success) = $0 else {
+                    continuation.resume(returning: false)
+                    return
+                }
+                continuation.resume(returning: success)
+            }
             apiQueue.addOperation(operation)
         }
     }
@@ -28,8 +40,14 @@ public extension ApiServerHandler {
     /// Unfollows a person id. Idempotent.
     func unfollowPerson(id: Int64) async -> Bool {
         await withCheckedContinuation { continuation in
-            let operation = PersonFollowTask(personId: id, unfollow: true)
-            operation.completion = { continuation.resume(returning: $0) }
+            let operation = PersonTask(request: .follow(personId: id, unfollow: true))
+            operation.completion = {
+                guard case let .mutation(success) = $0 else {
+                    continuation.resume(returning: false)
+                    return
+                }
+                continuation.resume(returning: success)
+            }
             apiQueue.addOperation(operation)
         }
     }
@@ -37,8 +55,14 @@ public extension ApiServerHandler {
     /// The caller's followed persons.
     func followedPersons() async -> [ServerPerson]? {
         await withCheckedContinuation { continuation in
-            let operation = PersonFollowsListTask()
-            operation.completion = { continuation.resume(returning: $0) }
+            let operation = PersonTask(request: .followedPersons)
+            operation.completion = {
+                guard case let .persons(persons) = $0 else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                continuation.resume(returning: persons)
+            }
             apiQueue.addOperation(operation)
         }
     }

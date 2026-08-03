@@ -3,7 +3,6 @@
 # Deletion-only: counts may only go down. Regenerate after removing usages
 # with: mise run ratchets:baseline
 Modules/Sources/PocketCastsDataModel/Private/DB/GRDB/GRDBQueue.swift: 1
-Modules/Sources/PocketCastsDataModel/Public/Model/PlaylistEpisode.swift: 1
 Modules/Sources/PocketCastsDataModel/Public/Repositories/Repositories+Dependency.swift: 1
 Modules/Sources/PocketCastsDataModelTesting/DataMaintenanceMock.swift: 1
 Modules/Sources/PocketCastsDataModelTesting/DatabaseObservingMock.swift: 1
@@ -14,6 +13,7 @@ Modules/Sources/PocketCastsDataModelTesting/PodcastRepositoryMock.swift: 1
 Modules/Sources/PocketCastsDataModelTesting/RepositoryMock.swift: 1
 Modules/Sources/PocketCastsDataModelTesting/UpNextRepositoryMock.swift: 1
 Modules/Sources/PocketCastsDataModelTesting/UserEpisodeRepositoryMock.swift: 1
+Modules/Sources/PocketCastsFileSync/Generated/filesync.pb.swift: 1
 Modules/Sources/PocketCastsFileSync/Generated/sync_records.pb.swift: 2
 Modules/Sources/PocketCastsServer/Private/API Tasks/ApiBaseTask.swift: 1
 Modules/Sources/PocketCastsServer/Private/API Tasks/ChangeEmailTask.swift: 1
@@ -21,6 +21,7 @@ Modules/Sources/PocketCastsServer/Private/API Tasks/ChangePasswordTask.swift: 1
 Modules/Sources/PocketCastsServer/Private/API Tasks/DeleteAccountTask.swift: 1
 Modules/Sources/PocketCastsServer/Private/API Tasks/ExchangeSonosTask.swift: 1
 Modules/Sources/PocketCastsServer/Private/API Tasks/MetadataTask.swift: 1
+Modules/Sources/PocketCastsServer/Private/API Tasks/PersonFollowTask.swift: 1
 Modules/Sources/PocketCastsServer/Private/API Tasks/PositionSyncTask.swift: 1
 Modules/Sources/PocketCastsServer/Private/API Tasks/RecommendEpisodesTask.swift: 1
 Modules/Sources/PocketCastsServer/Private/API Tasks/RetrieveBookmarksTask.swift: 1
@@ -45,10 +46,9 @@ Modules/Sources/PocketCastsServer/Private/API Tasks/StarredSyncTask.swift: 1
 Modules/Sources/PocketCastsServer/Private/API Tasks/SuggestedFolderTask.swift: 1
 Modules/Sources/PocketCastsServer/Private/API Tasks/SupportFeedbackTask.swift: 1
 Modules/Sources/PocketCastsServer/Private/API Tasks/UserPodcastRatingTask.swift: 2
-Modules/Sources/PocketCastsServer/Private/Protobuffer/api.pb.swift: 19
+Modules/Sources/PocketCastsServer/Private/Protobuffer/api.pb.swift: 20
 Modules/Sources/PocketCastsServer/Public/Refresh/PodcastSearchOperation.swift: 1
 Modules/Sources/PocketCastsServer/Public/Refresh/RefreshOperation.swift: 1
-Modules/Sources/PocketCastsServer/Public/ServerConfig.swift: 1
 Modules/Sources/PocketCastsServer/Public/ServerPodcastManager.swift: 1
 Modules/Sources/PocketCastsServer/Public/Sync/BackgroundSyncManager.swift: 1
 Modules/Sources/PocketCastsServer/Public/Sync/SyncHistoryTask.swift: 1

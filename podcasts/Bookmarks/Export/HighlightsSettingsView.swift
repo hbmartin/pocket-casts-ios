@@ -214,8 +214,12 @@ final class HighlightsSettingsViewModel: ObservableObject {
     }
 
     func disconnectReadwise() async {
-        _ = await readwise.updateToken(nil)
-        readwiseConnected = false
+        let removed = await readwise.updateToken(nil)
+        if removed {
+            readwiseConnected = false
+        } else {
+            readwiseValidationFailed = true
+        }
     }
 
     func folderPicked(_ url: URL) {

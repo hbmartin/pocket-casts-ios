@@ -160,7 +160,7 @@ nonisolated final class NotificationsHelper: NSObject, UNUserNotificationCenterD
 
         var properties: [String: String] = ["category": categoryIdentifier]
         let identifier = response.notification.request.identifier
-        if let type = NotificationType(rawValue: identifier) {
+        if let type = NotificationType(requestIdentifier: identifier) {
             properties["type"] = type.rawValue
             NotificationsCoordinator.shared.markNotification(type)
         }

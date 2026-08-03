@@ -7,7 +7,7 @@ import PocketCastsUtils
 /// Auto-exports highlights as Markdown into a user-picked folder (an Obsidian
 /// vault, iCloud Drive, …) — Highlights program S5.
 ///
-/// One file per episode (`<Podcast>/<Episode>.md`), app-owned and rewritten
+/// One file per episode (`<Podcast>/<Episode>--<Episode UUID>.md`), app-owned and rewritten
 /// whole on change: bookmark create/edit/trim/tag/delete events mark the
 /// episode dirty, and a short debounce coalesces bursts before writing.
 /// Folder access reuses the file-sync security-scoped machinery
@@ -18,11 +18,16 @@ final class HighlightFolderExporter {
     static let shared = HighlightFolderExporter()
 
     private static let folderBookmarkKey = "highlightExport.folderBookmark"
+    private static let episodePathsKey = "highlightExport.episodePaths"
+    private static let pathFormatVersionKey = "highlightExport.pathFormatVersion"
+    private static let currentPathFormatVersion = 2
     private static let debounceInterval: TimeInterval = 3
+    private static let retryInterval: TimeInterval = 30
 
     private var cancellables = Set<AnyCancellable>()
     private var dirtyEpisodes = Set<String>()
     private var drainTask: Task<Void, Never>?
+    private var isMigratingPaths = false
 
     private let bookmarkManager: BookmarkManager
 
@@ -83,6 +88,11 @@ final class HighlightFolderExporter {
                 event.items.forEach { self?.markDirty(episodeUuid: $0.episode) }
             }
             .store(in: &cancellables)
+
+        if UserDefaults.standard.integer(forKey: Self.pathFormatVersionKey) < Self.currentPathFormatVersion {
+            isMigratingPaths = true
+            exportAll()
+        }
     }
 
     /// Queues every episode that has highlights (initial export, or catch-up
@@ -121,31 +131,62 @@ final class HighlightFolderExporter {
         dirtyEpisodes.removeAll()
         guard !episodes.isEmpty else { return }
 
-        // Resolve everything on the main actor (models, share links), then hand
-        // pure (path, contents) pairs to the folder actor for coordinated IO.
-        var files: [(relativePath: String, contents: Data)] = []
         let renderer = HighlightMarkdownRenderer()
-        for episodeUuid in episodes {
-            guard let export = resolveExport(episodeUuid: episodeUuid), !export.highlights.isEmpty else { continue }
-            guard let contents = renderer.markdown(for: export).data(using: .utf8) else { continue }
-            files.append((renderer.relativePath(for: export), contents))
-        }
-        guard !files.isEmpty else { return }
-
         let folder = BookmarkSyncFolder(bookmarkData: data)
+        var episodePaths = rememberedEpisodePaths
+        var failedEpisodes = Set<String>()
         var written = 0
-        for file in files {
+
+        for episodeUuid in episodes {
+            let previousPath = episodePaths[episodeUuid]
+            let resolvedExport = resolveExport(episodeUuid: episodeUuid)
+            guard let export = resolvedExport, !export.highlights.isEmpty else {
+                let stalePaths = Set([previousPath, resolvedExport.map(renderer.legacyRelativePath)].compactMap { $0 })
+                guard !stalePaths.isEmpty else { continue }
+                do {
+                    for stalePath in stalePaths {
+                        try await folder.coordinatedDelete(stalePath)
+                    }
+                    episodePaths.removeValue(forKey: episodeUuid)
+                } catch {
+                    failedEpisodes.insert(episodeUuid)
+                    FileLog.shared.addMessage("[HighlightExport] delete failed for \(episodeUuid): \(error)")
+                }
+                continue
+            }
+
+            let currentPath = renderer.relativePath(for: export)
+            guard let contents = renderer.markdown(for: export).data(using: .utf8) else {
+                failedEpisodes.insert(episodeUuid)
+                continue
+            }
+
             do {
-                let directory = (file.relativePath as NSString).deletingLastPathComponent
+                let directory = (currentPath as NSString).deletingLastPathComponent
                 if !directory.isEmpty {
                     try await folder.createDirectory(directory)
                 }
-                try await folder.coordinatedWrite(file.relativePath, data: file.contents)
+                try await folder.coordinatedWrite(currentPath, data: contents)
+
+                // Only remove old paths after the replacement is durable. This
+                // covers title/podcast renames and migrates the original
+                // collision-prone filename format.
+                let stalePaths = Set([previousPath, renderer.legacyRelativePath(for: export)].compactMap { $0 })
+                    .subtracting([currentPath])
+                for stalePath in stalePaths {
+                    try await folder.coordinatedDelete(stalePath)
+                }
+
+                episodePaths[episodeUuid] = currentPath
                 written += 1
             } catch {
-                FileLog.shared.addMessage("[HighlightExport] write failed for \(file.relativePath): \(error)")
+                failedEpisodes.insert(episodeUuid)
+                FileLog.shared.addMessage("[HighlightExport] update failed for \(currentPath): \(error)")
             }
         }
+
+        rememberedEpisodePaths = episodePaths
+
         // A resolved stale bookmark self-heals for next time.
         if let refreshed = await folder.refreshedBookmarkData {
             UserDefaults.standard.set(refreshed, forKey: Self.folderBookmarkKey)
@@ -153,6 +194,18 @@ final class HighlightFolderExporter {
         if written > 0 {
             Analytics.track(.highlightExportWritten, properties: ["files": written])
         }
+        if !failedEpisodes.isEmpty {
+            dirtyEpisodes.formUnion(failedEpisodes)
+            scheduleDrain(after: Self.retryInterval)
+        } else if isMigratingPaths {
+            UserDefaults.standard.set(Self.currentPathFormatVersion, forKey: Self.pathFormatVersionKey)
+            isMigratingPaths = false
+        }
+    }
+
+    private var rememberedEpisodePaths: [String: String] {
+        get { UserDefaults.standard.dictionary(forKey: Self.episodePathsKey) as? [String: String] ?? [:] }
+        set { UserDefaults.standard.set(newValue, forKey: Self.episodePathsKey) }
     }
 
     private func resolveExport(episodeUuid: String) -> HighlightMarkdownRenderer.EpisodeExport? {
