@@ -5,6 +5,11 @@ client sends raw JPEG or PNG bytes (maximum 10 MiB) with Bearer authentication
 and App Attest. Expected validation/moderation rejections arrive inside the
 existing successful protobuf status envelope so the client can display them.
 
+The backend capability **must remain disabled in every public environment**
+until a real CSAM scan vendor is integrated as a hard pre-publication gate and
+its outage behavior has been acceptance-tested. Capability support in the
+client is not permission to enable the feature by itself.
+
 The backend validates decoded dimensions and pixel count before allocation,
 normalizes orientation, center-crops, strips metadata, and encodes a 1024×1024
 JPEG at quality 85. Google Vision SafeSearch rejects `adult` or `racy` at

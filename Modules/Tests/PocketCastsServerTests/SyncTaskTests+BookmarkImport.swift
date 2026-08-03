@@ -1,5 +1,6 @@
 @testable import PocketCastsServer
 @testable import PocketCastsDataModel
+import PocketCastsUtils
 import XCTest
 import GRDB
 
@@ -12,6 +13,13 @@ final class SyncTaskTests_BookmarkImport: XCTestCase {
         dataManager = DataManager(dbQueue: GRDBQueue(dbPool: try! DatabasePool(path: NSTemporaryDirectory().appending("\(UUID().uuidString).sqlite"))))
         bookmarkManager = dataManager.bookmarks
         syncTask = SyncTask(dataManager: dataManager)
+        UserDefaults.standard.removeObject(forKey: ServerConstants.UserDefaults.highlightAccountSyncCompleted)
+    }
+
+    override func tearDown() {
+        try? FeatureFlagOverrideStore().override(FeatureFlag.highlightAccountSync, withValue: FeatureFlag.highlightAccountSync.default)
+        UserDefaults.standard.removeObject(forKey: ServerConstants.UserDefaults.highlightAccountSyncCompleted)
+        super.tearDown()
     }
 
     // MARK: - Importing a single bookmark
@@ -104,6 +112,76 @@ final class SyncTaskTests_BookmarkImport: XCTestCase {
         XCTAssertEqual(updatedTitle, dbBookmark?.title)
     }
 
+    // MARK: - Highlight fields (ADR-0016)
+
+    func testImportAppliesTrimAndTagsToExistingBookmark() async {
+        let bookmark = addBookmark(time: 2)
+
+        var apiBookmark = Api_SyncUserBookmark.fromBookmark(bookmark)
+        apiBookmark.excerpt.value = "trimmed remotely"
+        apiBookmark.endTime.value = 44
+        apiBookmark.trimModified.value = 5_000_000
+        apiBookmark.tags = ["ai", "investing"]
+        apiBookmark.tagsModified.value = 5_000_000
+
+        await syncTask.importBookmark(apiBookmark)
+
+        let imported = bookmarkManager.bookmark(for: bookmark.uuid)
+        XCTAssertEqual(imported?.excerpt, "trimmed remotely")
+        XCTAssertEqual(imported?.endTime, 44)
+        XCTAssertEqual(imported?.trimModified, Date(timeIntervalSince1970: 5000))
+        XCTAssertEqual(imported?.tags, ["ai", "investing"])
+    }
+
+    func testImportedMachineExcerptFillsButNeverOverwrites() async {
+        let bookmark = addBookmark(time: 2)
+
+        var first = Api_SyncUserBookmark.fromBookmark(bookmark)
+        first.excerpt.value = "first machine"
+        first.endTime.value = 10
+        await syncTask.importBookmark(first)
+        XCTAssertEqual(bookmarkManager.bookmark(for: bookmark.uuid)?.excerpt, "first machine")
+
+        var second = Api_SyncUserBookmark.fromBookmark(bookmark)
+        second.excerpt.value = "second machine"
+        second.endTime.value = 20
+        await syncTask.importBookmark(second)
+        XCTAssertEqual(bookmarkManager.bookmark(for: bookmark.uuid)?.excerpt, "first machine",
+                       "machine enrichment over account sync is fill-once")
+    }
+
+    func testImportedStaleTrimLosesToNewerLocalTrim() async {
+        let bookmark = addBookmark(time: 2)
+        _ = await bookmarkManager.updateTrim(uuid: bookmark.uuid, excerpt: "newer local", endTime: 30,
+                                             trimModified: Date(timeIntervalSince1970: 9000))
+
+        var apiBookmark = Api_SyncUserBookmark.fromBookmark(bookmark)
+        apiBookmark.excerpt.value = "older remote"
+        apiBookmark.endTime.value = 15
+        apiBookmark.trimModified.value = 1_000_000 // 1000s — older
+
+        await syncTask.importBookmark(apiBookmark)
+
+        XCTAssertEqual(bookmarkManager.bookmark(for: bookmark.uuid)?.excerpt, "newer local")
+    }
+
+    func testImportedBookmarkAddsWithTrimAndTags() async {
+        let uuid = UUID().uuidString
+        var apiBookmark = Api_SyncUserBookmark(uuid: uuid, episode: "ep-1", podcast: "pod-1")
+        apiBookmark.excerpt.value = "arrives trimmed"
+        apiBookmark.endTime.value = 77
+        apiBookmark.trimModified.value = 2_000_000
+        apiBookmark.tags = ["fresh"]
+        apiBookmark.tagsModified.value = 2_000_000
+
+        await syncTask.importBookmark(apiBookmark)
+
+        let imported = bookmarkManager.bookmark(for: uuid)
+        XCTAssertEqual(imported?.excerpt, "arrives trimmed")
+        XCTAssertNotNil(imported?.trimModified)
+        XCTAssertEqual(imported?.tags, ["fresh"])
+    }
+
     // MARK: - Server Data Processed
 
     func testProcessServerDataParsesBookmarksCorrectly() {
@@ -152,6 +230,50 @@ final class SyncTaskTests_BookmarkImport: XCTestCase {
 
         XCTAssertEqual(allBookmarks.map(\.title), Array(repeating: newTitle, count: bookmarks.count))
         XCTAssertEqual(allBookmarks.map(\.created), Array(repeating: created, count: bookmarks.count))
+    }
+
+    func testFullSyncPreservesLocalHighlightFieldsWhileAccountSyncIsDisabled() async throws {
+        try FeatureFlagOverrideStore().override(FeatureFlag.highlightAccountSync, withValue: false)
+        let bookmark = addBookmark(time: 2)
+        let trimModified = Date(timeIntervalSince1970: 5000)
+        let tagsModified = Date(timeIntervalSince1970: 6000)
+        _ = await bookmarkManager.updateTrim(uuid: bookmark.uuid,
+                                             excerpt: "local excerpt",
+                                             endTime: 42,
+                                             trimModified: trimModified,
+                                             syncStatus: .synced)
+        _ = await bookmarkManager.setTags(uuid: bookmark.uuid,
+                                          tags: ["local", "private"],
+                                          modified: tagsModified,
+                                          syncStatus: .synced)
+
+        syncTask.processServerBookmarks([.fromBookmark(bookmark)])
+
+        let imported = bookmarkManager.bookmark(for: bookmark.uuid)
+        XCTAssertEqual(imported?.excerpt, "local excerpt")
+        XCTAssertEqual(imported?.endTime, 42)
+        XCTAssertEqual(imported?.trimModified, trimModified)
+        XCTAssertEqual(imported?.tags, ["local", "private"])
+        XCTAssertEqual(imported?.tagsModified, tagsModified)
+    }
+
+    func testEnablingHighlightAccountSyncRequeuesPreviouslySyncedHighlightsOnce() async throws {
+        let uuid = try XCTUnwrap(bookmarkManager.add(episodeUuid: "episode",
+                                                     podcastUuid: "podcast",
+                                                     title: "Title",
+                                                     time: 10,
+                                                     excerpt: "local excerpt",
+                                                     endTime: 20,
+                                                     syncStatus: .synced))
+        try FeatureFlagOverrideStore().override(FeatureFlag.highlightAccountSync, withValue: true)
+
+        syncTask.prepareHighlightAccountSyncTransition()
+        XCTAssertEqual(bookmarkManager.bookmarksToSync().map(\.uuid), [uuid])
+
+        bookmarkManager.markAllBookmarksAsSynced()
+        UserDefaults.standard.set(true, forKey: ServerConstants.UserDefaults.highlightAccountSyncCompleted)
+        syncTask.prepareHighlightAccountSyncTransition()
+        XCTAssertTrue(bookmarkManager.bookmarksToSync().isEmpty)
     }
 
     func testFullSyncImportsDataCorrectly() {

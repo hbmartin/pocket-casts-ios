@@ -1,6 +1,7 @@
 import AppIntents
 import Foundation
 import PocketCastsDataModel
+import PocketCastsUtils
 
 // MARK: - Playback control App Intents
 //
@@ -138,6 +139,24 @@ struct ExtendSleepTimerIntent: AppIntent {
     }
 }
 
+/// Saves a highlight at the current playback position (Highlights program S3).
+/// Powers the Siri phrase, the Action Button, and Shortcuts; fails with a
+/// dialog when nothing is playing.
+struct SaveHighlightIntent: AudioPlaybackIntent {
+    static let title: LocalizedStringResource = "Save Highlight"
+    static var openAppWhenRun: Bool { false }
+    static var supportedModes: IntentModes { [.background] }
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        guard FeatureFlag.highlightCapture.enabled else {
+            throw PlaybackIntentError.actionFailed
+        }
+        try requireSuccessfulPlaybackAction(PlaybackIntentActionHandler.shared.saveHighlight())
+        return .result()
+    }
+}
+
 // MARK: - App Shortcuts
 
 /// Surfaces the default shortcuts previously suggested by the legacy SiriKit
@@ -180,11 +199,14 @@ struct PocketCastsAppShortcuts: AppShortcutsProvider {
             shortTitle: "Play Filter",
             systemImageName: "play.square.stack"
         )
+        // Highlights program S3: Save Highlight took Open Filter's slot —
+        // Apple caps AppShortcutsProvider at 10 and Open Filter had the lowest
+        // eyes-free value (Play Filter keeps filters voice-reachable).
         AppShortcut(
-            intent: OpenFilterIntent(),
-            phrases: ["Open \(\.$filter) in \(.applicationName)", "Show my \(\.$filter) filter in \(.applicationName)"],
-            shortTitle: "Open Filter",
-            systemImageName: "line.3.horizontal.decrease.circle"
+            intent: SaveHighlightIntent(),
+            phrases: ["Save a highlight in \(.applicationName)", "Save highlight in \(.applicationName)", "Highlight that in \(.applicationName)"],
+            shortTitle: "Save Highlight",
+            systemImageName: "bookmark.fill"
         )
         AppShortcut(
             intent: NextChapterIntent(),

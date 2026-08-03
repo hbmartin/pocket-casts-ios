@@ -22,6 +22,8 @@ nonisolated enum NotificationType: String {
 
     case newFeatureSuggestedFolders
 
+    case highlightResurfacing
+
     var title: String {
         switch self {
         case .onboardingSignUp:
@@ -46,6 +48,8 @@ nonisolated enum NotificationType: String {
             return L10n.notificationsRecommendationsYouMightLikeTitle
         case .newFeatureSuggestedFolders:
             return L10n.notificationsNewFeatureSuggestedFoldersTitle
+        case .highlightResurfacing:
+            return L10n.notificationsHighlightResurfacingTitle
         }
     }
 
@@ -73,11 +77,17 @@ nonisolated enum NotificationType: String {
             return L10n.notificationsRecommendationsYouMightLikeBody
         case .newFeatureSuggestedFolders:
             return L10n.notificationsNewFeatureSuggestedFoldersBody
+        case .highlightResurfacing:
+            return NotificationsCoordinator.shared.resurfacedHighlightBody() ?? L10n.notificationsHighlightResurfacingBodyFallback
         }
     }
 
     var identifier: String {
         return self.rawValue
+    }
+
+    init?(requestIdentifier: String) {
+        self.init(rawValue: requestIdentifier.components(separatedBy: ".").first ?? requestIdentifier)
     }
 
     var link: String {
@@ -104,6 +114,8 @@ nonisolated enum NotificationType: String {
             return "thcast://discover/recommendations_user"
         case .newFeatureSuggestedFolders:
             return "thcast://features/suggestedFolders"
+        case .highlightResurfacing:
+            return "thcast://profile/bookmarks"
         }
     }
 
@@ -120,6 +132,9 @@ nonisolated enum NotificationType: String {
                 return Settings.suggestedFoldersUpsellCount < 2 && Settings.appVersion() == "7.90"
             case .reengagementDownloads:
                 return NotificationsCoordinator.shared.numberOfDownloadsAvailable() > 0
+            case .highlightResurfacing:
+                // Only when there's something worth resurfacing.
+                return NotificationsCoordinator.shared.resurfacedHighlightBody() != nil
             default:
                 return true
         }
@@ -130,7 +145,8 @@ nonisolated enum NotificationType: String {
             case .reengagementWeekly,
                  .reengagementDownloads,
                  .recommendationsTrending,
-                 .recommendationsYouMightLike:
+                 .recommendationsYouMightLike,
+                 .highlightResurfacing:
                 return true
             default:
                 return false
@@ -146,6 +162,8 @@ nonisolated enum NotificationsGroup: CaseIterable {
     case newFeaturesAndTips
     // Reserved to keep the offers notification preference stable.
     case offers
+    /// Opt-in weekly resurfacing of an old highlight (Highlights program).
+    case fromYourHighlights
 
     var notifications: [NotificationType] {
         switch self {
@@ -159,6 +177,8 @@ nonisolated enum NotificationsGroup: CaseIterable {
                 return [.newFeatureSuggestedFolders, .reengagementWeekly, .reengagementDownloads]
             case .offers:
                 return []
+            case .fromYourHighlights:
+                return [.highlightResurfacing]
         }
     }
 
@@ -175,6 +195,8 @@ nonisolated enum NotificationsGroup: CaseIterable {
             case .offers:
                 // Reserved for possible future local offer notifications.
                 return 14
+            case .fromYourHighlights:
+                return 18
         }
     }
 
@@ -190,7 +212,15 @@ nonisolated enum NotificationsGroup: CaseIterable {
                 return Settings.notificationsNewFeaturesAndTips
             case .offers:
                 return Settings.notificationsOffers
+            case .fromYourHighlights:
+                return Settings.notificationsFromYourHighlights
         }
+    }
+
+    /// Groups enabled as part of the app-wide notification permission flow.
+    /// Highlight resurfacing remains an explicit, separate opt-in.
+    var isEnabledByDefault: Bool {
+        self != .fromYourHighlights
     }
 
     func setEnabled(_ newValue: Bool) {
@@ -213,6 +243,8 @@ nonisolated enum NotificationsGroup: CaseIterable {
                 Settings.notificationsNewFeaturesAndTips = newValue
             case .offers:
                 Settings.notificationsOffers = newValue
+            case .fromYourHighlights:
+                Settings.notificationsFromYourHighlights = newValue
         }
     }
 
@@ -233,12 +265,17 @@ nonisolated enum NotificationsGroup: CaseIterable {
             case .offers:
                 // Reserved for possible future local offer notifications.
                 return Self.speedUpNotifications ? 120.seconds: 2.week
+            case .fromYourHighlights:
+                return Self.speedUpNotifications ? 60.seconds: 1.week
         }
     }
 
     func trigger(order: Int, notification: NotificationType) -> UNNotificationTrigger? {
         if Self.speedUpNotifications {
-            return UNTimeIntervalNotificationTrigger(timeInterval: Double(order + 1) * timeIntervalStep, repeats: notification.isRepeatable)
+            return UNTimeIntervalNotificationTrigger(
+                timeInterval: Double(order + 1) * timeIntervalStep,
+                repeats: notification.isRepeatable && notification != .highlightResurfacing
+            )
         }
         let calendar = Calendar.current
         let maxWeekDays: Int = calendar.weekdaySymbols.count
@@ -271,6 +308,13 @@ nonisolated enum NotificationsGroup: CaseIterable {
                     calendar: calendar,
                     repeats: notification.isRepeatable
                 )
+
+            case .fromYourHighlights:
+                return makeOneShotTrigger(
+                    days: (order + 1) * maxWeekDays,
+                    from: .now,
+                    calendar: calendar
+                )
         }
     }
 
@@ -282,6 +326,18 @@ nonisolated enum NotificationsGroup: CaseIterable {
         let weekday = calendar.component(.weekday, from: fireDate)
         let components = DateComponents(hour: scheduleHour, weekday: weekday)
         return UNCalendarNotificationTrigger(dateMatching: components, repeats: repeats)
+    }
+
+    private func makeOneShotTrigger(days: Int, from date: Date, calendar: Calendar) -> UNCalendarNotificationTrigger? {
+        guard let targetDay = calendar.date(byAdding: .day, value: days, to: date),
+              let fireDate = calendar.date(bySettingHour: scheduleHour, minute: 0, second: 0, of: targetDay) else {
+            return nil
+        }
+
+        var components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: fireDate)
+        components.calendar = calendar
+        components.timeZone = calendar.timeZone
+        return UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
     }
 
     static var allDisabled: Bool {
@@ -316,6 +372,7 @@ nonisolated final class NotificationsCoordinator: @unchecked Sendable {
     }
 
     private let notificationCenter: UNUserNotificationCenter
+    private static let highlightScheduleCount = 8
 
     private init(notificationCenter: UNUserNotificationCenter = .current()) {
         self.notificationCenter = notificationCenter
@@ -329,8 +386,9 @@ nonisolated final class NotificationsCoordinator: @unchecked Sendable {
                     continuation.resume(returning: false)
                     return
                 }
-                // activate all notifications
-                for group in NotificationsGroup.allCases {
+                // Activate the default groups. Highlight resurfacing has its
+                // own explicit opt-in in Highlights settings.
+                for group in NotificationsGroup.allCases where group.isEnabledByDefault {
                     self.setupNotifications(for: group)
                 }
                 continuation.resume(returning: granted)
@@ -349,6 +407,22 @@ nonisolated final class NotificationsCoordinator: @unchecked Sendable {
 
     func updateNotifications(for group: NotificationsGroup) {
         cancelNotifications(for: group)
+
+        if group == .fromYourHighlights {
+            let bodies = resurfacedHighlightBodies(limit: Self.highlightScheduleCount)
+            for (order, body) in bodies.enumerated() {
+                guard let trigger = group.trigger(order: order, notification: .highlightResurfacing) else { continue }
+                scheduleNotification(
+                    .highlightResurfacing,
+                    identifier: "\(NotificationType.highlightResurfacing.identifier).\(order)",
+                    body: body,
+                    trigger: trigger
+                )
+            }
+            printPendingNotifications()
+            return
+        }
+
         var order = 0
         for notification in group.notifications {
             guard notification.shouldSend,
@@ -360,6 +434,25 @@ nonisolated final class NotificationsCoordinator: @unchecked Sendable {
             order += 1
         }
         printPendingNotifications()
+    }
+
+    /// Replenishes an exhausted highlight batch without postponing requests
+    /// that are already pending every time the app launches.
+    func refreshHighlightNotificationsIfNeeded() {
+        guard NotificationsGroup.fromYourHighlights.isEnabled else { return }
+        guard FeatureFlag.highlightEditor.enabled else {
+            cancelNotifications(for: .fromYourHighlights)
+            return
+        }
+
+        Task {
+            let requests = await notificationCenter.pendingNotificationRequests()
+            let hasPendingHighlight = requests.contains {
+                NotificationType(requestIdentifier: $0.identifier) == .highlightResurfacing
+            }
+            guard !hasPendingHighlight else { return }
+            updateNotifications(for: .fromYourHighlights)
+        }
     }
 
     private func printPendingNotifications() {
@@ -391,14 +484,19 @@ nonisolated final class NotificationsCoordinator: @unchecked Sendable {
         }
     }
 
-    func scheduleNotification(_ type: NotificationType, trigger: UNNotificationTrigger) {
+    func scheduleNotification(
+        _ type: NotificationType,
+        identifier: String? = nil,
+        body: String? = nil,
+        trigger: UNNotificationTrigger
+    ) {
         let content = UNMutableNotificationContent()
         content.title = type.title
-        content.body = type.body
+        content.body = body ?? type.body
         content.categoryIdentifier = NotificationsHelper.NotificationsCategory.deepLink.rawValue
         content.userInfo = ["destination_url": type.link]
 
-        let request = UNNotificationRequest(identifier: type.identifier, content: content, trigger: trigger)
+        let request = UNNotificationRequest(identifier: identifier ?? type.identifier, content: content, trigger: trigger)
 
         // Schedule the request with the system. The request is freshly built and
         // handed over wholesale.
@@ -420,7 +518,13 @@ nonisolated final class NotificationsCoordinator: @unchecked Sendable {
     }
 
     func cancelNotifications(for group: NotificationsGroup) {
-        notificationCenter.removePendingNotificationRequests(withIdentifiers: group.notifications.map { $0.identifier })
+        var identifiers = group.notifications.map { $0.identifier }
+        if group == .fromYourHighlights {
+            identifiers.append(contentsOf: (0..<Self.highlightScheduleCount).map {
+                "\(NotificationType.highlightResurfacing.identifier).\($0)"
+            })
+        }
+        notificationCenter.removePendingNotificationRequests(withIdentifiers: identifiers)
         printPendingNotifications()
     }
 
@@ -433,6 +537,40 @@ nonisolated final class NotificationsCoordinator: @unchecked Sendable {
     func numberOfDownloadsAvailable() -> Int {
         episodesDataManager.downloadedEpisodes().reduce(0) { partialResult, list in
             return partialResult + list.elements.count
+        }
+    }
+
+    /// The resurfacing notification's body (Highlights program): a highlight
+    /// at least a week old, chosen pseudo-randomly per day so repeat schedules
+    /// don't pin the same one. nil = nothing old enough to resurface.
+    func resurfacedHighlightBody() -> String? {
+        resurfacedHighlightBodies(limit: 1).first
+    }
+
+    /// Builds a batch of one-shot weekly messages. Each request owns its body,
+    /// so the system does not repeat one captured highlight forever.
+    func resurfacedHighlightBodies(limit: Int) -> [String] {
+        guard FeatureFlag.highlightEditor.enabled else { return [] }
+
+        let cutoff = Date().addingTimeInterval(-7 * 24 * 60 * 60)
+        let eligible = DataManager.sharedManager.bookmarks
+            .allBookmarks(includeDeleted: false)
+            .filter { $0.created < cutoff }
+        guard !eligible.isEmpty, limit > 0 else { return [] }
+
+        let dayIndex = Int(Date().timeIntervalSince1970 / 86_400)
+        let ordered = eligible.sorted {
+            if $0.created != $1.created { return $0.created < $1.created }
+            return $0.uuid < $1.uuid
+        }
+        let start = dayIndex % ordered.count
+
+        return (0..<limit).map { offset in
+            let pick = ordered[(start + offset) % ordered.count]
+            if let excerpt = pick.excerpt, !excerpt.isEmpty {
+                return "\u{201C}\(excerpt.prefix(120))\u{201D}"
+            }
+            return pick.title
         }
     }
 }

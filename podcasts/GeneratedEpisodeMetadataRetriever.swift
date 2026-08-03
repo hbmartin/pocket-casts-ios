@@ -32,13 +32,9 @@ public actor GeneratedEpisodeMetadataRetriever {
 
         let task = Task<GeneratedMetadataEnvelope, Error> { [weak self] in
             guard let self else { throw TaskError.nilSelf }
-            guard await ServerCapabilitiesClient.shared.load()?.features.corpus == true else {
+            guard let manifest = try await CorpusManifestClient.shared.availableManifest(episodeUUID: episodeUuid) else {
                 throw Errors.corpusUnavailable
             }
-            let manifest = try await CorpusManifestClient.shared.manifest(
-                episodeUUID: episodeUuid,
-                acceptLanguage: Locale.preferredLanguages.joined(separator: ",")
-            )
             let chapters = manifest.chapters?.map {
                 GeneratedChapter(
                     title: $0.title,

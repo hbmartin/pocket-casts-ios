@@ -99,6 +99,8 @@ extension ShelfActionsViewController: UITableViewDelegate, UITableViewDataSource
                 self.playerActionsDelegate?.stopAfterEpisodeTapped()
             case .catchMeUp:
                 self.playerActionsDelegate?.catchMeUpTapped()
+            case .highlightsTour:
+                self.playerActionsDelegate?.highlightsTourTapped()
             case .routePicker:
                 self.playerActionsDelegate?.routePickerTapped(from: action)
             case .shareEpisode:

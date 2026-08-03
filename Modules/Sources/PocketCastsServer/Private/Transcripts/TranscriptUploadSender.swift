@@ -235,10 +235,8 @@ final class TranscriptUploadSender: Sendable {
 }
 
 public extension CorpusMetadataAttachmentClient {
-    /// Queue-facing variant of `attach(_:)`: same request, but the response is
-    /// classified onto `ContributionSendResult` so the durable metadata job can
-    /// tell transient failures apart from a consumed/expired one-time attachment
-    /// token (4xx), which can never succeed again with the same candidate.
+    /// Classifies metadata responses so the durable job can tell transient
+    /// failures apart from a consumed/expired one-time attachment token (4xx).
     static func attachResult(_ metadata: CorpusMetadataAttachment,
                              connection: URLConnection = URLConnection(handler: URLSession.shared)) async -> ContributionSendResult {
         guard let url = URL(string: ServerConstants.Urls.api() + "transcripts/contribute/metadata"),

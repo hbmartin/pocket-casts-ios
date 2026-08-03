@@ -24,6 +24,11 @@ public struct AppSettings: JSONCodable {
     // FORK: synced via fork-reserved proto fields 1001/1002; the production server drops them.
     @ModifiedDate public var tapToPlay: Bool = false
     @ModifiedDate public var seekAcceleration: Bool = false
+    // FORK: Highlights program (ADR-0016), fork-reserved proto fields 1014-1017.
+    @ModifiedDate public var reviewHighlightAfterCapture: Bool = false
+    @ModifiedDate public var highlightStylePreset: String = ""
+    @ModifiedDate public var highlightStyleCustom: String = ""
+    @ModifiedDate public var highlightConfirmationStyle: Int32 = 0
     @ModifiedDate public var playbackActions: Bool
     @ModifiedDate public var legacyBluetooth: Bool
     @ModifiedDate public var multiSelectGesture: Bool

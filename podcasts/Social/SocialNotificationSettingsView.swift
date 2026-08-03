@@ -101,6 +101,7 @@ final class SocialNotificationSettingsViewModel: ObservableObject {
         guard var confirmedProfile = profile else { return }
 
         while true {
+            guard !Task.isCancelled else { return }
             let requestedMask = disabledMask
             var updated = confirmedProfile
             updated.socialPushDisabled = requestedMask
@@ -109,6 +110,11 @@ final class SocialNotificationSettingsViewModel: ObservableObject {
                 if disabledMask == requestedMask {
                     disabledMask = confirmedProfile.socialPushDisabled
                     saveError = L10n.socialPrivacySaveFailed
+                    return
+                }
+                do {
+                    try await Task.sleep(for: .milliseconds(250))
+                } catch {
                     return
                 }
                 continue

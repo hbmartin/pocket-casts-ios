@@ -854,6 +854,24 @@ enum AnalyticsEvent: String {
     case highlightEnrichmentCompleted
     case highlightEnrichmentFailed
     case highlightQuoteShared
+    case highlightEdited
+    case highlightEditorShown
+    case highlightExportFolderEnabled
+    case highlightExportFolderDisabled
+    case highlightExportWritten
+    case readwiseEnabled
+    case readwiseDisabled
+    case readwisePushed
+    case suggestedHighlightsGenerated
+    case suggestedHighlightAccepted
+    case suggestedHighlightDismissed
+    case highlightsTourStarted
+    case highlightsTourCompleted
+    case highlightsTourCancelled
+    case bookDirectoryShown
+    case entityDetailAppearanceTapped
+    case personFollowed
+    case personUnfollowed
 
     // MARK: - People Directory
 

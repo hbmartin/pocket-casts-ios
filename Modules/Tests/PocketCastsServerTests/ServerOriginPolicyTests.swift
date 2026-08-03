@@ -68,4 +68,17 @@ final class ServerOriginPolicyTests: XCTestCase {
         XCTAssertFalse(updated.isNetworkAllowed)
         XCTAssertEqual(defaults.string(forKey: ServerOriginPolicy.installedOriginDefaultsKey), "https://one.example/")
     }
+
+    func testSameOriginRejectsCredentialBearingURLs() throws {
+        let policy = ServerOriginPolicy(
+            buildOrigin: "https://podcasts.example",
+            defaults: try XCTUnwrap(UserDefaults(suiteName: "ServerOriginPolicyTests.ephemeral")),
+            allowInsecureLoopback: false,
+            pinsOrigin: false
+        )
+
+        XCTAssertTrue(policy.isSameOrigin(try XCTUnwrap(URL(string: "https://podcasts.example/resource"))))
+        XCTAssertFalse(policy.isSameOrigin(try XCTUnwrap(URL(string: "https://user@podcasts.example/resource"))))
+        XCTAssertFalse(policy.isSameOrigin(try XCTUnwrap(URL(string: "https://user:password@podcasts.example/resource"))))
+    }
 }

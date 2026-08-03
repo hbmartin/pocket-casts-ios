@@ -83,7 +83,12 @@ public enum ServerConstants {
         }
 
         static func normalizedLocalBaseURL(_ value: String?) -> String? {
-            ServerOriginPolicy.normalizedOrigin(value, allowInsecureLoopback: true)
+            #if DEBUG && targetEnvironment(simulator)
+            let allowInsecureLoopback = true
+            #else
+            let allowInsecureLoopback = false
+            #endif
+            return ServerOriginPolicy.normalizedOrigin(value, allowInsecureLoopback: allowInsecureLoopback)
         }
 
         public static func main() -> String {
@@ -230,6 +235,7 @@ public enum ServerConstants {
         static let lastRefreshStartTime = "LastRefreshStartTime"
         static let lastRefreshEndTime = "SJLastRefreshDate"
         static let lastSyncTime = "SJLastSyncDate"
+        static let highlightAccountSyncCompleted = "HighlightsAccountSyncCompleted"
         static let syncingEmailLegacy = "SJSyncingEmail"
         static let historyServerLastModified = "SJHistoryServerLastModified"
         static let upNextServerLastModified = "SJUpNextServerLastModified"

@@ -113,6 +113,9 @@ nonisolated struct Constants {
         enum bookmarks {
             static let creationSound = SettingValue("bookmarks.creationSound", defaultValue: true)
 
+            /// Highlights Tour (S9): speak intro/bridge/outro lines. Off = tone-only jumps.
+            static let tourSpokenTransitions = SettingValue("bookmarks.tourSpokenTransitions", defaultValue: true)
+
             static let playerSort = SettingValue("bookmarks.playerSort", defaultValue: BookmarkSortOption.newestToOldest)
             static let podcastSort = SettingValue("bookmarks.podcastSort", defaultValue: BookmarkSortOption.newestToOldest)
             static let episodeSort = SettingValue("bookmarks.episodeSort", defaultValue: BookmarkSortOption.newestToOldest)
@@ -140,6 +143,7 @@ nonisolated struct Constants {
             static let newFeaturesAndTips = "notifications.newFeaturesAndTips"
             static let recommendations = "notifications.recommendations"
             static let offers = "notifications.offers"
+            static let fromYourHighlights = "notifications.fromYourHighlights"
             static let triggerDates = "notifications.triggerDates"
         }
 

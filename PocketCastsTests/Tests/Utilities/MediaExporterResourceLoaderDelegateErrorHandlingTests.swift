@@ -135,8 +135,10 @@ final class MediaExporterResourceLoaderDelegateErrorHandlingTests: XCTestCase {
     func testTerminalCallbackUsesFirstSettlement() {
         let callback = expectation(description: "Only the first terminal callback is delivered")
         callback.assertForOverFulfill = true
+        var capturedError: NSError?
         let delegate = MediaExporterResourceLoaderDelegate(saveFilePath: tempFilePath) { status, _, _, _ in
-            if case .failed = status {
+            if case .failed(let error) = status {
+                capturedError = error as NSError
                 callback.fulfill()
             }
         }
@@ -147,6 +149,8 @@ final class MediaExporterResourceLoaderDelegateErrorHandlingTests: XCTestCase {
         delegate.urlSession(.shared, task: makeURLSessionTask(), didCompleteWithError: second)
 
         wait(for: [callback], timeout: 1)
+        XCTAssertEqual(capturedError?.domain, NSURLErrorDomain)
+        XCTAssertEqual(capturedError?.code, NSURLErrorNotConnectedToInternet)
     }
 
     // MARK: - Progress reporting

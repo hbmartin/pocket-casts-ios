@@ -309,15 +309,20 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
         let candidateSession = URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
         let task = candidateSession.dataTask(with: urlRequest)
         task.priority = URLSessionTask.highPriority
-        let installed = lock.withLock {
-            guard session == nil, !terminalStatusReported else { return false }
+        let installation = lock.withLock { () -> (installed: Bool, replaced: URLSession?) in
+            guard !terminalStatusReported else { return (false, nil) }
+            if !retryWithoutUserAgent, session != nil {
+                return (false, nil)
+            }
+            let replacedSession = retryWithoutUserAgent ? session : nil
             session = candidateSession
             if retryWithoutUserAgent {
                 storedHasRetriedWithoutUserAgent = true
             }
-            return true
+            return (true, replacedSession)
         }
-        if installed {
+        installation.replaced?.invalidateAndCancel()
+        if installation.installed {
             if retryWithoutUserAgent {
                 FileLog.shared.addMessage("MediaExporterResourceLoaderDelegate: Starting request without User-Agent header")
             }
@@ -472,6 +477,9 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
             return .fulfilled
         }
         let bytesCached = try fileHandle.fileSize()
+        if isDownloadComplete, currentOffset == bytesCached {
+            return .fulfilled
+        }
 
         try validateCurrentOffsetLocked(currentOffset, bytesCached: bytesCached)
 
@@ -484,7 +492,9 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
         ) else {
             return .waiting
         }
-        guard let data = try fileHandle.readData(withOffset: range.lowerBound, forLength: range.count) else {
+        guard let data = try fileHandle.readData(withOffset: range.lowerBound, forLength: range.count),
+              !data.isEmpty
+        else {
             throw MediaFileHandleError.readAfterEndOfFile
         }
         return .chunk(data)
@@ -504,7 +514,7 @@ nonisolated final class MediaExporterResourceLoaderDelegate: NSObject, AVAssetRe
 
     /// Validates a read position against locked completion/file state.
     private func validateCurrentOffsetLocked(_ currentOffset: Int, bytesCached: Int) throws {
-        if isDownloadComplete, currentOffset >= bytesCached {
+        if isDownloadComplete, currentOffset > bytesCached {
             FileLog.shared.addMessage("MediaExporterResourceLoaderDelegate: try to read a position after the end of a file")
             throw MediaFileHandleError.readAfterEndOfFile
         }

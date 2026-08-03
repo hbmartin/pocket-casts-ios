@@ -47,6 +47,12 @@ final class PlaybackIntentActionHandlerTests: XCTestCase {
         func loadTopEpisode(forPodcastUuid _: String) -> Bool { podcastTopLoads }
         func setSleepTimer(seconds: TimeInterval) { sleepTimerSeconds = seconds }
         func extendSleepTimer(bySeconds seconds: TimeInterval) { extendedBySeconds = seconds }
+        var saveHighlightResult = true
+        private(set) var saveHighlightSources: [BookmarkAnalyticsSource] = []
+        func saveHighlight(source: BookmarkAnalyticsSource) -> Bool {
+            saveHighlightSources.append(source)
+            return saveHighlightResult
+        }
         func refreshWidgets() { refreshCount += 1 }
     }
 
@@ -251,5 +257,31 @@ final class PlaybackIntentActionHandlerTests: XCTestCase {
         XCTAssertFalse(makeHandler(fake).extendSleepTimer(minutes: -1))
         XCTAssertNil(fake.extendedBySeconds)
         XCTAssertEqual(fake.refreshCount, 0)
+    }
+
+    // MARK: Save Highlight (Highlights program S3)
+
+    func testSaveHighlightIntentUsesIntentSource() {
+        let fake = FakePlaybackFacade()
+
+        XCTAssertTrue(makeHandler(fake).saveHighlight())
+        XCTAssertEqual(fake.saveHighlightSources, [.intent])
+    }
+
+    func testSaveHighlightIntentReportsFailureWhenNothingPlays() {
+        let fake = FakePlaybackFacade()
+        fake.saveHighlightResult = false
+
+        XCTAssertFalse(makeHandler(fake).saveHighlight(),
+                       "the intent surfaces an error dialog when no episode is playing")
+    }
+
+    func testSaveHighlightControlUsesControlSourceAndRefreshes() {
+        let fake = FakePlaybackFacade()
+
+        makeHandler(fake).perform(.saveHighlight)
+
+        XCTAssertEqual(fake.saveHighlightSources, [.control])
+        XCTAssertEqual(fake.refreshCount, 1)
     }
 }

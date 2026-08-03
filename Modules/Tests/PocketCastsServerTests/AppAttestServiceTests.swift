@@ -1,5 +1,6 @@
 import CryptoKit
 import Foundation
+import Synchronization
 import Testing
 @testable import PocketCastsServer
 @testable import PocketCastsUtils
@@ -62,6 +63,30 @@ struct AppAttestServiceTests {
         #expect(headers.isEmpty)
         #expect(backend.state.withLock { $0.challengeCount } == 0)
         #expect(backend.state.withLock { $0.enrollBodies.isEmpty })
+    }
+
+    @Test func blockedOriginDoesNotBypassNetworkPolicyDuringEnrollment() async throws {
+        let suite = "AppAttestServiceTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        _ = ServerOriginPolicy(buildOrigin: "https://one.example", defaults: defaults, allowInsecureLoopback: false)
+        let blockedPolicy = ServerOriginPolicy(buildOrigin: "https://two.example", defaults: defaults, allowInsecureLoopback: false)
+        let requestCount = Mutex(0)
+        let connection = URLConnection(
+            handler: MockRequestHandler { request in
+                requestCount.withLock { $0 += 1 }
+                return (nil, HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil))
+            },
+            originPolicy: blockedPolicy
+        )
+        let service = AppAttestService(
+            attester: AppAttestKeyServiceMock(),
+            urlConnection: connection,
+            keychain: InMemoryKeychainStore()
+        )
+
+        #expect(await service.assertionHeaders(forBody: Data("body".utf8)).isEmpty)
+        #expect(requestCount.withLock { $0 } == 0)
     }
 
     @Test func persistedKeySkipsEnrollment() async throws {

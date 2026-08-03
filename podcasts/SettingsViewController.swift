@@ -11,6 +11,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
         case customFiles, importSteps, opml, backupRestore
         case fileSync
         case transcription
+        case highlights
         case about, privacy
         case upNextHistory, foldersHistory
         case headphoneControls
@@ -21,6 +22,9 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             switch self {
             case .transcription:
                 FeatureFlag.diarizedTranscription.enabled
+            case .highlights:
+                FeatureFlag.pkmExport.enabled || FeatureFlag.highlightCapture.enabled
+                    || FeatureFlag.highlightEditor.enabled || FeatureFlag.highlightPromptStyles.enabled
             default:
                 true
             }
@@ -72,6 +76,8 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
                 return (L10n.settingsDevices, UIImage(systemName: "airplayaudio"))
             case .transcription:
                 return (L10n.transcriptionSettingsTitle, UIImage(named: "transcript"))
+            case .highlights:
+                return (L10n.settingsHighlights, UIImage(named: "bookmarks-shelf-icon"))
             }
         }
     }
@@ -88,7 +94,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             [.general, .notifications, .appearance],
             [.autoArchive, .autoDownload, .autoAddToUpNext],
             [.fileSync],
-            [.storageAndDataUse, .headphoneControls, .devices, .advancedAudio, .transcription, .customFiles],
+            [.storageAndDataUse, .headphoneControls, .devices, .advancedAudio, .transcription, .highlights, .customFiles],
             [.importSteps, .opml, .backupRestore],
             [.upNextHistory, .foldersHistory],
             [.privacy, .about]
@@ -222,6 +228,11 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             let transcriptionView = TranscriptionSettingsView().environmentObject(Theme.sharedTheme)
             let hostingController = PCHostingController(rootView: transcriptionView)
             hostingController.title = L10n.transcriptionSettingsTitle
+            navigationController?.pushViewController(hostingController, animated: true)
+        case .highlights:
+            let highlightsView = HighlightsSettingsView().environmentObject(Theme.sharedTheme)
+            let hostingController = PCHostingController(rootView: highlightsView)
+            hostingController.title = L10n.settingsHighlights
             navigationController?.pushViewController(hostingController, animated: true)
         }
     }

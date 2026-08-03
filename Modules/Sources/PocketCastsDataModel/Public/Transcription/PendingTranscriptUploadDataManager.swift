@@ -205,6 +205,18 @@ public struct PendingTranscriptUploadDataManager: Sendable {
         return success
     }
 
+    /// Removes every pending corpus export after contribution consent is
+    /// absent or revoked. Accepted server artifacts are handled by the backend
+    /// erasure workflow, not this local queue.
+    @discardableResult
+    public func deleteAll() -> Bool {
+        let success = dbQueue.write { db in
+            _ = try PendingTranscriptUploadRecord.deleteAll(db)
+        }
+        if !success { FileLog.shared.addMessage("PendingTranscriptUploadDataManager.deleteAll failed") }
+        return success
+    }
+
     // MARK: - Introspection
 
     /// Number of rows still queued, regardless of due time.

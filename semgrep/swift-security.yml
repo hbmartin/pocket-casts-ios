@@ -5602,9 +5602,22 @@ rules:
         - "**/Modules/Sources/PocketCastsServer/**"
       exclude:
         - "**/MetadataTask.swift"
+        - "**/LocalFeedFetcher.swift"
     patterns:
       - pattern-either:
           - pattern: URLSession.shared.dataTask(...)
           - pattern: URLSession.shared.data(...)
           - pattern: URLSession.shared.download(...)
           - pattern: URLSession.shared.upload(...)
+          - patterns:
+              - pattern-either:
+                  - pattern: $SESSION.dataTask(...)
+                  - pattern: $SESSION.data(...)
+                  - pattern: $SESSION.download(...)
+                  - pattern: $SESSION.upload(...)
+              # A lowercase receiver covers stored/injected URLSession values
+              # without mistaking static helpers such as
+              # AppAttestCanonicalRequest.data(for:) for network transports.
+              - metavariable-regex:
+                  metavariable: $SESSION
+                  regex: ^(?:self\.)?[a-z_][A-Za-z0-9_]*$

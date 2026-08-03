@@ -222,6 +222,29 @@ final class PlaybackManager {
 
     private lazy var sleepTimerManager = SleepTimerManager()
 
+    /// Speaks the "Saved" capture confirmation (Highlights program S3); the
+    /// Highlights Tour reuses the same utility for bridges.
+    private lazy var highlightAnnouncer = SpeechAnnouncer()
+
+    /// The Highlights Tour supervisor (S9); nil = no tour this app session.
+    private(set) var tourController: HighlightsTourController?
+
+    /// Starts a Highlights Tour of the current episode (S9). Replaces any
+    /// existing tour; the controller reports progress via typed messages.
+    func startHighlightsTour(length: TourLength) {
+        guard let episode = currentEpisode() else { return }
+        tourController?.cancel(reason: .userCancelled)
+        let controller = HighlightsTourController(episode: episode, length: length, playbackManager: self)
+        tourController = controller
+        controller.start()
+    }
+
+    func cancelHighlightsTour() {
+        tourController?.cancel(reason: .userCancelled)
+    }
+
+    var isTouring: Bool { tourController?.isActive == true }
+
     /// The player we should fallback to
     private var fallbackToPlayer: PlaybackProtocol.Type? = nil
 
@@ -510,6 +533,14 @@ final class PlaybackManager {
     }
 
     func pause(userInitiated: Bool = true) {
+        pause(userInitiated: userInitiated, deactivateSession: true)
+    }
+
+    /// - Parameter deactivateSession: false keeps the audio session active
+    ///   (skips the delayed `deactiveAudioSession()`), for callers about to
+    ///   play more audio immediately — the Highlights Tour pauses, speaks a
+    ///   bridge, and resumes; the 3s deactivation timer would cut the speech.
+    func pause(userInitiated: Bool, deactivateSession: Bool) {
         guard let episode = currentEpisode() else { return }
 
         // Only trigger the event if we are already playing
@@ -533,7 +564,9 @@ final class PlaybackManager {
         catchUpHelper.playbackDidPause(of: episode, playedUpTo: positionTracker.playedUpTo(for: episode))
         NotificationCenter.postOnMainThread(PlaybackPaused())
         cancelUpdateTimer()
-        deactiveAudioSession()
+        if deactivateSession {
+            deactiveAudioSession()
+        }
 
         updateIdleTimer()
     }
@@ -726,7 +759,9 @@ final class PlaybackManager {
         guard let episodeUuid = currentEpisode()?.uuid else { return }
 
         if chapterManager.haveTriedToParseChaptersFor(episodeUuid: episodeUuid), chapterManager.updateCurrentChapter(time: currentTime()) {
-            if currentChapters().visibleChapter?.isPlayable() == false {
+            // A Highlights Tour owns the playhead: deselected-chapter auto-skip
+            // stays suppressed so the two seek drivers can't fight (S9).
+            if currentChapters().visibleChapter?.isPlayable() == false, tourController?.isActive != true {
                 skipToNextChapter()
                 trackChapterSkipped()
             } else {
@@ -774,6 +809,9 @@ final class PlaybackManager {
 
         let currentTime = positionTracker.playedUpTo(for: playingEpisode)
         seekingTo = time
+        // Tour seek attribution: the controller matches its own pending jumps
+        // and treats everything else as the user taking control (S9).
+        tourController?.observeSeek(to: time)
         FileLog.shared.addMessage("seek to \(time) startPlaybackAfterSeek \(startPlaybackAfterSeek)")
 
         let isReadyToPlay = player?.isReadyToPlay() == true
@@ -1489,6 +1527,12 @@ final class PlaybackManager {
             endBackgroundTask()
         }
 
+        // Suggested Highlights (S8): a finished episode is provably heard, so
+        // queue it for a salient-segment scan (battery-gated, deduped inside).
+        if let finishedUuid = currentEpisode()?.uuid {
+            SuggestedHighlightScanner.shared.episodeDidComplete(episodeUuid: finishedUuid)
+        }
+
         cancelUpdateTimer()
         seekingTo = PlaybackManager.notSeeking
         chapterManager.clearChapterInfo()
@@ -1840,6 +1884,9 @@ final class PlaybackManager {
         }
 
         checkForChapterChange()
+        // Highlights Tour segment-end detection rides the same 1 Hz tick (it
+        // keeps firing while backgrounded, unlike PlaybackProgressed).
+        tourController?.playbackTicked(time: currentTime(), rate: Double(player.playbackRate()))
         fireProgressNotification()
 
         if updateCount > updatesPerSave {
@@ -2404,7 +2451,7 @@ final class PlaybackManager {
 
     // MARK: - Background Handling
 
-    private func startBackgroundTask() {
+    func startBackgroundTask() {
         if backgroundTask != UIBackgroundTaskIdentifier.invalid { return } // already started
 
         // Playback calls this from its own queues; bridge the UIKit call
@@ -2418,7 +2465,7 @@ final class PlaybackManager {
         backgroundTask = Thread.isMainThread ? begin() : DispatchQueue.main.sync(execute: begin)
     }
 
-    private func endBackgroundTask() {
+    func endBackgroundTask() {
         if backgroundTask == .invalid { return } // already cancelled
 
         let task = backgroundTask
@@ -2682,28 +2729,64 @@ extension PlaybackManager {
         true
     }
 
-    func bookmark(source: BookmarkAnalyticsSource) {
+    @discardableResult
+    func bookmark(source: BookmarkAnalyticsSource) -> Bool {
         guard bookmarksEnabled, let episode = currentEpisode() else {
-            return
+            return false
         }
 
         let currentTime = currentTime()
-        bookmarkManager.add(to: episode, at: currentTime)
+        guard bookmarkManager.add(to: episode, at: currentTime) != nil else {
+            return false
+        }
 
-        playBookmarkCreationSoundIfNeeded(source: source)
+        confirmHighlightCapture(source: source)
 
         Analytics.track(.bookmarkCreated, source: source, properties: [
             "episode_uuid": episode.uuid,
             "podcast_uuid": (episode as? Episode)?.podcastUuid ?? "user_file",
             "time": Int(currentTime)
         ])
+        return true
+    }
+
+    /// Eyes-free capture confirmation (Highlights program S3): a haptic on
+    /// every capture, plus the user's audible layer (tone / spoken "Saved")
+    /// for hands-free sources. With the flag off, the legacy headphone-tone
+    /// behavior is unchanged.
+    private func confirmHighlightCapture(source: BookmarkAnalyticsSource) {
+        guard FeatureFlag.highlightCapture.enabled else {
+            legacyPlayBookmarkCreationSoundIfNeeded(source: source)
+            return
+        }
+
+        HapticsHelper.triggerHighlightCapturedHaptic()
+
+        // In-app captures already confirm visually (toast); the audible layer
+        // is for hands-free sources where the screen isn't in play.
+        guard source == .headphones || source == .intent || source == .control else { return }
+
+        let style = Settings.highlightConfirmationStyle
+        if style.playsSound {
+            bookmarkManager.playTone()
+        }
+        if style.speaks {
+            let announcer = highlightAnnouncer
+            Task { @MainActor in
+                if await announcer.speak(L10n.highlightSavedAnnouncement) == .unavailable, !style.playsSound {
+                    // No voice for the locale: fall back to the tone so the
+                    // capture is never silent when the user asked for audio.
+                    self.bookmarkManager.playTone()
+                }
+            }
+        }
     }
 
     /// Plays the bookmark creation sound only if:
     /// - The source is from the headphones
     /// - The user has the addBookmark option enabled in the Headphone Controls setting
     /// - The bookmark sound setting is enabled
-    private func playBookmarkCreationSoundIfNeeded(source: BookmarkAnalyticsSource) {
+    private func legacyPlayBookmarkCreationSoundIfNeeded(source: BookmarkAnalyticsSource) {
         guard source == .headphones, Settings.shouldPlayBookmarkSound else {
             return
         }

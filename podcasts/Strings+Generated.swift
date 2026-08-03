@@ -486,6 +486,18 @@ nonisolated internal enum L10n {
   }
   /// Title of a message thanking the user for being a beta tester
   internal static var betaThankYou: String { return L10n.tr("Localizable", "beta_thank_you", fallback: "Thank you for beta testing!") }
+  /// Empty state message for the books directory.
+  internal static var bookDirectoryEmptyMessage: String { return L10n.tr("Localizable", "book_directory_empty_message", fallback: "Books mentioned in episodes you view will collect here.") }
+  /// Empty state title for the books directory.
+  internal static var bookDirectoryEmptyTitle: String { return L10n.tr("Localizable", "book_directory_empty_title", fallback: "No books yet") }
+  /// Book row subtitle; placeholder is the number of episodes mentioning it.
+  internal static func bookDirectoryEpisodeCountPlural(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "book_directory_episode_count_plural", String(describing: p1), fallback: "Mentioned in %1$@ episodes")
+  }
+  /// Book row subtitle when the book was mentioned in exactly one episode.
+  internal static var bookDirectoryEpisodeCountSingular: String { return L10n.tr("Localizable", "book_directory_episode_count_singular", fallback: "Mentioned in 1 episode") }
+  /// Title of the Mentioned Books directory (Profile tab).
+  internal static var bookDirectoryTitle: String { return L10n.tr("Localizable", "book_directory_title", fallback: "Mentioned Books") }
   /// A message that appears to inform the user their bookmark is added
   internal static var bookmarkAdded: String { return L10n.tr("Localizable", "bookmark_added", fallback: "Bookmark added") }
   /// Title of a button that allows the user to view their bookmarks
@@ -526,6 +538,10 @@ nonisolated internal enum L10n {
   internal static var bookmarksExportUnknownEpisode: String { return L10n.tr("Localizable", "bookmarks_export_unknown_episode", fallback: "Unknown Episode") }
   /// Heading used in the bookmark Markdown export when a podcast no longer exists
   internal static var bookmarksExportUnknownPodcast: String { return L10n.tr("Localizable", "bookmarks_export_unknown_podcast", fallback: "Unknown Podcast") }
+  /// Tag-filter option that clears the filter and shows every bookmark.
+  internal static var bookmarksFilterAllTags: String { return L10n.tr("Localizable", "bookmarks_filter_all_tags", fallback: "All Tags") }
+  /// Bookmark list menu option that filters the list to a single tag.
+  internal static var bookmarksFilterByTag: String { return L10n.tr("Localizable", "bookmarks_filter_by_tag", fallback: "Filter by Tag") }
   /// A message informing the user a feature is locked. %1$@ is the name of the tier (Plus or Patron)
   internal static func bookmarksLockedMessage(_ p1: Any) -> String {
     return L10n.tr("Localizable", "bookmarks_locked_message", String(describing: p1), fallback: "Unlock this feature and many more with Pocket Casts %1$@ and save timestamps of your favorite episodes.")
@@ -1042,6 +1058,10 @@ nonisolated internal enum L10n {
   internal static var downloadErrorTryAgain: String { return L10n.tr("Localizable", "download_error_try_again", fallback: "Unable to download episode. Please try again later.") }
   /// A common string used throughout the app. Informs the user the download has failed.
   internal static var downloadFailed: String { return L10n.tr("Localizable", "download_failed", fallback: "Download Failed") }
+  /// User-facing error shown when a streaming download is cancelled before completion.
+  internal static var downloadStreamingCancelled: String { return L10n.tr("Localizable", "download_streaming_cancelled", fallback: "The streaming download was cancelled.") }
+  /// User-facing error shown when a streaming download exceeds its completion timeout.
+  internal static var downloadStreamingTimedOut: String { return L10n.tr("Localizable", "download_streaming_timed_out", fallback: "The streaming download timed out.") }
   /// A common string used throughout the app. Title for screens and prompts related to storage and downloaded files.
   internal static var downloadedFiles: String { return L10n.tr("Localizable", "downloaded_files", fallback: "Downloaded Files") }
   /// Confirmation message when you choose to delete a set of downloaded files
@@ -1118,6 +1138,18 @@ nonisolated internal enum L10n {
   internal static var editClip: String { return L10n.tr("Localizable", "edit_clip", fallback: "Edit clip") }
   /// Button label for a feature that the user can enable
   internal static var enableItNow: String { return L10n.tr("Localizable", "enable_it_now", fallback: "Enable it now") }
+  /// Section header listing where an entity appears.
+  internal static var entityDetailAppearances: String { return L10n.tr("Localizable", "entity_detail_appearances", fallback: "Appearances") }
+  /// Line with the number of followed shows mentioning this entity.
+  internal static func entityDetailFollowedShowsPlural(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "entity_detail_followed_shows_plural", String(describing: p1), fallback: "%1$@ shows you follow mentioned this")
+  }
+  /// Line when exactly one show the user follows mentioned this entity.
+  internal static var entityDetailFollowedShowsSingular: String { return L10n.tr("Localizable", "entity_detail_followed_shows_singular", fallback: "1 show you follow mentioned this") }
+  /// Appearance subtitle with the mention's timestamp. Placeholder is a play time like 34:12.
+  internal static func entityDetailMentionedAt(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "entity_detail_mentioned_at", String(describing: p1), fallback: "Mentioned at %1$@")
+  }
   /// Description shown on the final End of Year story for 2024
   internal static var eoy2024EpilogueDescription: String { return L10n.tr("Localizable", "eoy_2024_epilogue_description", fallback: "Don’t forget to share with friends and give a shout out to your favourite podcasts and creators.") }
   /// Title shown on the final End of Year story for 2024
@@ -1779,6 +1811,24 @@ nonisolated internal enum L10n {
   internal static var groupEpisodes: String { return L10n.tr("Localizable", "group_episodes", fallback: "Group Episodes") }
   /// Displayed when doing a heavy task the user has to wait
   internal static var hangOn: String { return L10n.tr("Localizable", "hang_on", fallback: "Hang on!") }
+  /// Confirmation style option: no audible confirmation.
+  internal static var highlightConfirmationNone: String { return L10n.tr("Localizable", "highlight_confirmation_none", fallback: "None") }
+  /// Confirmation style option: play the confirmation tone only.
+  internal static var highlightConfirmationSound: String { return L10n.tr("Localizable", "highlight_confirmation_sound", fallback: "Sound") }
+  /// Confirmation style option: play the tone and speak a short confirmation.
+  internal static var highlightConfirmationSoundSpoken: String { return L10n.tr("Localizable", "highlight_confirmation_sound_spoken", fallback: "Sound and Spoken") }
+  /// Confirmation style option: speak a short confirmation only.
+  internal static var highlightConfirmationSpoken: String { return L10n.tr("Localizable", "highlight_confirmation_spoken", fallback: "Spoken") }
+  /// Shown in the highlight editor when the episode has no transcript, so only title and tags can be edited.
+  internal static var highlightEditorNoTranscript: String { return L10n.tr("Localizable", "highlight_editor_no_transcript", fallback: "No transcript available for this episode — the excerpt can't be trimmed.") }
+  /// Placeholder for the tag input field in the highlight editor.
+  internal static var highlightEditorTagPlaceholder: String { return L10n.tr("Localizable", "highlight_editor_tag_placeholder", fallback: "Add a tag") }
+  /// Section label above the tag editor in the highlight editor.
+  internal static var highlightEditorTagsSection: String { return L10n.tr("Localizable", "highlight_editor_tags_section", fallback: "Tags") }
+  /// Title of the highlight editor sheet (trim the excerpt window, edit title and tags).
+  internal static var highlightEditorTitle: String { return L10n.tr("Localizable", "highlight_editor_title", fallback: "Edit Highlight") }
+  /// Section label above the excerpt trim control in the highlight editor.
+  internal static var highlightEditorTrimSection: String { return L10n.tr("Localizable", "highlight_editor_trim_section", fallback: "Excerpt") }
   /// Shown on the shareable quote card when a bookmark has no transcript excerpt
   internal static var highlightExcerptUnavailable: String { return L10n.tr("Localizable", "highlight_excerpt_unavailable", fallback: "No transcript excerpt available") }
   /// Accessibility label for the shareable quote card. %1$@ is the transcript excerpt shown on the card.
@@ -1787,6 +1837,20 @@ nonisolated internal enum L10n {
   }
   /// Name of the quote-card style offered when sharing a highlight (a bookmark enriched with a transcript excerpt)
   internal static var highlightQuoteShareStyle: String { return L10n.tr("Localizable", "highlight_quote_share_style", fallback: "Quote") }
+  /// Short spoken confirmation after a highlight is captured hands-free. Keep it to one word if possible.
+  internal static var highlightSavedAnnouncement: String { return L10n.tr("Localizable", "highlight_saved_announcement", fallback: "Saved") }
+  /// Highlight title style: a self-contained claim that stands alone (Zettelkasten).
+  internal static var highlightStyleAtomicNote: String { return L10n.tr("Localizable", "highlight_style_atomic_note", fallback: "Atomic Note") }
+  /// Highlight title style: as short and punchy as possible.
+  internal static var highlightStylePunchy: String { return L10n.tr("Localizable", "highlight_style_punchy", fallback: "Punchy") }
+  /// Highlight title style: phrased as the question the moment answers.
+  internal static var highlightStyleQuestionFirst: String { return L10n.tr("Localizable", "highlight_style_question_first", fallback: "Question") }
+  /// Highlight title style: no AI title; the quote itself is the note.
+  internal static var highlightStyleQuoteOnly: String { return L10n.tr("Localizable", "highlight_style_quote_only", fallback: "Quote Only") }
+  /// Highlight title style: the default balanced titling.
+  internal static var highlightStyleStandard: String { return L10n.tr("Localizable", "highlight_style_standard", fallback: "Standard") }
+  /// Toast action that opens the highlight editor right after a capture.
+  internal static var highlightToastEdit: String { return L10n.tr("Localizable", "highlight_toast_edit", fallback: "Edit") }
   /// Prompt to clear the full listening history for the user.
   internal static var historyClearAll: String { return L10n.tr("Localizable", "history_clear_all", fallback: "Clear All") }
   /// Title for the details prompt to confirm the user wants to clear their listening history.
@@ -2076,6 +2140,10 @@ nonisolated internal enum L10n {
   internal static var notOnWifi: String { return L10n.tr("Localizable", "not_on_wifi", fallback: "You're not on WiFi") }
   /// Settings to control sending of daily reminders notifications
   internal static var notificationsDailyReminders: String { return L10n.tr("Localizable", "notifications_daily_reminders", fallback: "Daily Reminders") }
+  /// Fallback body when the resurfaced highlight has no excerpt or title.
+  internal static var notificationsHighlightResurfacingBodyFallback: String { return L10n.tr("Localizable", "notifications_highlight_resurfacing_body_fallback", fallback: "Revisit a moment you saved.") }
+  /// Title of the notification that resurfaces an old highlight.
+  internal static var notificationsHighlightResurfacingTitle: String { return L10n.tr("Localizable", "notifications_highlight_resurfacing_title", fallback: "From your highlights") }
   /// Notification body for new feature Suggested folders
   internal static var notificationsNewFeatureSuggestedFoldersBody: String { return L10n.tr("Localizable", "notifications_new_feature_suggested_folders_body", fallback: "Try Plus and automatically organize your shows with folders.") }
   /// Notification title for new feature Suggested folders
@@ -2331,6 +2399,10 @@ nonisolated internal enum L10n {
   internal static var peopleDirectoryEpisodeCountSingular: String { return L10n.tr("Localizable", "people_directory_episode_count_singular", fallback: "1 episode") }
   /// Title of the People directory screen listing renamed transcript speakers
   internal static var peopleDirectoryTitle: String { return L10n.tr("Localizable", "people_directory_title", fallback: "People") }
+  /// Button that follows a person for new-appearance notifications.
+  internal static var personFollowButton: String { return L10n.tr("Localizable", "person_follow_button", fallback: "Notify Me") }
+  /// Button state when a person is already followed.
+  internal static var personFollowingButton: String { return L10n.tr("Localizable", "person_following_button", fallback: "Notifying") }
   /// A common string used throughout the app. Used to reference a phone.
   internal static var phone: String { return L10n.tr("Localizable", "phone", fallback: "Phone") }
   /// A common string used throughout the app. Prompt to start playback.
@@ -3635,6 +3707,8 @@ nonisolated internal enum L10n {
   internal static var retryDownload: String { return L10n.tr("Localizable", "retry_download", fallback: "Retry download") }
   /// Title of a button that allows the user to save their changes
   internal static var saveBookmark: String { return L10n.tr("Localizable", "save_bookmark", fallback: "Save Bookmark") }
+  /// Action title for saving a highlight at the current playback position (Siri shortcut, Control Center control).
+  internal static var saveHighlight: String { return L10n.tr("Localizable", "save_highlight", fallback: "Save Highlight") }
   /// A common string used throughout the app. Placeholder text used in search boxes.
   internal static var search: String { return L10n.tr("Localizable", "search", fallback: "Search") }
   /// A placeholder used when searching bookmarks.
@@ -4055,6 +4129,50 @@ nonisolated internal enum L10n {
   internal static var settingsHeadphoneControlsFooter: String { return L10n.tr("Localizable", "settings_headphone_controls_footer", fallback: "Customise the actions done by the most common headphone controls.") }
   /// A common string used throughout the app. Refers to the Help & Feedback settings menu
   internal static var settingsHelp: String { return L10n.tr("Localizable", "settings_help", fallback: "Help & Feedback") }
+  /// Settings section subtitle explaining the highlight capture confirmation options. A haptic always plays.
+  internal static var settingsHighlightConfirmationFooter: String { return L10n.tr("Localizable", "settings_highlight_confirmation_footer", fallback: "Choose how saving a highlight is confirmed while listening. A gentle haptic always plays.") }
+  /// Label for the setting that picks how a saved highlight is confirmed (sound, spoken, both, or nothing).
+  internal static var settingsHighlightConfirmationStyle: String { return L10n.tr("Localizable", "settings_highlight_confirmation_style", fallback: "Capture Confirmation") }
+  /// Title of the Highlights settings screen (capture behavior + Markdown export).
+  internal static var settingsHighlights: String { return L10n.tr("Localizable", "settings_highlights", fallback: "Highlights") }
+  /// Section header for capture-behavior options on the Highlights settings screen.
+  internal static var settingsHighlightsCaptureSection: String { return L10n.tr("Localizable", "settings_highlights_capture_section", fallback: "Capture") }
+  /// Button that starts choosing a folder for the Markdown export.
+  internal static var settingsHighlightsExportChooseFolder: String { return L10n.tr("Localizable", "settings_highlights_export_choose_folder", fallback: "Choose Export Folder…") }
+  /// Button that turns the folder export off.
+  internal static var settingsHighlightsExportDisable: String { return L10n.tr("Localizable", "settings_highlights_export_disable", fallback: "Stop Exporting") }
+  /// Row showing the currently selected export folder.
+  internal static var settingsHighlightsExportFolder: String { return L10n.tr("Localizable", "settings_highlights_export_folder", fallback: "Folder") }
+  /// Footer explaining the Markdown folder export.
+  internal static var settingsHighlightsExportFooter: String { return L10n.tr("Localizable", "settings_highlights_export_footer", fallback: "Writes one Markdown file per episode into the folder you choose — works great with Obsidian, Logseq, or any notes vault. Files are updated automatically as you capture and edit highlights.") }
+  /// Button that immediately re-exports every episode's highlights.
+  internal static var settingsHighlightsExportNow: String { return L10n.tr("Localizable", "settings_highlights_export_now", fallback: "Export All Now") }
+  /// Section header for the Markdown folder export on the Highlights settings screen.
+  internal static var settingsHighlightsExportSection: String { return L10n.tr("Localizable", "settings_highlights_export_section", fallback: "Markdown Export") }
+  /// Placeholder for the optional free-text style preference for AI highlight titles.
+  internal static var settingsHighlightsPromptCustomPlaceholder: String { return L10n.tr("Localizable", "settings_highlights_prompt_custom_placeholder", fallback: "Optional style preference (e.g. \"always name the speaker\")") }
+  /// Picker label for how AI writes highlight titles.
+  internal static var settingsHighlightsPromptStyle: String { return L10n.tr("Localizable", "settings_highlights_prompt_style", fallback: "Title Style") }
+  /// Button that validates and saves the Readwise token.
+  internal static var settingsHighlightsReadwiseConnect: String { return L10n.tr("Localizable", "settings_highlights_readwise_connect", fallback: "Connect") }
+  /// Row confirming the Readwise account is connected.
+  internal static var settingsHighlightsReadwiseConnected: String { return L10n.tr("Localizable", "settings_highlights_readwise_connected", fallback: "Connected") }
+  /// Button that removes the stored Readwise token.
+  internal static var settingsHighlightsReadwiseDisconnect: String { return L10n.tr("Localizable", "settings_highlights_readwise_disconnect", fallback: "Disconnect") }
+  /// Footer explaining the Readwise integration.
+  internal static var settingsHighlightsReadwiseFooter: String { return L10n.tr("Localizable", "settings_highlights_readwise_footer", fallback: "New and edited highlights are pushed to your Readwise account, which can forward them to Notion, Roam, and more. Your token is stored securely on this device.") }
+  /// Error shown when the Readwise token is rejected by the API.
+  internal static var settingsHighlightsReadwiseInvalidToken: String { return L10n.tr("Localizable", "settings_highlights_readwise_invalid_token", fallback: "That token wasn't accepted. Copy it from readwise.io/access_token and try again.") }
+  /// Section header for the Readwise integration on the Highlights settings screen.
+  internal static var settingsHighlightsReadwiseSection: String { return L10n.tr("Localizable", "settings_highlights_readwise_section", fallback: "Readwise") }
+  /// Placeholder for the Readwise access-token field.
+  internal static var settingsHighlightsReadwiseTokenPlaceholder: String { return L10n.tr("Localizable", "settings_highlights_readwise_token_placeholder", fallback: "Access token") }
+  /// Button label while the Readwise token is being validated.
+  internal static var settingsHighlightsReadwiseValidating: String { return L10n.tr("Localizable", "settings_highlights_readwise_validating", fallback: "Validating…") }
+  /// Toggle for the weekly notification resurfacing an old highlight.
+  internal static var settingsHighlightsResurfacing: String { return L10n.tr("Localizable", "settings_highlights_resurfacing", fallback: "Weekly Highlight Reminder") }
+  /// Toggle: open the highlight editor right after each in-app capture.
+  internal static var settingsHighlightsReviewAfterCapture: String { return L10n.tr("Localizable", "settings_highlights_review_after_capture", fallback: "Review After Capture") }
   /// Title for the screen that manages the importing and exporting of podcasts.
   internal static var settingsImportExport: String { return L10n.tr("Localizable", "settings_import_export", fallback: "Import / Export") }
   /// Informs the user that the current podcast is included in one filter. '%1$@' is a placeholder for the number of filters this podcast is included in.
@@ -4664,7 +4782,7 @@ nonisolated internal enum L10n {
     return L10n.tr("Localizable", "social_feed_item_reviewed", String(describing: p1), String(describing: p2), fallback: "%1$@ reviewed %2$@")
   }
   /// Body of the contacts consent alert — honest about the mechanics
-  internal static var socialFindContactsConsentBody: String { return L10n.tr("Localizable", "social_find_contacts_consent_body", fallback: "Your contacts' email addresses and phone numbers are scrambled (hashed) on this device. Email hashes are compared once; phone hashes are currently ignored. Nothing is stored, and no one is notified. Only members who allow discovery can match.") }
+  internal static var socialFindContactsConsentBody: String { return L10n.tr("Localizable", "social_find_contacts_consent_body", fallback: "Your contacts' email addresses and phone numbers are scrambled (hashed) on this device and compared once for matching. Nothing is stored, and no one is notified. Only members who allow discovery can match.") }
   /// Confirm button of the contacts consent alert
   internal static var socialFindContactsConsentCta: String { return L10n.tr("Localizable", "social_find_contacts_consent_cta", fallback: "Match my contacts") }
   /// Header over contact-match results
@@ -5253,6 +5371,12 @@ nonisolated internal enum L10n {
   internal static var suggestedFoldersTitle: String { return L10n.tr("Localizable", "suggested_folders_title", fallback: "Smart Folders") }
   /// Suggested Folders button title to accept suggested folders
   internal static var suggestedFoldersUseSuggestedFolders: String { return L10n.tr("Localizable", "suggested_folders_use_suggested_folders", fallback: "Use these folders") }
+  /// Accessibility label for dismissing a suggested highlight.
+  internal static var suggestedHighlightDismiss: String { return L10n.tr("Localizable", "suggested_highlight_dismiss", fallback: "Dismiss suggestion") }
+  /// Accessibility label for accepting a suggested highlight.
+  internal static var suggestedHighlightKeep: String { return L10n.tr("Localizable", "suggested_highlight_keep", fallback: "Keep highlight") }
+  /// Header of the review strip listing machine-suggested highlights.
+  internal static var suggestedHighlightsTitle: String { return L10n.tr("Localizable", "suggested_highlights_title", fallback: "Suggested Highlights") }
   /// A label used to identify that a user is a supporter of the selected podcast.
   internal static var supporter: String { return L10n.tr("Localizable", "supporter", fallback: "Supporter") }
   /// Menu option to open details on available podcast supporter contribution options.
@@ -5311,6 +5435,38 @@ nonisolated internal enum L10n {
   internal static var today: String { return L10n.tr("Localizable", "today", fallback: "Today") }
   /// A common string used throughout the app. Title option to place the item at the top of the queue.
   internal static var top: String { return L10n.tr("Localizable", "top", fallback: "Top") }
+  /// Spoken before jumping to a tour stop. Placeholder is the stop's title.
+  internal static func tourBridgeLine(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "tour_bridge_line", String(describing: p1), fallback: "Next: %1$@")
+  }
+  /// Button that stops the running tour and returns to normal playback.
+  internal static var tourExit: String { return L10n.tr("Localizable", "tour_exit", fallback: "Exit Tour") }
+  /// Shown when the tour played its last highlight.
+  internal static var tourFinished: String { return L10n.tr("Localizable", "tour_finished", fallback: "That's the tour!") }
+  /// Spoken once at tour start. First placeholder is the number of stops, second the episode title.
+  internal static func tourIntroLine(_ p1: Any, _ p2: Any) -> String {
+    return L10n.tr("Localizable", "tour_intro_line", String(describing: p1), String(describing: p2), fallback: "Here's your %1$@-highlight tour of %2$@.")
+  }
+  /// Tour length option: about half of the episode.
+  internal static var tourLengthDeep: String { return L10n.tr("Localizable", "tour_length_deep", fallback: "Deep — about half") }
+  /// Tour length option: about five minutes.
+  internal static var tourLengthQuick: String { return L10n.tr("Localizable", "tour_length_quick", fallback: "Quick — about 5 minutes") }
+  /// Tour length option: about a quarter of the episode.
+  internal static var tourLengthStandard: String { return L10n.tr("Localizable", "tour_length_standard", fallback: "Standard — about 25%") }
+  /// Spoken after the last tour stop.
+  internal static var tourOutroLine: String { return L10n.tr("Localizable", "tour_outro_line", fallback: "That's the tour.") }
+  /// Shown when a tour can't be built (no transcript or no segments).
+  internal static var tourPreparationFailed: String { return L10n.tr("Localizable", "tour_preparation_failed", fallback: "Couldn't build a tour for this episode. It needs a transcript first.") }
+  /// Shown while the tour analyzes the episode.
+  internal static var tourPreparing: String { return L10n.tr("Localizable", "tour_preparing", fallback: "Finding the best moments…") }
+  /// Tour HUD position, e.g. "Highlight 2 of 6". First placeholder is the current index, second the total.
+  internal static func tourProgress(_ p1: Any, _ p2: Any) -> String {
+    return L10n.tr("Localizable", "tour_progress", String(describing: p1), String(describing: p2), fallback: "Highlight %1$@ of %2$@")
+  }
+  /// Player shelf action + sheet title: guided playback of an episode's best moments.
+  internal static var tourShelfTitle: String { return L10n.tr("Localizable", "tour_shelf_title", fallback: "Highlights Tour") }
+  /// Toggle for speaking the tour's intro and transitions aloud.
+  internal static var tourSpokenTransitionsToggle: String { return L10n.tr("Localizable", "tour_spoken_transitions_toggle", fallback: "Spoken transitions") }
   /// A common string used throughout the app. Often refers to the Transcript tab in the player.
   internal static var transcript: String { return L10n.tr("Localizable", "transcript", fallback: "Transcript") }
   /// Transcript error message when transcript is empty

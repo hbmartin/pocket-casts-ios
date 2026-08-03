@@ -82,6 +82,22 @@ struct BookmarkRow<Style: BookmarksStyle>: View {
                         .lineLimit(2)
                 }
 
+                // Tags (Highlights program S4): compact single-line chip strip
+                if FeatureFlag.highlightEditor.enabled, !bookmark.tags.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 6) {
+                            ForEach(bookmark.tags, id: \.self) { tag in
+                                Text(tag)
+                                    .font(style: .caption2, weight: .medium)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 3)
+                                    .background(Capsule().fill(style.tertiaryText.opacity(0.15)))
+                                    .foregroundStyle(style.secondaryText)
+                            }
+                        }
+                    }
+                }
+
                 Text(rowModel.subtitle)
                     .foregroundStyle(style.tertiaryText)
                     .font(style: .caption, weight: .semibold)

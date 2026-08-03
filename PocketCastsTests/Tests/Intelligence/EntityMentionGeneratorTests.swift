@@ -25,7 +25,7 @@ nonisolated private final class CountingEntityIntelligence: IntelligenceProvidin
     func respond<T: Generable & Sendable>(
         instructions: String,
         prompt: String,
-        generating type: T.Type
+        generating _: T.Type
     ) async throws -> T {
         responseCount.withLock { $0 += 1 }
         guard let result = try response() as? T else {
@@ -294,6 +294,27 @@ final class EntityMentionGeneratorTests: XCTestCase {
         XCTAssertEqual(store.load(episodeUuid: "ep-1", fingerprint: "generated-10-300"), result)
         XCTAssertNil(store.load(episodeUuid: "ep-1", fingerprint: "generated-12-360"), "a re-indexed transcript reads as a miss")
         XCTAssertNil(store.load(episodeUuid: "ep-other", fingerprint: "generated-10-300"))
+    }
+
+    func testSuccessfulEmptyResultIsCachedAndRestored() async {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("entity-store-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = OnDeviceEntityStore(directoryURL: directory)
+        let segments = (0 ..< 10).map { segment($0, "ordinary lowercase transcript words", start: TimeInterval($0)) }
+        let emptyIntelligence = CountingEntityIntelligence(response: { GeneratedEntityList(entities: []) })
+
+        let generated = await EntityMentionGenerator(intelligence: emptyIntelligence, store: store)
+            .mentions(episodeUuid: "ep-empty", fingerprint: "fingerprint", segments: segments)
+
+        XCTAssertEqual(generated?.mentions, [])
+        let shouldNotRun = CountingEntityIntelligence(response: {
+            GeneratedEntityList(entities: [GeneratedEntityItem(name: "Alice", kind: "person", startSeconds: 0)])
+        })
+        let restored = await EntityMentionGenerator(intelligence: shouldNotRun, store: store)
+            .mentions(episodeUuid: "ep-empty", fingerprint: "fingerprint", segments: segments)
+
+        XCTAssertEqual(restored, generated)
+        XCTAssertEqual(shouldNotRun.responses, 0)
     }
 
     func testStoreRejectsLegacySchemaWithoutProvenance() throws {

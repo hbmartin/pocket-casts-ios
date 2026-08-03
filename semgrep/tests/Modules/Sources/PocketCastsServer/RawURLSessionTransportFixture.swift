@@ -23,3 +23,17 @@ enum RawURLSessionTransportFixture {
         }
     }
 }
+
+struct InjectedRawURLSessionTransportFixture {
+    private let session: URLSession
+
+    init(session: URLSession = .shared) {
+        self.session = session
+    }
+
+    func bypassesTransport(request: URLRequest) async throws -> Data {
+        // ruleid: pocketcasts.server-module-raw-urlsession-transport
+        let (data, _) = try await session.data(for: request)
+        return data
+    }
+}

@@ -106,7 +106,9 @@ protocol PlaybackManaging: AnyObject, Sendable {
 
     // MARK: Bookmarks and search
 
-    func bookmark(source: BookmarkAnalyticsSource)
+    /// Returns false when no episode is playing (nothing was captured).
+    @discardableResult
+    func bookmark(source: BookmarkAnalyticsSource) -> Bool
     func playBookmark(_ bookmark: Bookmark, source: BookmarkAnalyticsSource, firstTry: Bool)
     func playEpisodeSearchResult(_ searchEpisode: EpisodeSearchResult, firstTry: Bool)
 

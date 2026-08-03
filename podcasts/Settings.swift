@@ -1188,6 +1188,18 @@ nonisolated class Settings: NSObject {
         }
     }
 
+    /// Highlights Tour (S9): whether bridges/intro/outro are spoken. Off falls
+    /// back to tone-only jump marking.
+    static var tourSpokenTransitionsEnabled: Bool {
+        get {
+            Constants.UserDefaults.bookmarks.tourSpokenTransitions.value
+        }
+
+        set {
+            Constants.UserDefaults.bookmarks.tourSpokenTransitions.save(newValue)
+        }
+    }
+
     static var darkUpNextTheme: Bool {
         get {
             if FeatureFlag.newSettingsStorage.enabled {
@@ -1452,6 +1464,16 @@ nonisolated class Settings: NSObject {
         }
         set {
             UserDefaults.standard.setValue(newValue, forKey: Constants.UserDefaults.notifications.offers)
+        }
+    }
+
+    /// Opt-in weekly "from your highlights" resurfacing (default OFF).
+    static var notificationsFromYourHighlights: Bool {
+        get {
+            UserDefaults.standard.value(forKey: Constants.UserDefaults.notifications.fromYourHighlights) as? Bool ?? false
+        }
+        set {
+            UserDefaults.standard.setValue(newValue, forKey: Constants.UserDefaults.notifications.fromYourHighlights)
         }
     }
 

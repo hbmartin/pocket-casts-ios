@@ -353,6 +353,106 @@ class DatabaseHelper {
         SchemaMigration(toVersion: 86) { db in
             try db.executeUpdate("ALTER TABLE SJFilteredPlaylist ADD COLUMN sharedListId INTEGER", values: nil)
             try db.executeUpdate("ALTER TABLE SJFilteredPlaylist ADD COLUMN sharedRole INTEGER NOT NULL DEFAULT 0", values: nil)
+        },
+
+        // Highlights program S1 (ADR-0016): user-authored trim + tags on bookmarks.
+        // trimModified marks the excerpt window as user-edited (a set stamp beats
+        // machine re-enrichment everywhere); tagsModified stamps whole-set tag
+        // merges. Both sync over account sync (fork fields >= 1003) and file sync
+        // once the S2 wiring lands; until then they ride the existing bookmark
+        // sync_status without leaving the device.
+        SchemaMigration(toVersion: 87) { db in
+            try db.executeUpdate("ALTER TABLE Bookmark ADD COLUMN trimModified REAL;", values: nil)
+            try db.executeUpdate("ALTER TABLE Bookmark ADD COLUMN tagsModified REAL;", values: nil)
+            try db.executeUpdate("""
+            CREATE TABLE IF NOT EXISTS BookmarkTag (
+                bookmarkUuid TEXT NOT NULL,
+                tag TEXT NOT NULL,
+                PRIMARY KEY (bookmarkUuid, tag)
+            );
+            """, values: nil)
+            // Tag-first lookups: autocomplete vocabulary and "highlights tagged X".
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS bookmark_tag_tag ON BookmarkTag (tag);
+            """, values: nil)
+        },
+
+        // Highlights program S8 (ADR-0018): salient segments — one on-device
+        // generation per episode serving BOTH the Highlights Tour and Suggested
+        // Highlights. Stored in the DB (not Caches) because suggestionStatus is
+        // user state: a dismissed suggestion that resurrects after a cache purge
+        // is a bug. Device-local, never syncs; accepting a suggestion creates a
+        // Bookmark (which syncs) and records its uuid here.
+        SchemaMigration(toVersion: 88) { db in
+            try db.executeUpdate("""
+            CREATE TABLE IF NOT EXISTS SalientSegment (
+                episodeUuid TEXT NOT NULL,
+                rank INTEGER NOT NULL,
+                startTime REAL NOT NULL,
+                endTime REAL NOT NULL,
+                title TEXT NOT NULL DEFAULT '',
+                score INTEGER NOT NULL DEFAULT 0,
+                excerpt TEXT,
+                suggestionStatus INTEGER NOT NULL DEFAULT 0,
+                bookmarkUuid TEXT,
+                PRIMARY KEY (episodeUuid, rank)
+            );
+            """, values: nil)
+            // The review queue's "pending suggestions across episodes" query.
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS salient_segment_status
+            ON SalientSegment (suggestionStatus, episodeUuid);
+            """, values: nil)
+            try db.executeUpdate("""
+            CREATE TABLE IF NOT EXISTS SalientSegmentMeta (
+                episodeUuid TEXT PRIMARY KEY,
+                podcastUuid TEXT,
+                outcome INTEGER NOT NULL DEFAULT 0,
+                transcriptSource TEXT NOT NULL DEFAULT '',
+                generatorVersion INTEGER NOT NULL DEFAULT 0,
+                generatedAt REAL NOT NULL DEFAULT 0,
+                segmentCount INTEGER NOT NULL DEFAULT 0
+            );
+            """, values: nil)
+        },
+
+        // Highlights program S10: the Mentioned Entity substrate — a persisted,
+        // library-wide record that an entity (person/book/product/…) appears in
+        // an episode, from one of three sources: a feed credit, a named
+        // transcript speaker, or a transcript mention. Until now these lived in
+        // purgeable caches (mentions: Caches JSON; credits: URLCache only), so
+        // no aggregate ("books across your library") could be built on them.
+        // One shared name-folding rule produces canonicalKey. Device-local,
+        // never syncs; regeneration replaces an episode+source's rows whole.
+        SchemaMigration(toVersion: 89) { db in
+            try db.executeUpdate("""
+            CREATE TABLE IF NOT EXISTS MentionedEntity (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                kind TEXT NOT NULL,
+                canonicalKey TEXT NOT NULL,
+                displayName TEXT NOT NULL,
+                episodeUuid TEXT NOT NULL,
+                podcastUuid TEXT,
+                startTime REAL,
+                source TEXT NOT NULL,
+                role TEXT,
+                createdAt REAL NOT NULL DEFAULT 0
+            );
+            """, values: nil)
+            // Library-wide aggregates group on (kind, canonicalKey).
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS mentioned_entity_key
+            ON MentionedEntity (kind, canonicalKey);
+            """, values: nil)
+            // Per-show "most cited" and per-episode replace-on-regenerate.
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS mentioned_entity_podcast
+            ON MentionedEntity (kind, podcastUuid);
+            """, values: nil)
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS mentioned_entity_episode
+            ON MentionedEntity (episodeUuid, source);
+            """, values: nil)
         }
     ]
 

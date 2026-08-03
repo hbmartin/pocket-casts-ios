@@ -111,6 +111,30 @@ final class BookmarkManager {
         }
     }
 
+    /// Writes a user-authored trim of the excerpt window (ADR-0016), emits
+    /// `onBookmarkChanged` on success. The trim stamp makes the window
+    /// authoritative over any future machine enrichment.
+    @discardableResult
+    func updateTrim(excerpt: String, endTime: TimeInterval, for bookmark: Bookmark) async -> Bool {
+        await dataManager.updateTrim(uuid: bookmark.uuid, excerpt: excerpt, endTime: endTime).when(true) {
+            onBookmarkChanged.send(.init(uuid: bookmark.uuid, change: .trim(excerpt)))
+        }
+    }
+
+    /// Replaces the bookmark's whole tag set (ADR-0016), emits
+    /// `onBookmarkChanged` on success.
+    @discardableResult
+    func setTags(_ tags: [String], for bookmark: Bookmark) async -> Bool {
+        await dataManager.setTags(uuid: bookmark.uuid, tags: tags).when(true) {
+            onBookmarkChanged.send(.init(uuid: bookmark.uuid, change: .tags(tags)))
+        }
+    }
+
+    /// The user's tag vocabulary, most-used first (autocomplete source).
+    func allTags() -> [String] {
+        dataManager.allTags()
+    }
+
     /// Gets the `BaseEpisode` for the given bookmark
     func episode(for bookmark: Bookmark) -> BaseEpisode? {
         generalManager.findBaseEpisode(uuid: bookmark.episodeUuid)
@@ -148,6 +172,14 @@ final class BookmarkManager {
                 /// The bookmark was enriched with a smart-highlight transcript excerpt
                 /// The new excerpt is passed as a value
                 case excerpt(String)
+
+                /// The user trimmed the excerpt window (ADR-0016)
+                /// The re-derived excerpt is passed as a value
+                case trim(String)
+
+                /// The bookmark's tag set was replaced
+                /// The new whole set is passed as a value
+                case tags([String])
             }
         }
 

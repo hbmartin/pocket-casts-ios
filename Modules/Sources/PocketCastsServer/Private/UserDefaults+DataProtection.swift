@@ -9,22 +9,13 @@ extension UserDefaults {
     }
 }
 
-private final class ProtectedDataAvailability: Sendable {
+private final class ProtectedDataAvailability: NSObject, Sendable {
     static let shared = ProtectedDataAvailability()
 
     private struct State {
         var cachedValue: Bool?
         var observersInstalled = false
         var refreshScheduled = false
-        // Block-based observer tokens auto-unregister on dealloc, so they must stay retained
-        // for the lifetime of this singleton.
-        var notificationObservers = [ObserverToken]()
-    }
-
-    /// @unchecked Sendable: NotificationCenter's opaque token is only retained
-    /// and released while protected by `state`; it is never messaged directly.
-    private struct ObserverToken: @unchecked Sendable {
-        let value: NSObjectProtocol
     }
 
     private let state = Mutex(State())
@@ -50,30 +41,28 @@ private final class ProtectedDataAvailability: Sendable {
             return
         }
 
-        let notificationCenter = NotificationCenter.default
-        let didBecomeAvailable = notificationCenter.addObserver(
-            forName: UIApplication.protectedDataDidBecomeAvailableNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.setCachedValue(true)
-        }
-        let willBecomeUnavailable = notificationCenter.addObserver(
-            forName: UIApplication.protectedDataWillBecomeUnavailableNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.setCachedValue(false)
-        }
-
-        state.withLock {
-            $0.notificationObservers = [
-                ObserverToken(value: didBecomeAvailable),
-                ObserverToken(value: willBecomeUnavailable),
-            ]
-        }
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(protectedDataDidBecomeAvailable),
+            name: UIApplication.protectedDataDidBecomeAvailableNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(protectedDataWillBecomeUnavailable),
+            name: UIApplication.protectedDataWillBecomeUnavailableNotification,
+            object: nil
+        )
 
         scheduleRefresh()
+    }
+
+    @objc private func protectedDataDidBecomeAvailable() {
+        setCachedValue(true)
+    }
+
+    @objc private func protectedDataWillBecomeUnavailable() {
+        setCachedValue(false)
     }
 
     private func cached() -> Bool? {

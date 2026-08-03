@@ -155,9 +155,14 @@ actor TranscriptionQueueManager {
              // Crowdsourced transcript upload (docs/TranscriptContributions.md §2):
              // a completed transcription of an Eligible episode becomes a
              // Contribution row, drained by the contribution manager.
-             if TranscriptContributionManager.enqueueContribution(episodeUuid: episodeUuid, record: record, dataManager: .sharedManager) {
-                 TranscriptContributionManager.kickShared()
-             }
+            if TranscriptContributionManager.enqueueContribution(
+                episodeUuid: episodeUuid,
+                record: record,
+                dataManager: .sharedManager,
+                hasConsent: TranscriptContributionConsent.isGranted
+            ) {
+                TranscriptContributionManager.kickShared()
+            }
          },
          reportFailureAnalytics: @escaping @Sendable (String, String) -> Void = { episodeUuid, sanitizedError in
              Analytics.track(.transcriptionFailed, properties: ["episode_uuid": episodeUuid, "error": sanitizedError])

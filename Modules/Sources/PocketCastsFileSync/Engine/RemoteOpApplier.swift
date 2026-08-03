@@ -180,7 +180,7 @@ struct RemoteOpApplier {
 
         guard let existing else {
             guard !item.episodeUuid.isEmpty else { return }
-            _ = dataManager.bookmarks.add(
+            let addedUuid = dataManager.bookmarks.add(
                 uuid: uuid,
                 episodeUuid: item.episodeUuid,
                 podcastUuid: item.podcastUuid.isEmpty ? nil : item.podcastUuid,
@@ -190,6 +190,9 @@ struct RemoteOpApplier {
                 excerpt: item.hasExcerpt ? item.excerpt.value : nil,
                 endTime: item.hasEndTime ? item.endTime.value : nil,
                 syncStatus: .synced)
+            if addedUuid != nil {
+                await applyTrimAndTags(item, uuid: uuid, localTrim: nil, localTags: nil)
+            }
             return
         }
 
@@ -209,14 +212,48 @@ struct RemoteOpApplier {
         // 1000/1001), so the merged record is authoritative: adopt its excerpt
         // and end time whenever either differs from the local row. Each field
         // is honored independently — an absent field keeps the local value.
-        let mergedExcerpt = item.hasExcerpt ? item.excerpt.value : existing.excerpt
-        let mergedEndTime = item.hasEndTime ? item.endTime.value : existing.endTime
-        if mergedExcerpt != existing.excerpt || mergedEndTime != existing.endTime {
-            _ = await dataManager.bookmarks.updateEnrichment(
-                uuid: uuid,
-                excerpt: mergedExcerpt,
-                endTime: mergedEndTime,
-                syncStatus: .synced)
+        // A user-trimmed local row is authoritative over machine enrichment
+        // (ADR-0016): `updateEnrichment` refuses trimmed rows at the write, and
+        // the merged trim (if any) is applied by `applyTrimAndTags` below.
+        if !item.hasTrimModified, existing.trimModified == nil {
+            let mergedExcerpt = item.hasExcerpt ? item.excerpt.value : existing.excerpt
+            let mergedEndTime = item.hasEndTime ? item.endTime.value : existing.endTime
+            if mergedExcerpt != existing.excerpt || mergedEndTime != existing.endTime {
+                _ = await dataManager.bookmarks.updateEnrichment(
+                    uuid: uuid,
+                    excerpt: mergedExcerpt,
+                    endTime: mergedEndTime,
+                    syncStatus: .synced)
+            }
+        }
+
+        await applyTrimAndTags(item, uuid: uuid, localTrim: existing.trimModified, localTags: existing.tagsModified)
+    }
+
+    /// Applies the merged record's trim window and tag set (ADR-0016), each
+    /// gated on a strictly-newer stamp so re-applies are idempotent.
+    private func applyTrimAndTags(_ item: Api_SyncUserBookmark, uuid: String, localTrim: Date?, localTags: Date?) async {
+        if item.hasTrimModified, item.hasExcerpt {
+            let localMs = localTrim.map { Int64($0.timeIntervalSince1970 * 1000) } ?? 0
+            if item.trimModified.value > localMs {
+                _ = await dataManager.bookmarks.updateTrim(
+                    uuid: uuid,
+                    excerpt: item.excerpt.value,
+                    endTime: item.hasEndTime ? item.endTime.value : TimeInterval(item.time.value),
+                    trimModified: Date(timeIntervalSince1970: Double(item.trimModified.value) / 1000),
+                    syncStatus: .synced)
+            }
+        }
+
+        if item.hasTagsModified {
+            let localMs = localTags.map { Int64($0.timeIntervalSince1970 * 1000) } ?? 0
+            if item.tagsModified.value > localMs {
+                _ = await dataManager.bookmarks.setTags(
+                    uuid: uuid,
+                    tags: item.tags,
+                    modified: Date(timeIntervalSince1970: Double(item.tagsModified.value) / 1000),
+                    syncStatus: .synced)
+            }
         }
     }
 

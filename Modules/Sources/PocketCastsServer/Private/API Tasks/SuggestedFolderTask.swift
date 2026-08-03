@@ -25,7 +25,8 @@ public struct SuggestedFoldersResponse: Sendable {
                 continue
             }
             var group = merged[folded] ?? (name, [])
-            group.uuids.append(contentsOf: recognized)
+            var existingUUIDs = Set(group.uuids)
+            group.uuids.append(contentsOf: recognized.filter { existingUUIDs.insert($0).inserted })
             merged[folded] = group
         }
 
@@ -38,7 +39,7 @@ public struct SuggestedFoldersResponse: Sendable {
         var other = Set(valid.filter { occurrences[$0] != 1 })
         other.formUnion(forcedOther)
         var groups = merged.values.compactMap { group -> (name: String, uuids: [String])? in
-            let uuids = Array(Set(group.uuids.filter { occurrences[$0] == 1 })).sorted()
+            let uuids = group.uuids.filter { occurrences[$0] == 1 }.sorted()
             guard uuids.count >= 2 else {
                 other.formUnion(uuids)
                 return nil

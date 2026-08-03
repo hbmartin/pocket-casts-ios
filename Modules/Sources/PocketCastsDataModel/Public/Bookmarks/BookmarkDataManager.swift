@@ -37,7 +37,14 @@ struct BookmarkRow: Equatable, Sendable {
 
     var endTime: Double?
 
-    var asBookmark: Bookmark {
+    /// User-trim stamp (migration 87). Non-nil = excerpt/endTime are user-authored.
+    var trimModified: Double?
+
+    /// Whole-set tag LWW stamp (migration 87).
+    var tagsModified: Double?
+
+    /// Tags live in the `BookmarkTag` join table; callers hydrate them separately.
+    func asBookmark(tags: [String] = []) -> Bookmark {
         Bookmark(
             uuid: uuid,
             title: title,
@@ -47,11 +54,22 @@ struct BookmarkRow: Equatable, Sendable {
             podcastUuid: podcastUuid,
             excerpt: excerpt,
             endTime: endTime,
+            tags: tags,
             titleModified: titleModifiedDate.map { Date(timeIntervalSince1970: $0) },
             deletedModified: deletedModifiedDate.map { Date(timeIntervalSince1970: $0) },
+            trimModified: trimModified.map { Date(timeIntervalSince1970: $0) },
+            tagsModified: tagsModified.map { Date(timeIntervalSince1970: $0) },
             deleted: deleted
         )
     }
+}
+
+/// Row record for the `BookmarkTag` join table (migration 87). One row per
+/// (bookmark, tag); the set is always replaced whole (ADR-0016), never patched.
+@GRDBRecord(table: "BookmarkTag")
+struct BookmarkTagRow: Equatable, Sendable {
+    var bookmarkUuid = ""
+    var tag = ""
 }
 
 public struct BookmarkDataManager: Sendable {
@@ -133,6 +151,10 @@ public struct BookmarkDataManager: Sendable {
     /// Writes the smart-highlight enrichment (transcript excerpt + window end) for a
     /// bookmark. Unlike `update`, this doesn't touch the title or its modified date,
     /// so a concurrent rename can't be clobbered.
+    ///
+    /// Machine path only: rows the user has trimmed (`trimModified` set) are left
+    /// untouched — the WHERE clause enforces ADR-0016's "user trim beats machine
+    /// enrichment" at the write itself, closing the read-check-write race.
     @discardableResult
     public func updateEnrichment(uuid: String, excerpt: String?, endTime: TimeInterval?, syncStatus: SyncStatus = .notSynced) async -> Bool {
         let syncStatusValue = syncStatus.rawValue
@@ -140,6 +162,7 @@ public struct BookmarkDataManager: Sendable {
         let success = dbQueue.write { db in
             try BookmarkRow
                 .filter(BookmarkRow.Columns.uuid == uuid)
+                .filter(BookmarkRow.Columns.trimModified == nil)
                 .updateAll(db,
                            BookmarkRow.Columns.excerpt.set(to: excerpt),
                            BookmarkRow.Columns.endTime.set(to: endTime),
@@ -148,6 +171,86 @@ public struct BookmarkDataManager: Sendable {
         }
         if !success { FileLog.shared.addMessage("BookmarkDataManager.updateEnrichment failed") }
         return success
+    }
+
+    /// Writes a user-authored trim of the excerpt window: excerpt text, window end,
+    /// and the `trimModified` stamp that makes the window authoritative over any
+    /// future machine enrichment (ADR-0016). Never touches the title.
+    @discardableResult
+    public func updateTrim(uuid: String, excerpt: String, endTime: TimeInterval, trimModified: Date = Date(), syncStatus: SyncStatus = .notSynced) async -> Bool {
+        let syncStatusValue = syncStatus.rawValue
+        let trimModifiedInterval = trimModified.timeIntervalSince1970
+
+        let success = dbQueue.write { db in
+            try BookmarkRow
+                .filter(BookmarkRow.Columns.uuid == uuid)
+                .updateAll(db,
+                           BookmarkRow.Columns.excerpt.set(to: excerpt),
+                           BookmarkRow.Columns.endTime.set(to: endTime),
+                           BookmarkRow.Columns.trimModified.set(to: trimModifiedInterval),
+                           BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
+            try recordFileSyncChange(uuid: uuid, isDelete: false, syncStatus: syncStatus, db: db)
+        }
+        if !success { FileLog.shared.addMessage("BookmarkDataManager.updateTrim failed") }
+        return success
+    }
+
+    // MARK: - Tags
+
+    /// Replaces a bookmark's whole tag set (ADR-0016: tags never merge per-tag).
+    /// Tags are trimmed and case-insensitively deduped, keeping the first casing;
+    /// the normalized set is stored sorted for stable display and export.
+    @discardableResult
+    public func setTags(uuid: String, tags: [String], modified: Date = Date(), syncStatus: SyncStatus = .notSynced) async -> Bool {
+        let normalized = Self.normalizedTags(tags)
+        let syncStatusValue = syncStatus.rawValue
+        let modifiedInterval = modified.timeIntervalSince1970
+
+        let success = dbQueue.write { db in
+            _ = try BookmarkTagRow.filter(BookmarkTagRow.Columns.bookmarkUuid == uuid).deleteAll(db)
+            for tag in normalized {
+                var row = BookmarkTagRow()
+                row.bookmarkUuid = uuid
+                row.tag = tag
+                try row.insert(db)
+            }
+            try BookmarkRow
+                .filter(BookmarkRow.Columns.uuid == uuid)
+                .updateAll(db,
+                           BookmarkRow.Columns.tagsModified.set(to: modifiedInterval),
+                           BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
+            try recordFileSyncChange(uuid: uuid, isDelete: false, syncStatus: syncStatus, db: db)
+        }
+        if !success { FileLog.shared.addMessage("BookmarkDataManager.setTags failed") }
+        return success
+    }
+
+    /// The user's tag vocabulary for autocomplete: distinct tags across
+    /// non-deleted bookmarks, most-used first, ties alphabetical.
+    public func allTags() -> [String] {
+        dbQueue.read { db in
+            // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - aggregate over a join the query interface can't express tersely
+            try String.fetchAll(db, sql: """
+                SELECT bt.tag FROM BookmarkTag bt
+                JOIN \(Self.tableName) b ON b.uuid = bt.bookmarkUuid AND b.deleted = 0
+                GROUP BY bt.tag
+                ORDER BY COUNT(*) DESC, bt.tag ASC
+                """)
+        } ?? []
+    }
+
+    /// Trim → drop empties → case-insensitive dedupe (first casing wins) → sort.
+    static func normalizedTags(_ tags: [String]) -> [String] {
+        var seen = Set<String>()
+        var result: [String] = []
+        for raw in tags {
+            let tag = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !tag.isEmpty else { continue }
+            let key = tag.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+            guard seen.insert(key).inserted else { continue }
+            result.append(tag)
+        }
+        return result.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
     }
 
     // MARK: - Retrieving
@@ -203,11 +306,29 @@ public struct BookmarkDataManager: Sendable {
     }
 
     @discardableResult
-    public func markAllBookmarksAsSynced() async -> Bool {
+    public func markAllBookmarksAsSynced() -> Bool {
         let success = dbQueue.write { db in
             _ = try BookmarkRow.updateAll(db, BookmarkRow.Columns.syncStatus.set(to: SyncStatus.synced.rawValue))
         }
         if !success { FileLog.shared.addMessage("BookmarkManager.markAllBookmarksAsSynced failed") }
+        return success
+    }
+
+    /// Requeues bookmarks that carry fork-owned highlight metadata when the
+    /// account-sync rollout transitions from disabled to enabled.
+    @discardableResult
+    public func markHighlightBookmarksAsUnsynced() -> Bool {
+        let success = dbQueue.write { db in
+            _ = try BookmarkRow
+                .filter(
+                    BookmarkRow.Columns.excerpt != nil ||
+                        BookmarkRow.Columns.endTime != nil ||
+                        BookmarkRow.Columns.trimModified != nil ||
+                        BookmarkRow.Columns.tagsModified != nil
+                )
+                .updateAll(db, BookmarkRow.Columns.syncStatus.set(to: SyncStatus.notSynced.rawValue))
+        }
+        if !success { FileLog.shared.addMessage("BookmarkManager.markHighlightBookmarksAsUnsynced failed") }
         return success
     }
 
@@ -242,6 +363,7 @@ public struct BookmarkDataManager: Sendable {
 
         let success = dbQueue.write { db in
             _ = try BookmarkRow.filter(uuids.contains(BookmarkRow.Columns.uuid)).deleteAll(db)
+            _ = try BookmarkTagRow.filter(uuids.contains(BookmarkTagRow.Columns.bookmarkUuid)).deleteAll(db)
         }
         if !success { FileLog.shared.addMessage("BookmarkManager.remove failed") }
         return success
@@ -332,7 +454,22 @@ private extension BookmarkDataManager {
             request = request.limit(limit)
         }
 
-        return dbQueue.fetchAll(request).map(\.asBookmark)
+        let rows = dbQueue.fetchAll(request)
+        guard !rows.isEmpty else { return [] }
+
+        let tagsByBookmark = tags(forBookmarkUuids: rows.map(\.uuid))
+        return rows.map { $0.asBookmark(tags: tagsByBookmark[$0.uuid] ?? []) }
+    }
+
+    /// Batch tag hydration for a page of bookmark rows; values keep
+    /// `normalizedTags` ordering because the table is only ever written whole.
+    func tags(forBookmarkUuids uuids: [String]) -> [String: [String]] {
+        let tagRows = dbQueue.fetchAll(
+            BookmarkTagRow.filter(uuids.contains(BookmarkTagRow.Columns.bookmarkUuid))
+        )
+        return Dictionary(grouping: tagRows, by: \.bookmarkUuid).mapValues { rows in
+            rows.map(\.tag).sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+        }
     }
 }
 

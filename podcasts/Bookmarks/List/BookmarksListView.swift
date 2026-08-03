@@ -85,6 +85,16 @@ struct BookmarksListView<ListStyle: BookmarksStyle>: View {
                 .padding(.bottom, BookmarkListConstants.searchFieldBottomPadding)
             }
 
+            // Suggested Highlights review strip (S8): hidden unless pending.
+            if let episodeViewModel = viewModel as? BookmarkEpisodeListViewModel {
+                SuggestedHighlightsSection(
+                    style: style,
+                    scope: .episode(episodeViewModel.episode?.uuid)
+                )
+            } else {
+                SuggestedHighlightsSection(style: style)
+            }
+
             if viewModel.bookmarks.isEmpty {
                 emptyView
             } else {

@@ -766,6 +766,12 @@
 /* The episode failed to download but the app wasn't able to determine why. Suggesting to try again after waiting for a bit. */
 "download_error_try_again" = "Unable to download episode. Please try again later.";
 
+/* User-facing error shown when a streaming download exceeds its completion timeout. */
+"download_streaming_timed_out" = "The streaming download timed out.";
+
+/* User-facing error shown when a streaming download is cancelled before completion. */
+"download_streaming_cancelled" = "The streaming download was cancelled.";
+
 /* A common string used throughout the app. Informs the user the download has failed. */
 "download_failed" = "Download Failed";
 
@@ -4424,6 +4430,216 @@
 /* Label for a setting that allows the user to enable or disable playing a tone when creating a bookmark . */
 "settings_bookmark_confirmation_sound" = "Bookmark Confirmation Sound";
 
+/* Label for the setting that picks how a saved highlight is confirmed (sound, spoken, both, or nothing). */
+"settings_highlight_confirmation_style" = "Capture Confirmation";
+
+/* Settings section subtitle explaining the highlight capture confirmation options. A haptic always plays. */
+"settings_highlight_confirmation_footer" = "Choose how saving a highlight is confirmed while listening. A gentle haptic always plays.";
+
+/* Confirmation style option: play the confirmation tone only. */
+"highlight_confirmation_sound" = "Sound";
+
+/* Confirmation style option: play the tone and speak a short confirmation. */
+"highlight_confirmation_sound_spoken" = "Sound and Spoken";
+
+/* Confirmation style option: speak a short confirmation only. */
+"highlight_confirmation_spoken" = "Spoken";
+
+/* Confirmation style option: no audible confirmation. */
+"highlight_confirmation_none" = "None";
+
+/* Short spoken confirmation after a highlight is captured hands-free. Keep it to one word if possible. */
+"highlight_saved_announcement" = "Saved";
+
+/* Action title for saving a highlight at the current playback position (Siri shortcut, Control Center control). */
+"save_highlight" = "Save Highlight";
+
+/* Title of the highlight editor sheet (trim the excerpt window, edit title and tags). */
+"highlight_editor_title" = "Edit Highlight";
+
+/* Section label above the excerpt trim control in the highlight editor. */
+"highlight_editor_trim_section" = "Excerpt";
+
+/* Section label above the tag editor in the highlight editor. */
+"highlight_editor_tags_section" = "Tags";
+
+/* Placeholder for the tag input field in the highlight editor. */
+"highlight_editor_tag_placeholder" = "Add a tag";
+
+/* Shown in the highlight editor when the episode has no transcript, so only title and tags can be edited. */
+"highlight_editor_no_transcript" = "No transcript available for this episode — the excerpt can't be trimmed.";
+
+/* Toast action that opens the highlight editor right after a capture. */
+"highlight_toast_edit" = "Edit";
+
+/* Bookmark list menu option that filters the list to a single tag. */
+"bookmarks_filter_by_tag" = "Filter by Tag";
+
+/* Tag-filter option that clears the filter and shows every bookmark. */
+"bookmarks_filter_all_tags" = "All Tags";
+
+/* Title of the Highlights settings screen (capture behavior + Markdown export). */
+"settings_highlights" = "Highlights";
+
+/* Section header for capture-behavior options on the Highlights settings screen. */
+"settings_highlights_capture_section" = "Capture";
+
+/* Toggle: open the highlight editor right after each in-app capture. */
+"settings_highlights_review_after_capture" = "Review After Capture";
+
+/* Section header for the Markdown folder export on the Highlights settings screen. */
+"settings_highlights_export_section" = "Markdown Export";
+
+/* Row showing the currently selected export folder. */
+"settings_highlights_export_folder" = "Folder";
+
+/* Button that starts choosing a folder for the Markdown export. */
+"settings_highlights_export_choose_folder" = "Choose Export Folder…";
+
+/* Button that immediately re-exports every episode's highlights. */
+"settings_highlights_export_now" = "Export All Now";
+
+/* Button that turns the folder export off. */
+"settings_highlights_export_disable" = "Stop Exporting";
+
+/* Footer explaining the Markdown folder export. */
+"settings_highlights_export_footer" = "Writes one Markdown file per episode into the folder you choose — works great with Obsidian, Logseq, or any notes vault. Files are updated automatically as you capture and edit highlights.";
+
+/* Section header for the Readwise integration on the Highlights settings screen. */
+"settings_highlights_readwise_section" = "Readwise";
+
+/* Placeholder for the Readwise access-token field. */
+"settings_highlights_readwise_token_placeholder" = "Access token";
+
+/* Button that validates and saves the Readwise token. */
+"settings_highlights_readwise_connect" = "Connect";
+
+/* Button label while the Readwise token is being validated. */
+"settings_highlights_readwise_validating" = "Validating…";
+
+/* Row confirming the Readwise account is connected. */
+"settings_highlights_readwise_connected" = "Connected";
+
+/* Button that removes the stored Readwise token. */
+"settings_highlights_readwise_disconnect" = "Disconnect";
+
+/* Error shown when the Readwise token is rejected by the API. */
+"settings_highlights_readwise_invalid_token" = "That token wasn't accepted. Copy it from readwise.io/access_token and try again.";
+
+/* Footer explaining the Readwise integration. */
+"settings_highlights_readwise_footer" = "New and edited highlights are pushed to your Readwise account, which can forward them to Notion, Roam, and more. Your token is stored securely on this device.";
+
+/* Picker label for how AI writes highlight titles. */
+"settings_highlights_prompt_style" = "Title Style";
+
+/* Placeholder for the optional free-text style preference for AI highlight titles. */
+"settings_highlights_prompt_custom_placeholder" = "Optional style preference (e.g. \"always name the speaker\")";
+
+/* Highlight title style: the default balanced titling. */
+"highlight_style_standard" = "Standard";
+
+/* Highlight title style: a self-contained claim that stands alone (Zettelkasten). */
+"highlight_style_atomic_note" = "Atomic Note";
+
+/* Highlight title style: phrased as the question the moment answers. */
+"highlight_style_question_first" = "Question";
+
+/* Highlight title style: no AI title; the quote itself is the note. */
+"highlight_style_quote_only" = "Quote Only";
+
+/* Highlight title style: as short and punchy as possible. */
+"highlight_style_punchy" = "Punchy";
+
+/* Header of the review strip listing machine-suggested highlights. */
+"suggested_highlights_title" = "Suggested Highlights";
+
+/* Accessibility label for accepting a suggested highlight. */
+"suggested_highlight_keep" = "Keep highlight";
+
+/* Accessibility label for dismissing a suggested highlight. */
+"suggested_highlight_dismiss" = "Dismiss suggestion";
+
+/* Player shelf action + sheet title: guided playback of an episode's best moments. */
+"tour_shelf_title" = "Highlights Tour";
+
+/* Tour length option: about five minutes. */
+"tour_length_quick" = "Quick — about 5 minutes";
+
+/* Tour length option: about a quarter of the episode. */
+"tour_length_standard" = "Standard — about 25%";
+
+/* Tour length option: about half of the episode. */
+"tour_length_deep" = "Deep — about half";
+
+/* Toggle for speaking the tour's intro and transitions aloud. */
+"tour_spoken_transitions_toggle" = "Spoken transitions";
+
+/* Shown while the tour analyzes the episode. */
+"tour_preparing" = "Finding the best moments…";
+
+/* Shown when a tour can't be built (no transcript or no segments). */
+"tour_preparation_failed" = "Couldn't build a tour for this episode. It needs a transcript first.";
+
+/* Shown when the tour played its last highlight. */
+"tour_finished" = "That's the tour!";
+
+/* Button that stops the running tour and returns to normal playback. */
+"tour_exit" = "Exit Tour";
+
+/* Tour HUD position, e.g. "Highlight 2 of 6". First placeholder is the current index, second the total. */
+"tour_progress" = "Highlight %1$@ of %2$@";
+
+/* Spoken before jumping to a tour stop. Placeholder is the stop's title. */
+"tour_bridge_line" = "Next: %1$@";
+
+/* Spoken once at tour start. First placeholder is the number of stops, second the episode title. */
+"tour_intro_line" = "Here's your %1$@-highlight tour of %2$@.";
+
+/* Spoken after the last tour stop. */
+"tour_outro_line" = "That's the tour.";
+
+/* Title of the Mentioned Books directory (Profile tab). */
+"book_directory_title" = "Mentioned Books";
+
+/* Empty state title for the books directory. */
+"book_directory_empty_title" = "No books yet";
+
+/* Empty state message for the books directory. */
+"book_directory_empty_message" = "Books mentioned in episodes you view will collect here.";
+
+/* Book row subtitle when the book was mentioned in exactly one episode. */
+"book_directory_episode_count_singular" = "Mentioned in 1 episode";
+
+/* Book row subtitle; placeholder is the number of episodes mentioning it. */
+"book_directory_episode_count_plural" = "Mentioned in %1$@ episodes";
+
+/* Section header listing where an entity appears. */
+"entity_detail_appearances" = "Appearances";
+
+/* Line when exactly one show the user follows mentioned this entity. */
+"entity_detail_followed_shows_singular" = "1 show you follow mentioned this";
+
+/* Line with the number of followed shows mentioning this entity. */
+"entity_detail_followed_shows_plural" = "%1$@ shows you follow mentioned this";
+
+/* Appearance subtitle with the mention's timestamp. Placeholder is a play time like 34:12. */
+"entity_detail_mentioned_at" = "Mentioned at %1$@";
+
+/* Button that follows a person for new-appearance notifications. */
+"person_follow_button" = "Notify Me";
+
+/* Button state when a person is already followed. */
+"person_following_button" = "Notifying";
+
+/* Toggle for the weekly notification resurfacing an old highlight. */
+"settings_highlights_resurfacing" = "Weekly Highlight Reminder";
+
+/* Title of the notification that resurfaces an old highlight. */
+"notifications_highlight_resurfacing_title" = "From your highlights";
+
+/* Fallback body when the resurfaced highlight has no excerpt or title. */
+"notifications_highlight_resurfacing_body_fallback" = "Revisit a moment you saved.";
+
 /* Label for displaying the number of bookmarks the user has when the bookmark count is equal to one */
 "bookmarks_count_singular" = "1 bookmark";
 
@@ -7705,7 +7921,7 @@
 "social_find_contacts_consent_cta" = "Match my contacts";
 
 /* Body of the contacts consent alert — honest about the mechanics */
-"social_find_contacts_consent_body" = "Your contacts' email addresses and phone numbers are scrambled (hashed) on this device. Email hashes are compared once; phone hashes are currently ignored. Nothing is stored, and no one is notified. Only members who allow discovery can match.";
+"social_find_contacts_consent_body" = "Your contacts' email addresses and phone numbers are scrambled (hashed) on this device and compared once for matching. Nothing is stored, and no one is notified. Only members who allow discovery can match.";
 
 /* Row sharing the owner's Profile Link to invite a friend */
 "social_find_invite" = "Invite a friend";

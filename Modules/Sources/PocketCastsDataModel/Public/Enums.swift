@@ -303,6 +303,7 @@ public enum PlayerAction: String, Codable, Equatable, CaseIterable, Sendable {
     case addToPlaylist = "playlist"
     case stopAfterEpisode = "stopAfterEpisode"
     case catchMeUp = "catchMeUp"
+    case highlightsTour = "highlightsTour"
 }
 
 extension Array: @retroactive RawRepresentable where Element: RawRepresentable<String> {

@@ -155,7 +155,7 @@ final class PlaybackManagingMock: PlaybackManaging {
 
     // MARK: Bookmarks and search
 
-    func bookmark(source: BookmarkAnalyticsSource) { }
+    func bookmark(source: BookmarkAnalyticsSource) -> Bool { true }
     func playBookmark(_ bookmark: Bookmark, source: BookmarkAnalyticsSource, firstTry: Bool) { }
     func playEpisodeSearchResult(_ searchEpisode: EpisodeSearchResult, firstTry: Bool) { }
 

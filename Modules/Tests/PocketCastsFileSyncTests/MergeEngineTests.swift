@@ -165,7 +165,9 @@ final class MergeEngineTests: XCTestCase {
     private func bookmarkOp(
         uuid: String = "bm-1", device: String, seq: UInt64, wallClockMs: Int64,
         title: String? = nil, titleModified: Int64? = nil,
-        excerpt: String? = nil, endTime: Double? = nil
+        excerpt: String? = nil, endTime: Double? = nil,
+        trimModified: Int64? = nil,
+        tags: [String]? = nil, tagsModified: Int64? = nil
     ) -> Filesync_OpEnvelope {
         var bookmark = Api_SyncUserBookmark()
         bookmark.bookmarkUuid = uuid
@@ -176,6 +178,9 @@ final class MergeEngineTests: XCTestCase {
         }
         if let excerpt { bookmark.excerpt = .with { $0.value = excerpt } }
         if let endTime { bookmark.endTime = .with { $0.value = endTime } }
+        if let trimModified { bookmark.trimModified = .with { $0.value = trimModified } }
+        if let tags { bookmark.tags = tags }
+        if let tagsModified { bookmark.tagsModified = .with { $0.value = tagsModified } }
         var record = Api_Record()
         record.bookmark = bookmark
         var envelope = Filesync_OpEnvelope()
@@ -226,6 +231,101 @@ final class MergeEngineTests: XCTestCase {
         XCTAssertEqual(forward.excerpt.value, reversed.excerpt.value)
         XCTAssertEqual(forward.endTime.value, reversed.endTime.value)
         XCTAssertEqual(forward.excerpt.value, "second")
+    }
+
+    // MARK: Trim & tags (ADR-0016)
+
+    func testTrimBeatsMachineEnrichmentInEveryReplayOrder() {
+        // The machine op carries a LATER op stamp than the trim — the trim must
+        // still win, in both orders, or devices diverge after compaction.
+        let trim = bookmarkOp(device: "a", seq: 1, wallClockMs: 1000,
+                              excerpt: "user trim", endTime: 55, trimModified: 1000)
+        let machine = bookmarkOp(device: "b", seq: 1, wallClockMs: 2000,
+                                 excerpt: "machine", endTime: 60)
+
+        for ops in [[trim, machine], [machine, trim]] {
+            let bookmark = MergeEngine.merged(snapshots: [], ops: ops).bookmarks["bm-1"]!.record
+            XCTAssertEqual(bookmark.excerpt.value, "user trim")
+            XCTAssertEqual(bookmark.endTime.value, 55)
+            XCTAssertEqual(bookmark.trimModified.value, 1000)
+        }
+    }
+
+    func testConflictingTrimsResolveByTrimStampNotOpOrder() {
+        let older = bookmarkOp(device: "a", seq: 5, wallClockMs: 9000,
+                               excerpt: "older trim", endTime: 40, trimModified: 1000)
+        let newer = bookmarkOp(device: "b", seq: 1, wallClockMs: 1500,
+                               excerpt: "newer trim", endTime: 50, trimModified: 2000)
+
+        for ops in [[older, newer], [newer, older]] {
+            let bookmark = MergeEngine.merged(snapshots: [], ops: ops).bookmarks["bm-1"]!.record
+            XCTAssertEqual(bookmark.excerpt.value, "newer trim",
+                           "trim-vs-trim is LWW by the trim stamp, not by op arrival")
+            XCTAssertEqual(bookmark.trimModified.value, 2000)
+        }
+    }
+
+    func testTagsMergeAsWholeSetByStamp() {
+        let first = bookmarkOp(device: "a", seq: 1, wallClockMs: 1000,
+                               tags: ["ai", "investing"], tagsModified: 1000)
+        let second = bookmarkOp(device: "b", seq: 1, wallClockMs: 500,
+                                tags: ["climate"], tagsModified: 2000)
+
+        for ops in [[first, second], [second, first]] {
+            let bookmark = MergeEngine.merged(snapshots: [], ops: ops).bookmarks["bm-1"]!.record
+            XCTAssertEqual(bookmark.tags, ["climate"], "whole-set LWW by tagsModified")
+            XCTAssertEqual(bookmark.tagsModified.value, 2000)
+        }
+    }
+
+    func testUnstampedTagsNeverTouchTheSet() {
+        let stamped = bookmarkOp(device: "a", seq: 1, wallClockMs: 1000,
+                                 tags: ["keep"], tagsModified: 1000)
+        var unstamped = bookmarkOp(device: "b", seq: 1, wallClockMs: 2000, title: "rename")
+        unstamped.record.bookmark.tags = ["ignored"]
+
+        let bookmark = MergeEngine.merged(snapshots: [], ops: [stamped, unstamped]).bookmarks["bm-1"]!.record
+        XCTAssertEqual(bookmark.tags, ["keep"])
+    }
+
+    func testSnapshotFoldReplaysTrimAndTagsIdentically() {
+        // Live-replay result must equal fold(snapshot(live-replay)) — the
+        // compaction invariant that keeps devices convergent. The snapshot
+        // record is built the way SnapshotWriter.buildSnapshot does: merged
+        // record + fieldModifiedMs from the merged stamps.
+        let ops = [
+            bookmarkOp(device: "a", seq: 1, wallClockMs: 1000, title: "Bookmark"),
+            bookmarkOp(device: "b", seq: 1, wallClockMs: 2000,
+                       excerpt: "trimmed", endTime: 44, trimModified: 2000),
+            bookmarkOp(device: "a", seq: 2, wallClockMs: 3000,
+                       tags: ["ai"], tagsModified: 3000),
+        ]
+        let live = MergeEngine.merged(snapshots: [], ops: ops)
+        let liveMerged = live.bookmarks["bm-1"]!
+
+        var record = Api_Record()
+        record.bookmark = liveMerged.record
+        var snapshotRecord = Filesync_SnapshotRecord()
+        snapshotRecord.record = record
+        snapshotRecord.fieldModifiedMs = liveMerged.stamps.mapValues(\.wallClockMs)
+        var snapshot = Filesync_Snapshot()
+        snapshot.deviceID = "a"
+        snapshot.records = [snapshotRecord]
+
+        let folded = MergeEngine.merged(snapshots: [snapshot], ops: [])
+        let bookmark = folded.bookmarks["bm-1"]!.record
+
+        XCTAssertEqual(bookmark.excerpt.value, liveMerged.record.excerpt.value)
+        XCTAssertEqual(bookmark.endTime.value, liveMerged.record.endTime.value)
+        XCTAssertEqual(bookmark.trimModified.value, liveMerged.record.trimModified.value)
+        XCTAssertEqual(bookmark.tags, liveMerged.record.tags)
+        XCTAssertEqual(bookmark.tagsModified.value, liveMerged.record.tagsModified.value)
+
+        // And a machine op replayed AFTER the trimmed snapshot still loses.
+        let lateMachine = bookmarkOp(device: "c", seq: 1, wallClockMs: 9000,
+                                     excerpt: "late machine", endTime: 99)
+        let refolded = MergeEngine.merged(snapshots: [snapshot], ops: [lateMachine])
+        XCTAssertEqual(refolded.bookmarks["bm-1"]!.record.excerpt.value, "trimmed")
     }
 
     // MARK: Tombstones and resurrection

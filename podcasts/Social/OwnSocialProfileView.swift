@@ -171,8 +171,14 @@ final class OwnSocialProfileViewModel: ObservableObject {
     @Published private(set) var isAvatarUpdating = false
     @Published private(set) var saveError: String?
     @Published var selectedAvatarItem: PhotosPickerItem? {
-        didSet { loadSelectedAvatar() }
+        didSet {
+            avatarSelectionRevision &+= 1
+            loadSelectedAvatar()
+        }
     }
+
+    private var avatarSelectionRevision = 0
+    private var avatarUpdateTask: Task<Void, Never>?
 
     /// Presents the system share sheet; injected so the view stays testable.
     var onShare: ((URL) -> Void)?
@@ -226,50 +232,93 @@ final class OwnSocialProfileViewModel: ObservableObject {
 
     func removeAvatar() async {
         guard !isAvatarUpdating else { return }
+        let selectionRevision = avatarSelectionRevision
         isAvatarUpdating = true
         saveError = nil
-        defer { isAvatarUpdating = false }
+        defer {
+            isAvatarUpdating = false
+            loadSelectedAvatar()
+        }
         guard await SocialAvatarUploadSender().remove() else {
             saveError = L10n.socialProfileAvatarRemoveFailed
             return
         }
         profile.avatarURL = ""
         SocialIdentityStore.cachedProfile = profile
-        selectedAvatarItem = nil
+        if avatarSelectionRevision == selectionRevision {
+            selectedAvatarItem = nil
+        }
     }
 
     private func loadSelectedAvatar() {
-        guard let item = selectedAvatarItem, !isAvatarUpdating else { return }
-        Task { [weak self, item] in
-            guard let self else { return }
-            isAvatarUpdating = true
+        guard selectedAvatarItem != nil, !isAvatarUpdating, avatarUpdateTask == nil else { return }
+
+        // Claim the operation before creating the unstructured task so a
+        // second PhotosPicker callback cannot start an overlapping upload.
+        isAvatarUpdating = true
+        saveError = nil
+        avatarUpdateTask = Task { @MainActor [weak self] in
+            await self?.processSelectedAvatars()
+        }
+    }
+
+    private func processSelectedAvatars() async {
+        defer {
+            avatarUpdateTask = nil
+            isAvatarUpdating = false
+        }
+
+        while let item = selectedAvatarItem {
+            let revision = avatarSelectionRevision
             saveError = nil
-            defer { isAvatarUpdating = false }
-            do {
-                guard let picked = try await item.loadTransferable(type: Data.self) else {
+            await uploadAvatar(item, revision: revision)
+
+            // A newer selection that arrived while loading or uploading is
+            // processed next, after the current server request has settled.
+            guard avatarSelectionRevision != revision else { return }
+        }
+    }
+
+    private func uploadAvatar(_ item: PhotosPickerItem, revision: Int) async {
+        do {
+            guard let picked = try await item.loadTransferable(type: Data.self) else {
+                if avatarSelectionRevision == revision {
                     saveError = L10n.socialProfileAvatarReadFailed
-                    return
                 }
-                guard let data = Self.avatarUploadData(from: picked) else {
+                return
+            }
+            guard let data = Self.avatarUploadData(from: picked) else {
+                if avatarSelectionRevision == revision {
                     saveError = L10n.socialProfileAvatarInvalidFormat
-                    return
                 }
-                guard data.count <= Self.avatarMaxBytes else {
+                return
+            }
+            guard data.count <= Self.avatarMaxBytes else {
+                if avatarSelectionRevision == revision {
                     saveError = L10n.socialProfileAvatarTooLarge
-                    return
                 }
-                switch await SocialAvatarUploadSender().upload(imageData: data) {
-                case let .accepted(avatarURL):
-                    profile.avatarURL = avatarURL
-                    SocialIdentityStore.cachedProfile = profile
-                case .rejectedScan:
-                    saveError = L10n.socialProfileAvatarScanRejected
-                case .rejectedFormat:
-                    saveError = L10n.socialProfileAvatarInvalidFormat
-                case .failed:
-                    saveError = L10n.socialProfileAvatarUploadFailed
-                }
-            } catch {
+                return
+            }
+
+            // If PhotosPicker delivered a replacement while the original was
+            // loading, skip the obsolete network request entirely.
+            guard avatarSelectionRevision == revision else { return }
+            let result = await SocialAvatarUploadSender().upload(imageData: data)
+            guard avatarSelectionRevision == revision else { return }
+
+            switch result {
+            case let .accepted(avatarURL):
+                profile.avatarURL = avatarURL
+                SocialIdentityStore.cachedProfile = profile
+            case .rejectedScan:
+                saveError = L10n.socialProfileAvatarScanRejected
+            case .rejectedFormat:
+                saveError = L10n.socialProfileAvatarInvalidFormat
+            case .failed:
+                saveError = L10n.socialProfileAvatarUploadFailed
+            }
+        } catch {
+            if avatarSelectionRevision == revision {
                 saveError = L10n.socialProfileAvatarReadFailed
             }
         }

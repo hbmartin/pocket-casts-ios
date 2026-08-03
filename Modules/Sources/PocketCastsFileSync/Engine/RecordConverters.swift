@@ -125,6 +125,16 @@ enum RecordConverters {
         if let endTime = bookmark.endTime {
             item.endTime = .with { $0.value = endTime }
         }
+        // ADR-0016: a trim stamp only travels with a real window; tags travel
+        // with their stamp so an empty stamped set means "cleared", while an
+        // absent stamp leaves the receiver's tags alone.
+        if let trimModified = bookmark.trimModified, bookmark.excerpt != nil {
+            item.trimModified = .with { $0.value = Int64(trimModified.timeIntervalSince1970 * 1000) }
+        }
+        if let tagsModified = bookmark.tagsModified {
+            item.tags = bookmark.tags
+            item.tagsModified = .with { $0.value = Int64(tagsModified.timeIntervalSince1970 * 1000) }
+        }
         var record = Api_Record()
         record.bookmark = item
         return record

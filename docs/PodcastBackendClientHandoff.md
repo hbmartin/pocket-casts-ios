@@ -9,10 +9,13 @@ work that still requires a configured environment or real device.
 
 ## Release boundary
 
-The client and backend form one pre-release protocol migration. Older clients
-and legacy refresh tokens are intentionally unsupported. Do not independently
-ship this client against an older backend or switch App Attest to required while
-acceptance is incomplete.
+The client and backend form an additive protocol migration. Existing clients
+continue using the legacy response fields and refresh path during the adoption
+window; new token fields are additive and ignored by older protobuf clients.
+The backend must preserve legacy refresh families until telemetry shows the
+supported installed-client threshold has migrated, then retire them through a
+staged, reversible rollout. Do not switch App Attest to required while paired
+acceptance or that compatibility window is incomplete.
 
 The release backend origin currently comes from `PODCAST_BACKEND_ORIGIN` in
 `config/PocketCasts.base.xcconfig` and is injected as
@@ -66,8 +69,10 @@ Important files/tests:
 
 - Login, registration, refresh, and reset requests carry the installation/device
   identifier expected by the coordinated backend protobuf.
-- Authentication responses persist access and refresh tokens. Logout uses the
-  possession-only revoke contract.
+- Authentication responses persist access and refresh tokens. Logout requires
+  neither Bearer authentication nor App Attest; an unbound family uses the
+  refresh token alone, while a DPoP-bound family also requires a proof from the
+  key whose thumbprint matches its `jkt`.
 - The former forgot-password request was replaced by submission of an
   administrator-issued reset code plus email, identifier, and a 12–72-byte new
   password. The backend does not send reset email.
@@ -125,8 +130,10 @@ Important files:
   chapter URLs and types. Do not construct `.vtt` or fingerprint URLs.
 - Manifest reads use App Attest, ETags/304, strict same-origin capability URLs,
   and SHA-256 verification. Object-storage URLs must never reach the client.
-- The transcript uploads immediately. A successful response persists the
-  candidate ID and attachment token for a later metadata attachment.
+- Transcript upload is disabled until the user explicitly opts in and the
+  episode passes the eligibility policy in `docs/TranscriptContributions.md`.
+  A successful response persists the candidate ID and attachment token for a
+  later metadata attachment.
 - `TranscriptCorpusMetadataGenerator` performs a bounded Foundation Models
   segment map/reduce. Unavailable generation remains durable and retries on
   lifecycle opportunities and weekly until success or candidate deletion.

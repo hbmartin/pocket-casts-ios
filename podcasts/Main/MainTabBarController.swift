@@ -815,16 +815,29 @@ private extension MainTabBarController {
         let title = bookmark.title
         let message = title == L10n.bookmarkDefaultTitle ? L10n.bookmarkAdded : L10n.bookmarkAddedNotification(title)
 
-        let action = Toast.Action(title: L10n.changeBookmarkTitle) { [weak self] in
-            let controller = BookmarkEditTitleViewController(manager: bookmarkManager, bookmark: bookmark, state: .updating, onDismiss: { [weak self] updatedTitle, _ in
-                guard title != updatedTitle else { return }
+        let action: Toast.Action
+        if FeatureFlag.highlightEditor.enabled {
+            // Full editor: trim + tags + title (Highlights program S4).
+            action = Toast.Action(title: L10n.highlightToastEdit) { [weak self] in
+                let controller = HighlightEditorPresenter.controller(
+                    manager: bookmarkManager,
+                    bookmark: bookmark,
+                    source: .headphones
+                )
+                self?.presentFromRootController(controller)
+            }
+        } else {
+            action = Toast.Action(title: L10n.changeBookmarkTitle) { [weak self] in
+                let controller = BookmarkEditTitleViewController(manager: bookmarkManager, bookmark: bookmark, state: .updating, onDismiss: { [weak self] updatedTitle, _ in
+                    guard title != updatedTitle else { return }
 
-                self?.handleBookmarkTitleUpdated(updatedTitle: updatedTitle)
-            })
+                    self?.handleBookmarkTitleUpdated(updatedTitle: updatedTitle)
+                })
 
-            controller.source = .headphones
+                controller.source = .headphones
 
-            self?.presentFromRootController(controller)
+                self?.presentFromRootController(controller)
+            }
         }
 
         Toast.show(message, actions: [action], theme: .playerTheme)

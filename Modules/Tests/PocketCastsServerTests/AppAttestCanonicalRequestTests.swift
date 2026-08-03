@@ -54,5 +54,8 @@ final class AppAttestCanonicalRequestTests: XCTestCase {
         var authenticatedPublicRequest = URLRequest(url: try XCTUnwrap(URL(string: "/discover/ios/content_v3.json", relativeTo: origin)?.absoluteURL))
         authenticatedPublicRequest.setValue("Bearer token", forHTTPHeaderField: ServerConstants.HttpHeaders.authorization)
         XCTAssertTrue(AppAttestRoutePolicy.requiresAttestation(authenticatedPublicRequest, origin: origin))
+
+        let credentialBearingRequest = URLRequest(url: try XCTUnwrap(URL(string: "https://user@podcasts.example/api/v1/capabilities")))
+        XCTAssertFalse(AppAttestRoutePolicy.requiresAttestation(credentialBearingRequest, origin: origin))
     }
 }

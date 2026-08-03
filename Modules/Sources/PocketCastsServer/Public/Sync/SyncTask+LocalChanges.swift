@@ -284,6 +284,22 @@ private extension Api_SyncUserBookmark {
 
         self.title.value = bookmark.title
         self.titleModified = .init(date: bookmark.titleModified ?? bookmark.created)
+
+        // Highlight fields (ADR-0016, fork fields >= 1001). Gated so the wire
+        // payload is unchanged until the backend that persists them is live.
+        guard FeatureFlag.highlightAccountSync.enabled else { return }
+
+        if let excerpt = bookmark.excerpt, !excerpt.isEmpty {
+            self.excerpt.value = excerpt
+            self.endTime.value = bookmark.endTime ?? bookmark.time
+        }
+        if let trimModified = bookmark.trimModified {
+            self.trimModified = .init(date: trimModified)
+        }
+        if let tagsModified = bookmark.tagsModified {
+            self.tags = bookmark.tags
+            self.tagsModified = .init(date: tagsModified)
+        }
     }
 }
 

@@ -9,14 +9,8 @@ enum AppAttestCanonicalRequestError: Error, Equatable {
 
 enum AppAttestRoutePolicy {
     static func isSelfHosted(_ request: URLRequest, origin: URL?) -> Bool {
-        guard let url = request.url, let origin,
-              url.scheme?.lowercased() == origin.scheme?.lowercased(),
-              url.host?.lowercased() == origin.host?.lowercased(),
-              effectivePort(url) == effectivePort(origin)
-        else {
-            return false
-        }
-        return true
+        guard let url = request.url else { return false }
+        return ServerOriginPolicy.isSameOrigin(url, origin: origin)
     }
 
     static func requiresAttestation(_ request: URLRequest, origin: URL?) -> Bool {
@@ -48,11 +42,6 @@ enum AppAttestRoutePolicy {
         }
 
         return true
-    }
-
-    private static func effectivePort(_ url: URL) -> Int? {
-        if let port = url.port { return port }
-        return url.scheme?.lowercased() == "https" ? 443 : 80
     }
 }
 

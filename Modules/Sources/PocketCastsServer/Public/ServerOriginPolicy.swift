@@ -32,13 +32,21 @@ public final class ServerOriginPolicy: Sendable {
     /// True when `url` targets exactly the ready origin (scheme, host and
     /// effective port). Always false while networking is blocked.
     public func isSameOrigin(_ url: URL) -> Bool {
+        Self.isSameOrigin(url, origin: origin)
+    }
+
+    /// Shared origin comparison for request-routing and artifact validation.
+    /// Credential-bearing URLs are never equivalent to the configured origin.
+    static func isSameOrigin(_ url: URL, origin: URL?) -> Bool {
         guard let origin,
+              url.user == nil,
+              url.password == nil,
+              origin.user == nil,
+              origin.password == nil,
               url.scheme?.lowercased() == origin.scheme?.lowercased(),
               url.host?.lowercased() == origin.host?.lowercased(),
-              Self.effectivePort(url) == Self.effectivePort(origin)
-        else {
-            return false
-        }
+              effectivePort(url) == effectivePort(origin)
+        else { return false }
         return true
     }
 

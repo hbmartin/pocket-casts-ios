@@ -40,10 +40,14 @@ public struct EpisodeSearchResult: Codable, Hashable, Sendable {
 }
 
 public final class EpisodeSearchTask: Sendable {
-    private let session: URLSession
+    private let urlConnection: URLConnection
 
-    public init(session: URLSession = .shared) {
-        self.session = session
+    public init(urlConnection: URLConnection = URLConnection(handler: URLSession.shared)) {
+        self.urlConnection = urlConnection
+    }
+
+    public convenience init(session: URLSession) {
+        self.init(urlConnection: URLConnection(handler: session))
     }
 
     public func search(term: String) async throws -> [EpisodeSearchResult] {
@@ -58,7 +62,10 @@ public final class EpisodeSearchTask: Sendable {
 
         request.httpBody = jsonData
 
-        let (data, _) = try await session.data(for: request)
+        let (responseData, _) = try await urlConnection.send(request: request)
+        guard let data = responseData else {
+            throw URLError(.badServerResponse)
+        }
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
 

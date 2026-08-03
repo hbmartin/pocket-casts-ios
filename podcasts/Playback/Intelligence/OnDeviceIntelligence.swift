@@ -215,6 +215,8 @@ actor OnDeviceIntelligence: IntelligenceProviding {
     private func reportGenerationWatchdogIfNeeded(id: UUID) {
         guard inFlightGenerationID == id else { return }
         watchdogReporter()
+        inFlightGenerationID = nil
+        generationWatchdog = nil
     }
 
     /// Races `work` against the timeout without awaiting a hung child on the

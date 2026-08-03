@@ -112,7 +112,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // yet (also the lazy re-embed path after an OS model bump)
         TranscriptEmbeddingBackfill.shared.kickAfterLaunch()
 
+        // Markdown folder auto-export (Highlights S5): observe highlight
+        // changes once a folder has been picked; no-op otherwise.
+        HighlightFolderExporter.shared.startObservingIfNeeded()
+
+        // Readwise push (Highlights S6): no-op until a token is stored.
+        ReadwiseSyncManager.shared.startObservingIfNeeded()
+
+        // Suggested Highlights (S8): drain any episodes queued while deferred.
+        SuggestedHighlightScanner.shared.kickAfterLaunch()
+
         NotificationsHelper.shared.register(checkToken: false)
+        if NotificationsGroup.fromYourHighlights.isEnabled {
+            NotificationsCoordinator.shared.refreshHighlightNotificationsIfNeeded()
+        }
 
         DispatchQueue.global().async { [weak self] in
             guard let self else {

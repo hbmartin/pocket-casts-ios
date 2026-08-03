@@ -319,10 +319,11 @@ final class UpNextDataManagerTests: DataManagerTestCase {
             self.addToUpNextBottom(episodeUuid: episode.uuid, title: episode.title ?? "", podcastUuid: podcast.uuid, dataManager: dataManager)
             XCTAssertTrue(dataManager.upNextPlayListContains(episodeUuid: episode.uuid), "\(impl): Should contain episode initially")
 
-            // Find the playlist episode and delete it
-            if let playlistEpisode = dataManager.findPlaylistEpisode(uuid: episode.uuid) {
-                dataManager.delete(playlistEpisode: playlistEpisode)
-            }
+            let playlistEpisode = try XCTUnwrap(
+                dataManager.findPlaylistEpisode(uuid: episode.uuid),
+                "\(impl): persisted Up Next row should exist before deletion"
+            )
+            dataManager.delete(playlistEpisode: playlistEpisode)
 
             XCTAssertFalse(dataManager.upNextPlayListContains(episodeUuid: episode.uuid), "\(impl): Should not contain episode after removal")
         }

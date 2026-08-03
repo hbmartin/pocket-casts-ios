@@ -14,6 +14,13 @@ struct PersonDetailView: View {
 
     var body: some View {
         List {
+            // Person follows (S12): server-matched, dark until B2 is live.
+            Section {
+                PersonFollowButton(displayName: model.entry.displayName)
+                    .listRowBackground(AppTheme.color(for: .primaryUi01, theme: theme))
+                    .listRowSeparator(.hidden)
+            }
+
             Section {
                 TextField(L10n.peopleDetailSearchPlaceholder, text: $model.searchTerm)
                     .textFieldStyle(.roundedBorder)

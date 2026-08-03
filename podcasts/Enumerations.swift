@@ -258,7 +258,7 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
     static var defaultActions: [PlayerAction] {
         [
             .effects, .sleepTimer, .stopAfterEpisode, .routePicker, .shareEpisode, .addToPlaylist, .download,
-            .transcript, .catchMeUp, .goToPodcast, .addBookmark, .markPlayed,
+            .transcript, .catchMeUp, .highlightsTour, .goToPodcast, .addBookmark, .markPlayed,
             .starEpisode, .archive
         ]
     }
@@ -293,6 +293,8 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
             self = .stopAfterEpisode
         case 15:
             self = .catchMeUp
+        case 16:
+            self = .highlightsTour
         default:
             return nil
         }
@@ -329,6 +331,9 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
             return 14
         case .catchMeUp:
             return 15
+        case .highlightsTour:
+            // 16: 15 is the current max and 7 is retired — don't reuse it
+            return 16
         }
     }
 
@@ -378,6 +383,8 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
             return L10n.playerActionTitleStopAfterEpisode
         case .catchMeUp:
             return L10n.catchMeUpTitle
+        case .highlightsTour:
+            return L10n.tourShelfTitle
         }
     }
 
@@ -428,6 +435,9 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
         case .catchMeUp:
             // reusing the smart-playlist sparkle asset instead of adding a new imageset
             return "cs-sparkle-black"
+        case .highlightsTour:
+            // reusing the bookmarks shelf asset instead of adding a new imageset
+            return "bookmarks-shelf-icon"
         }
     }
 
@@ -464,6 +474,8 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
             return "filter_clock"
         case .catchMeUp:
             return "cs-sparkle-black"
+        case .highlightsTour:
+            return "bookmarks-shelf-icon"
         }
     }
 
@@ -474,6 +486,9 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
         case .catchMeUp:
             // Only meaningful mid-episode: enough heard to recap, not nearly done.
             return CatchMeUpGenerator.isEligible(playedUpTo: episode.playedUpTo, duration: episode.duration)
+        case .highlightsTour:
+            // Audio only, and long enough that a tour beats just listening.
+            return !episode.videoPodcast() && episode.duration >= 600
         default:
             return true
         }
@@ -485,6 +500,8 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
         switch self {
         case .catchMeUp:
             FeatureFlag.catchMeUp.enabled
+        case .highlightsTour:
+            FeatureFlag.highlightsTour.enabled
         default:
             true
         }
@@ -520,6 +537,8 @@ nonisolated extension PlayerAction: AnalyticsDescribable {
             return "stop_after_episode"
         case .catchMeUp:
             return "catch_me_up"
+        case .highlightsTour:
+            return "highlights_tour"
         }
     }
 }

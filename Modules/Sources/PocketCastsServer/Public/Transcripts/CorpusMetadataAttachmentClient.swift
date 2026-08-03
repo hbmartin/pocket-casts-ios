@@ -33,20 +33,7 @@ public struct CorpusMetadataAttachmentClient: Sendable {
         self.connection = connection
     }
 
-    public func attach(_ metadata: CorpusMetadataAttachment) async -> Bool {
-        guard let url = URL(string: ServerConstants.Urls.api() + "transcripts/contribute/metadata"),
-              let body = try? JSONEncoder().encode(metadata), body.count <= 128 * 1024
-        else { return false }
-        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: ServerConstants.Timeouts.general)
-        request.httpMethod = "POST"
-        request.httpBody = body
-        request.setValue("application/json", forHTTPHeaderField: ServerConstants.HttpHeaders.contentType)
-        request.setValue("application/json", forHTTPHeaderField: ServerConstants.HttpHeaders.accept)
-        do {
-            let (_, response) = try await connection.send(request: request)
-            return (response as? HTTPURLResponse)?.statusCode == 204
-        } catch {
-            return false
-        }
+    public func attach(_ metadata: CorpusMetadataAttachment) async -> ContributionSendResult {
+        await Self.attachResult(metadata, connection: connection)
     }
 }

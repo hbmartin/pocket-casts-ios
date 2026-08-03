@@ -450,6 +450,108 @@ final class BookmarkDataManagerTests: DataManagerTestCase {
         }
     }
 
+    // MARK: - Trim & Tags (Highlights program S1, ADR-0016)
+
+    func testUpdateTrimPersistsWindowAndStamp() async throws {
+        try await runWithBothImplementations { dataManager, impl in
+            let bookmark = addBookmark(time: 60, dataManager: dataManager)
+            let stamp = Date(timeIntervalSince1970: 5000)
+
+            let success = await dataManager.bookmarks.updateTrim(
+                uuid: bookmark.uuid,
+                excerpt: "Trimmed excerpt",
+                endTime: 72,
+                trimModified: stamp
+            )
+            XCTAssertTrue(success, "\(impl): updateTrim should succeed")
+
+            let updated = dataManager.bookmarks.bookmark(for: bookmark.uuid)
+            XCTAssertEqual(updated?.excerpt, "Trimmed excerpt", "\(impl): trimmed excerpt should persist")
+            XCTAssertEqual(updated?.endTime, 72, "\(impl): trimmed endTime should persist")
+            XCTAssertEqual(updated?.trimModified, stamp, "\(impl): trim stamp should persist")
+        }
+    }
+
+    func testUpdateEnrichmentNeverOverwritesUserTrim() async throws {
+        try await runWithBothImplementations { dataManager, impl in
+            let bookmark = addBookmark(time: 60, dataManager: dataManager)
+            _ = await dataManager.bookmarks.updateTrim(uuid: bookmark.uuid, excerpt: "User trim", endTime: 70)
+
+            _ = await dataManager.bookmarks.updateEnrichment(uuid: bookmark.uuid, excerpt: "Machine excerpt", endTime: 65)
+
+            let updated = dataManager.bookmarks.bookmark(for: bookmark.uuid)
+            XCTAssertEqual(updated?.excerpt, "User trim", "\(impl): machine enrichment must not clobber a user trim")
+            XCTAssertEqual(updated?.endTime, 70, "\(impl): trimmed endTime must survive")
+            XCTAssertNotNil(updated?.trimModified, "\(impl): trim stamp must survive")
+        }
+    }
+
+    func testSetTagsNormalizesDedupesAndReplaces() async throws {
+        try await runWithBothImplementations { dataManager, impl in
+            let bookmark = addBookmark(dataManager: dataManager)
+
+            _ = await dataManager.bookmarks.setTags(uuid: bookmark.uuid, tags: [" Investing ", "investing", "AI", ""])
+            XCTAssertEqual(
+                dataManager.bookmarks.bookmark(for: bookmark.uuid)?.tags,
+                ["AI", "Investing"],
+                "\(impl): tags should trim, case-insensitively dedupe (first casing wins) and sort"
+            )
+
+            _ = await dataManager.bookmarks.setTags(uuid: bookmark.uuid, tags: ["climate"])
+            XCTAssertEqual(
+                dataManager.bookmarks.bookmark(for: bookmark.uuid)?.tags,
+                ["climate"],
+                "\(impl): setTags should replace the whole set"
+            )
+        }
+    }
+
+    func testSetTagsStampsAndMarksForSync() async throws {
+        try await runWithBothImplementations { dataManager, impl in
+            let bookmark = addBookmark(syncStatus: .synced, dataManager: dataManager)
+            let stamp = Date(timeIntervalSince1970: 7000)
+
+            _ = await dataManager.bookmarks.setTags(uuid: bookmark.uuid, tags: ["a"], modified: stamp)
+
+            let updated = dataManager.bookmarks.bookmark(for: bookmark.uuid)
+            XCTAssertEqual(updated?.tagsModified, stamp, "\(impl): tagsModified should persist")
+            XCTAssertEqual(
+                dataManager.bookmarks.bookmarksToSync().map(\.uuid),
+                [bookmark.uuid],
+                "\(impl): tagging should mark the bookmark for sync"
+            )
+        }
+    }
+
+    func testAllTagsOrdersByUsageThenName() async throws {
+        try await runWithBothImplementations { dataManager, impl in
+            let first = addBookmark(time: 1, dataManager: dataManager)
+            let second = addBookmark(time: 2, dataManager: dataManager)
+            let third = addBookmark(time: 3, dataManager: dataManager)
+
+            _ = await dataManager.bookmarks.setTags(uuid: first.uuid, tags: ["beta", "alpha"])
+            _ = await dataManager.bookmarks.setTags(uuid: second.uuid, tags: ["beta"])
+            _ = await dataManager.bookmarks.setTags(uuid: third.uuid, tags: ["beta", "alpha", "zeta"])
+
+            XCTAssertEqual(
+                dataManager.bookmarks.allTags(),
+                ["beta", "alpha", "zeta"],
+                "\(impl): vocabulary should order by usage desc, then name"
+            )
+        }
+    }
+
+    func testPermanentDeleteRemovesTagRows() async throws {
+        try await runWithBothImplementations { dataManager, impl in
+            let bookmark = addBookmark(dataManager: dataManager)
+            _ = await dataManager.bookmarks.setTags(uuid: bookmark.uuid, tags: ["orphan"])
+
+            _ = await dataManager.bookmarks.permanentlyDelete(bookmarks: [bookmark])
+
+            XCTAssertEqual(dataManager.bookmarks.allTags(), [], "\(impl): tag rows should die with the bookmark")
+        }
+    }
+
     // MARK: - Helpers
 
     @discardableResult

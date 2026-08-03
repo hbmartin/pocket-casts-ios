@@ -144,6 +144,70 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// see docs/Social.md and ADR-0005/0006/0007.
     case socialProfiles
 
+    /// Account sync for the highlight fields on bookmarks: excerpt/endTime,
+    /// user trims (trim_modified) and tags (tags/tags_modified) ride
+    /// SyncUserBookmark as fork fields >= 1001 and are restored by full sync.
+    /// Ships DARK — backend milestone B1 must be live in production first
+    /// (remote key `highlight_account_sync` is the kill switch); see ADR-0016.
+    case highlightAccountSync
+
+    /// Eyes-free highlight capture (Highlights program S3): haptic + tiered
+    /// confirmation (sound / spoken "Saved") on every capture, the
+    /// Save Highlight App Intent (Siri phrase, Action Button, Shortcuts) and
+    /// Control Center control.
+    case highlightCapture
+
+    /// The highlight editor (Highlights program S4): trim the excerpt window
+    /// against the transcript with looping preview, free-form tags with
+    /// autocomplete + list filtering, and the synced "review after capture"
+    /// flow. Replaces the title-only edit sheet.
+    case highlightEditor
+
+    /// PKM export (Highlights program S5): Markdown auto-export of highlights
+    /// into a user-picked folder (Obsidian vault, iCloud Drive), plus the
+    /// Get Highlights App Intent for Shortcuts pipelines.
+    case pkmExport
+
+    /// Readwise sync (Highlights program S6): pushes new/edited highlights to
+    /// the user's Readwise account (their gateway to Notion/Roam/etc.). Token
+    /// lives in the Keychain and survives sign-out.
+    case readwiseSync
+
+    /// Custom prompt styles (Highlights program S7): presets + a capped
+    /// free-text preference shaping highlight-family generation only
+    /// (auto-titles, suggested-highlight titles). Output validation is never
+    /// weakened; other generators keep fixed prompts.
+    case highlightPromptStyles
+
+    /// Suggested Highlights (Highlights program S8, ADR-0018): finished
+    /// episodes are scanned on device for salient segments; the top ranks land
+    /// in a review queue where accepting creates a real highlight. One cached
+    /// generation per episode also feeds the Highlights Tour (S9).
+    case suggestedHighlights
+
+    /// The Highlights Tour (Highlights program S9, ADR-0018): DJ-style guided
+    /// playback of an episode's top salient segments by length budget, with
+    /// spoken transitions (pause → speak → seek → resume). Player shelf action.
+    case highlightsTour
+
+    /// Caption burn-in for shared video clips (Highlights program S13):
+    /// cue-level transcript captions rendered onto exported clips via a
+    /// Core Animation overlay on the export composition.
+    case clipCaptions
+
+    /// Person follows (Highlights program S12, ADR-0017): follow a person
+    /// (host/guest) and get a push when they appear on any newly ingested
+    /// episode, catalog-wide. Ships DARK — backend milestone B2 must be live
+    /// in production first (remote key `person_follows` is the kill switch).
+    case personFollows
+
+    /// The Mentioned Entity substrate (Highlights program S10): persists
+    /// entity appearances (feed credits, renamed speakers, transcript
+    /// mentions) under one folding rule so library-wide books/people
+    /// aggregates (S11) and person follows (S12) have real storage instead of
+    /// purgeable caches.
+    case mentionedEntityIndex
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -228,6 +292,28 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             BuildEnvironment.current != .appStore
         case .socialProfiles:
             BuildEnvironment.current != .appStore
+        case .highlightAccountSync:
+            BuildEnvironment.current != .appStore
+        case .highlightCapture:
+            BuildEnvironment.current != .appStore
+        case .highlightEditor:
+            BuildEnvironment.current != .appStore
+        case .pkmExport:
+            BuildEnvironment.current != .appStore
+        case .readwiseSync:
+            BuildEnvironment.current != .appStore
+        case .highlightPromptStyles:
+            BuildEnvironment.current != .appStore
+        case .suggestedHighlights:
+            BuildEnvironment.current != .appStore
+        case .highlightsTour:
+            BuildEnvironment.current != .appStore
+        case .mentionedEntityIndex:
+            BuildEnvironment.current != .appStore
+        case .personFollows:
+            BuildEnvironment.current != .appStore
+        case .clipCaptions:
+            BuildEnvironment.current != .appStore
         }
     }
 
@@ -309,6 +395,28 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             "'Mentioned in this episode' card extracting people, books, products, websites and places from the transcript with tap-to-seek links, generated on device. Medium risk."
         case .socialProfiles:
             "Social identity foundation: opt-in public profiles with an immutable @handle (pca.st/u/<handle>), per-field privacy, and block/mute/report. Ships dark — requires the social backend to be live in production; enabling early will fail. High risk."
+        case .highlightAccountSync:
+            "Syncs highlight excerpts, trims and tags on bookmarks with your account. Requires backend milestone B1 to be live; until then these fields stay device-local while titles keep syncing. Medium risk."
+        case .highlightCapture:
+            "Eyes-free highlight capture: haptic plus a configurable sound or spoken confirmation on every capture, a Save Highlight Siri shortcut (replaces Open Filter) and a Control Center control. Low risk."
+        case .highlightEditor:
+            "Highlight editor: trim the transcript excerpt window with audio preview, add free-form tags with filtering, and optionally review each capture as it happens. Replaces the title-only bookmark edit sheet. Medium risk."
+        case .pkmExport:
+            "Auto-exports highlights as Markdown into a folder you pick (Obsidian vault, iCloud Drive), one file per episode, and adds a Get Highlights action to Shortcuts. Low risk."
+        case .readwiseSync:
+            "Pushes new and edited highlights to your Readwise account (token entered in Settings > Highlights, stored in the Keychain). Low risk."
+        case .highlightPromptStyles:
+            "Choose how AI writes highlight titles: presets (atomic note, question-first, quote-only, punchy) plus an optional free-text style preference. Only affects highlight titling. Low risk."
+        case .suggestedHighlights:
+            "Scans episodes you finish for their best moments on device and suggests them as highlights to keep or dismiss. Battery-policy gated. Medium risk."
+        case .highlightsTour:
+            "Highlights Tour on the player shelf: a guided, optionally narrated jump through an episode's best moments at your chosen length. Needs a transcript. Medium risk."
+        case .mentionedEntityIndex:
+            "Builds a local index of people and books from episode credits, renamed speakers and transcript mentions, powering library-wide directories. Low risk."
+        case .personFollows:
+            "Follow people (hosts, guests) and get notified when they appear on any show the server ingests. Ships dark - requires backend milestone B2 in production; enabling early will fail. Medium risk."
+        case .clipCaptions:
+            "Burns transcript captions into shared video clips when the episode has a transcript. Low risk."
         }
     }
 

@@ -12,13 +12,14 @@ struct MockRequestHandler {
 }
 
 extension MockRequestHandler: RequestHandler {
-    func send(request: URLRequest, completion: @escaping (Data?, URLResponse?, Error?) -> Void) {
+    func send(request: URLRequest, completion: @escaping (Data?, URLResponse?, Error?) -> Void) -> RequestCancellation? {
         do {
             let (data, response) = try handler(request)
             completion(data, response, nil)
         } catch {
             completion(nil, nil, error)
         }
+        return nil
     }
 }
 
