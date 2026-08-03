@@ -23,6 +23,7 @@ final class SettingsTests: XCTestCase {
             .download,
             .transcript,
             .catchMeUp,
+            .highlightsTour,
             .goToPodcast,
             .starEpisode,
             .archive

@@ -151,6 +151,29 @@ final class HighlightExcerptBuilderTests: XCTestCase {
         XCTAssertEqual(window, 10...15)
     }
 
+    func testRecoveredWindowSurvivesDenseWordLevelCues() {
+        // Auto-STT cues can end within fractions of a second of each other:
+        // several ends fall inside the drift tolerance, and only the excerpt's
+        // suffix identifies the true last cue. Recovery must try candidates
+        // nearest the stored endTime, not blindly take the last in tolerance.
+        let transcript = makeTranscript([
+            (10, 10.6, "One "),
+            (10.6, 11.2, "two "),
+            (11.2, 11.8, "three "),
+            (11.8, 12.4, "four "),
+            (12.4, 13.0, "five ")
+        ])
+
+        let window = HighlightExcerptBuilder.recoveredWindow(
+            excerpt: "One two three",
+            endTime: 11.8,
+            cues: transcript.cues,
+            plainText: transcript.plainText
+        )
+
+        XCTAssertEqual(window, 10...11.8)
+    }
+
     func testRecoveredWindowFailsWhenTranscriptChanged() {
         let transcript = makeTranscript([(10, 15, "Completely different words now.")])
 

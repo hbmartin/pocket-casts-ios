@@ -25,7 +25,12 @@ class BookmarkListViewModel: SearchableListViewModel<Bookmark> {
     }
 
     /// When set, only bookmarks carrying this tag are listed (Highlights S4).
-    @Published var tagFilter: String? = nil
+    @Published var tagFilter: String? = nil {
+        didSet {
+            // A narrowed list must not keep invisible rows selected.
+            if isMultiSelecting { deselectAll() }
+        }
+    }
 
     var bookmarks: [Bookmark] {
         let base = isSearching ? filteredItems : items
@@ -34,6 +39,10 @@ class BookmarkListViewModel: SearchableListViewModel<Bookmark> {
             bookmark.tags.contains { $0.caseInsensitiveCompare(tagFilter) == .orderedSame }
         }
     }
+
+    /// Bulk selection (Select All, above/below) operates on the rendered list,
+    /// never on rows hidden by search or the tag filter.
+    override var selectableItems: [Bookmark] { bookmarks }
 
     var bookmarkCount: Int {
         tagFilter == nil ? (isSearching ? numberOfFilteredItems : numberOfItems) : bookmarks.count

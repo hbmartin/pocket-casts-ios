@@ -293,7 +293,10 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
         case .socialProfiles:
             BuildEnvironment.current != .appStore
         case .highlightAccountSync:
-            BuildEnvironment.current != .appStore
+            // Ships dark (release gate): the wire fields need backend B1 in
+            // production, and a full sync with this on against an older backend
+            // has nothing to restore trims/tags from. Beta-menu override only.
+            false
         case .highlightCapture:
             BuildEnvironment.current != .appStore
         case .highlightEditor:
@@ -311,7 +314,9 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
         case .mentionedEntityIndex:
             BuildEnvironment.current != .appStore
         case .personFollows:
-            BuildEnvironment.current != .appStore
+            // Ships dark (release gate): person endpoints 404 until backend B2
+            // is in production. Beta-menu override only.
+            false
         case .clipCaptions:
             BuildEnvironment.current != .appStore
         }

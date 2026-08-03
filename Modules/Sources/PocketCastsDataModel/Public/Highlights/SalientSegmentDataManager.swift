@@ -18,37 +18,51 @@ public struct SalientSegmentDataManager: Sendable {
 
     // MARK: - Reads
 
-    /// The generation for an episode, if a current-version one exists.
+    /// The generation for an episode, if a current-version one exists. Meta
+    /// and segments come from one read transaction so a concurrent
+    /// `replaceGeneration` can't produce a torn pair.
     public func generation(episodeUuid: String) -> (meta: SalientSegmentMetaRecord, segments: [SalientSegmentRecord])? {
-        let meta: SalientSegmentMetaRecord? = dbQueue.read { db in
-            try SalientSegmentMetaRecord
+        let pair: (SalientSegmentMetaRecord, [SalientSegmentRecord])? = dbQueue.read { db in
+            guard let meta = try SalientSegmentMetaRecord
                 .filter(SalientSegmentMetaRecord.Columns.episodeUuid == episodeUuid)
-                .fetchOne(db)
-        } ?? nil
-        guard let meta, meta.generatorVersion == Self.generatorVersion else { return nil }
+                .fetchOne(db),
+                meta.generatorVersion == Self.generatorVersion else { return nil }
 
-        let segments = dbQueue.fetchAll(
-            SalientSegmentRecord
+            let segments = try SalientSegmentRecord
                 .filter(SalientSegmentRecord.Columns.episodeUuid == episodeUuid)
                 .order(SalientSegmentRecord.Columns.rank.asc)
-        )
-        return (meta, segments)
+                .fetchAll(db)
+            return (meta, segments)
+        } ?? nil
+        return pair
     }
 
-    /// Pending suggestions across episodes, newest generation first.
+    /// Pending suggestions across episodes, newest generation first (ties by
+    /// rank so one episode's suggestions stay in quality order).
     public func pendingSuggestions(limit: Int = 50) -> [SalientSegmentRecord] {
-        dbQueue.fetchAll(
-            SalientSegmentRecord
-                .filter(SalientSegmentRecord.Columns.suggestionStatus == SalientSuggestionStatus.pending.rawValue)
-                .order(SalientSegmentRecord.Columns.episodeUuid.asc, SalientSegmentRecord.Columns.rank.asc)
-                .limit(limit)
-        )
+        dbQueue.read { db in
+            // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - ordering by a joined meta column
+            try SalientSegmentRecord.fetchAll(db, sql: """
+                SELECT s.* FROM SalientSegment s
+                JOIN SalientSegmentMeta m ON m.episodeUuid = s.episodeUuid
+                WHERE s.suggestionStatus = ?
+                ORDER BY m.generatedAt DESC, s.rank ASC
+                LIMIT ?
+                """, arguments: [SalientSuggestionStatus.pending.rawValue, limit])
+        } ?? []
     }
 
     /// Episodes with no current-version generation attempt, for the scanner's
-    /// dedupe (a `noSegments` meta row counts as attempted).
+    /// dedupe (a `noSegments` meta row counts as attempted). Meta-only: the
+    /// scanner calls this per episode, so it must not materialize segments.
     public func hasGeneration(episodeUuid: String) -> Bool {
-        generation(episodeUuid: episodeUuid) != nil
+        let count: Int = dbQueue.read { db in
+            try SalientSegmentMetaRecord
+                .filter(SalientSegmentMetaRecord.Columns.episodeUuid == episodeUuid)
+                .filter(SalientSegmentMetaRecord.Columns.generatorVersion == Self.generatorVersion)
+                .fetchCount(db)
+        } ?? 0
+        return count > 0
     }
 
     // MARK: - Writes
@@ -106,6 +120,9 @@ public struct SalientSegmentDataManager: Sendable {
         }
     }
 
+    /// nil `bookmarkUuid` leaves any stored link untouched — a later status
+    /// change must not silently sever an accepted segment's created-bookmark
+    /// audit trail.
     @discardableResult
     public func setStatus(
         _ status: SalientSuggestionStatus,
@@ -114,12 +131,14 @@ public struct SalientSegmentDataManager: Sendable {
         bookmarkUuid: String? = nil
     ) -> Bool {
         dbQueue.write { db in
+            var assignments = [SalientSegmentRecord.Columns.suggestionStatus.set(to: status.rawValue)]
+            if let bookmarkUuid {
+                assignments.append(SalientSegmentRecord.Columns.bookmarkUuid.set(to: bookmarkUuid))
+            }
             try SalientSegmentRecord
                 .filter(SalientSegmentRecord.Columns.episodeUuid == episodeUuid)
                 .filter(SalientSegmentRecord.Columns.rank == rank)
-                .updateAll(db,
-                           SalientSegmentRecord.Columns.suggestionStatus.set(to: status.rawValue),
-                           SalientSegmentRecord.Columns.bookmarkUuid.set(to: bookmarkUuid))
+                .updateAll(db, assignments)
         }
     }
 }

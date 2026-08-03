@@ -523,6 +523,23 @@ final class BookmarkDataManagerTests: DataManagerTestCase {
         }
     }
 
+    func testSetTagsWithStaleStampIsRejectedAtTheWrite() async throws {
+        try await runWithBothImplementations { dataManager, impl in
+            let bookmark = addBookmark(dataManager: dataManager)
+            _ = await dataManager.bookmarks.setTags(uuid: bookmark.uuid, tags: ["newer"],
+                                                    modified: Date(timeIntervalSince1970: 9000))
+
+            let applied = await dataManager.bookmarks.setTags(uuid: bookmark.uuid, tags: ["stale"],
+                                                              modified: Date(timeIntervalSince1970: 1000))
+
+            XCTAssertFalse(applied, "\(impl): a stale stamp must report not-applied")
+            let row = dataManager.bookmarks.bookmark(for: bookmark.uuid)
+            XCTAssertEqual(row?.tags, ["newer"],
+                           "\(impl): whole-set LWW is enforced at the write itself, whatever the caller pre-checked")
+            XCTAssertEqual(row?.tagsModified, Date(timeIntervalSince1970: 9000))
+        }
+    }
+
     func testAllTagsOrdersByUsageThenName() async throws {
         try await runWithBothImplementations { dataManager, impl in
             let first = addBookmark(time: 1, dataManager: dataManager)

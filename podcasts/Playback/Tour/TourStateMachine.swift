@@ -41,6 +41,9 @@ nonisolated struct TourStateMachine: Sendable {
         case speechFinished
         /// No voice for the language — fall back to the earcon for this jump.
         case speechUnavailable
+        /// The OS killed the utterance mid-line (call, Siri, route change).
+        /// Playback is already paused, so suspend and wait for a resume.
+        case speechInterrupted
         /// The 1 Hz supervisor tick (playback time + rate).
         case tick(time: TimeInterval, rate: Double)
         /// A seek the controller didn't issue (scrubber, skip, remote, sync).
@@ -48,7 +51,7 @@ nonisolated struct TourStateMachine: Sendable {
         case userPaused
         case userResumed
         case episodeChanged
-        case cancelRequested
+        case cancelRequested(reason: CancelReason)
     }
 
     enum Effect: Equatable, Sendable {
@@ -120,7 +123,7 @@ nonisolated struct TourStateMachine: Sendable {
             state = .touring(index: 0)
             return [seekEffect(0), .notifyStateChanged]
 
-        case (.speakingIntro, .userPaused):
+        case (.speakingIntro, .userPaused), (.speakingIntro, .speechInterrupted):
             state = .suspended(resume: .atSegmentStart(index: 0))
             return [.stopSpeech, .notifyStateChanged]
 
@@ -153,7 +156,7 @@ nonisolated struct TourStateMachine: Sendable {
             if case .speechUnavailable = event { effects.insert(.playEarcon, at: 0) }
             return effects
 
-        case (.bridging(let nextIndex), .userPaused):
+        case (.bridging(let nextIndex), .userPaused), (.bridging(let nextIndex), .speechInterrupted):
             state = .suspended(resume: .atSegmentStart(index: nextIndex))
             return [.stopSpeech, .notifyStateChanged]
 
@@ -161,7 +164,7 @@ nonisolated struct TourStateMachine: Sendable {
             state = .finished
             return [.pauseAtEnd, .notifyFinished, .notifyStateChanged]
 
-        case (.speakingOutro, .userPaused):
+        case (.speakingOutro, .userPaused), (.speakingOutro, .speechInterrupted):
             state = .finished
             return [.stopSpeech, .notifyFinished, .notifyStateChanged]
 
@@ -191,8 +194,8 @@ nonisolated struct TourStateMachine: Sendable {
             state = .cancelled(reason: .episodeChanged)
             return [.stopSpeech, .notifyStateChanged]
 
-        case (_, .cancelRequested) where isActive:
-            state = .cancelled(reason: .userCancelled)
+        case (_, .cancelRequested(let reason)) where isActive:
+            state = .cancelled(reason: reason)
             return [.stopSpeech, .notifyStateChanged]
 
         default:

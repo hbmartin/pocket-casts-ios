@@ -5615,9 +5615,32 @@ rules:
                   - pattern: $SESSION.data(...)
                   - pattern: $SESSION.download(...)
                   - pattern: $SESSION.upload(...)
-              # A lowercase receiver covers stored/injected URLSession values
-              # without mistaking static helpers such as
+              # An inline-constructed session such as
+              # URLSession(configuration: .ephemeral).data(for:) is transport
+              # regardless of spelling. Matching the receiver via
+              # metavariable-pattern (not a literal URLSession(...).data(...)
+              # pattern) is deliberate: the literal form fails to match when
+              # the call sits under a `try await` prefix.
+              - metavariable-pattern:
+                  metavariable: $SESSION
+                  pattern: URLSession(...)
+          - patterns:
+              - pattern-either:
+                  - pattern: $SESSION.dataTask(...)
+                  - pattern: $SESSION.data(...)
+                  - pattern: $SESSION.download(...)
+                  - pattern: $SESSION.upload(...)
+              # String.data(using:) is encoding and UserDefaults.data(forKey:)
+              # is storage, not transport; URLSession's data methods only take
+              # for:/from:/delegate: labels, so these exclusions cannot hide a
+              # real session call.
+              - pattern-not: "$SESSION.data(using: $ENCODING)"
+              - pattern-not: "$SESSION.data(using: $ENCODING, allowLossyConversion: $LOSSY)"
+              - pattern-not: "$SESSION.data(forKey: $KEY)"
+              # A lowercase receiver path covers stored/injected URLSession
+              # values - including nested ones such as deps.session - without
+              # mistaking static helpers such as
               # AppAttestCanonicalRequest.data(for:) for network transports.
               - metavariable-regex:
                   metavariable: $SESSION
-                  regex: ^(?:self\.)?[a-z_][A-Za-z0-9_]*$
+                  regex: ^(?:self\.)?[a-z_][A-Za-z0-9_]*(?:\.[a-z_][A-Za-z0-9_]*)*$

@@ -114,7 +114,13 @@ final class SyncTaskTests_BookmarkImport: XCTestCase {
 
     // MARK: - Highlight fields (ADR-0016)
 
+    /// The wire fields ship dark; these tests exercise the flag-on behavior.
+    private func enableHighlightAccountSync() {
+        try? FeatureFlagOverrideStore().override(FeatureFlag.highlightAccountSync, withValue: true)
+    }
+
     func testImportAppliesTrimAndTagsToExistingBookmark() async {
+        enableHighlightAccountSync()
         let bookmark = addBookmark(time: 2)
 
         var apiBookmark = Api_SyncUserBookmark.fromBookmark(bookmark)
@@ -134,6 +140,7 @@ final class SyncTaskTests_BookmarkImport: XCTestCase {
     }
 
     func testImportedMachineExcerptFillsButNeverOverwrites() async {
+        enableHighlightAccountSync()
         let bookmark = addBookmark(time: 2)
 
         var first = Api_SyncUserBookmark.fromBookmark(bookmark)
@@ -151,6 +158,7 @@ final class SyncTaskTests_BookmarkImport: XCTestCase {
     }
 
     func testImportedStaleTrimLosesToNewerLocalTrim() async {
+        enableHighlightAccountSync()
         let bookmark = addBookmark(time: 2)
         _ = await bookmarkManager.updateTrim(uuid: bookmark.uuid, excerpt: "newer local", endTime: 30,
                                              trimModified: Date(timeIntervalSince1970: 9000))
@@ -166,6 +174,7 @@ final class SyncTaskTests_BookmarkImport: XCTestCase {
     }
 
     func testImportedBookmarkAddsWithTrimAndTags() async {
+        enableHighlightAccountSync()
         let uuid = UUID().uuidString
         var apiBookmark = Api_SyncUserBookmark(uuid: uuid, episode: "ep-1", podcast: "pod-1")
         apiBookmark.excerpt.value = "arrives trimmed"
@@ -255,6 +264,94 @@ final class SyncTaskTests_BookmarkImport: XCTestCase {
         XCTAssertEqual(imported?.trimModified, trimModified)
         XCTAssertEqual(imported?.tags, ["local", "private"])
         XCTAssertEqual(imported?.tagsModified, tagsModified)
+    }
+
+    func testFullSyncPreservesLocalOnlyHighlightFieldsWithAccountSyncEnabled() async throws {
+        enableHighlightAccountSync()
+        let bookmark = addBookmark(time: 2)
+        let trimModified = Date(timeIntervalSince1970: 5000)
+        let tagsModified = Date(timeIntervalSince1970: 6000)
+        _ = await bookmarkManager.updateTrim(uuid: bookmark.uuid,
+                                             excerpt: "captured while dark",
+                                             endTime: 42,
+                                             trimModified: trimModified,
+                                             syncStatus: .synced)
+        _ = await bookmarkManager.setTags(uuid: bookmark.uuid,
+                                          tags: ["local", "private"],
+                                          modified: tagsModified,
+                                          syncStatus: .synced)
+
+        // The server never received the highlight fields (they were captured
+        // while the flag was dark), so its copy carries none.
+        syncTask.processServerBookmarks([.fromBookmark(bookmark)])
+
+        let imported = bookmarkManager.bookmark(for: bookmark.uuid)
+        XCTAssertEqual(imported?.excerpt, "captured while dark")
+        XCTAssertEqual(imported?.endTime, 42)
+        XCTAssertEqual(imported?.trimModified, trimModified)
+        XCTAssertEqual(imported?.tags, ["local", "private"])
+        XCTAssertEqual(bookmarkManager.bookmarksToSync().map(\.uuid), [bookmark.uuid],
+                       "restored local-only fields must requeue for upload")
+    }
+
+    func testFullSyncAppliesServerNewerHighlightFieldsWithAccountSyncEnabled() async {
+        enableHighlightAccountSync()
+        let bookmark = addBookmark(time: 2)
+        _ = await bookmarkManager.updateTrim(uuid: bookmark.uuid,
+                                             excerpt: "older local",
+                                             endTime: 30,
+                                             trimModified: Date(timeIntervalSince1970: 1000),
+                                             syncStatus: .synced)
+
+        var server = Api_BookmarkResponse.fromBookmark(bookmark)
+        server.excerpt = "newer server"
+        server.endTime = 55
+        server.trimModified = 9_000_000 // 9000s — newer
+        server.tags = ["synced"]
+        server.tagsModified = 9_000_000
+
+        syncTask.processServerBookmarks([server])
+
+        let imported = bookmarkManager.bookmark(for: bookmark.uuid)
+        XCTAssertEqual(imported?.excerpt, "newer server")
+        XCTAssertEqual(imported?.endTime, 55)
+        XCTAssertEqual(imported?.trimModified, Date(timeIntervalSince1970: 9000))
+        XCTAssertEqual(imported?.tags, ["synced"])
+        XCTAssertTrue(bookmarkManager.bookmarksToSync().isEmpty,
+                      "server-sourced fields import as synced")
+    }
+
+    func testFullSyncKeepsNewerLocalTrimOverOlderServerTrimWithAccountSyncEnabled() async {
+        enableHighlightAccountSync()
+        let bookmark = addBookmark(time: 2)
+        let localStamp = Date(timeIntervalSince1970: 9000)
+        _ = await bookmarkManager.updateTrim(uuid: bookmark.uuid,
+                                             excerpt: "newer local",
+                                             endTime: 30,
+                                             trimModified: localStamp,
+                                             syncStatus: .synced)
+
+        var server = Api_BookmarkResponse.fromBookmark(bookmark)
+        server.excerpt = "older server"
+        server.endTime = 15
+        server.trimModified = 1_000_000 // 1000s — older
+
+        syncTask.processServerBookmarks([server])
+
+        let imported = bookmarkManager.bookmark(for: bookmark.uuid)
+        XCTAssertEqual(imported?.excerpt, "newer local")
+        XCTAssertEqual(imported?.endTime, 30)
+        XCTAssertEqual(imported?.trimModified, localStamp)
+    }
+
+    func testFullSyncNeverMarksHighlightTransitionCompleted() {
+        enableHighlightAccountSync()
+        UserDefaults.standard.set(true, forKey: ServerConstants.UserDefaults.highlightAccountSyncCompleted)
+
+        syncTask.processServerBookmarks([.forTesting(uuid: "one")])
+
+        XCTAssertFalse(UserDefaults.standard.bool(forKey: ServerConstants.UserDefaults.highlightAccountSyncCompleted),
+                       "a download-only full sync must re-arm the upload requeue, not complete it")
     }
 
     func testEnablingHighlightAccountSyncRequeuesPreviouslySyncedHighlightsOnce() async throws {

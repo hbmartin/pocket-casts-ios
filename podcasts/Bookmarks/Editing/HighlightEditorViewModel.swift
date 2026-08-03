@@ -79,10 +79,19 @@ final class HighlightEditorViewModel: ObservableObject {
 
     var canTrim: Bool { transcript != nil }
 
+    /// The tag vocabulary, loaded once per sheet: `suggestedTags` runs in every
+    /// body evaluation (each keystroke of the tag field), so it must not hit
+    /// the database each time.
+    private lazy var tagVocabulary: [String] = bookmarkManager.allTags()
+
+    /// Autocomplete: unused vocabulary tags, narrowed by the typed prefix.
     var suggestedTags: [String] {
         let existing = Set(tags.map { $0.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil) })
-        return bookmarkManager.allTags().filter {
-            !existing.contains($0.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil))
+        let typed = tagInput.trimmingCharacters(in: .whitespacesAndNewlines)
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+        return tagVocabulary.filter {
+            let folded = $0.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+            return !existing.contains(folded) && (typed.isEmpty || folded.hasPrefix(typed))
         }
     }
 

@@ -155,44 +155,60 @@ public struct BookmarkDataManager: Sendable {
     /// Machine path only: rows the user has trimmed (`trimModified` set) are left
     /// untouched — the WHERE clause enforces ADR-0016's "user trim beats machine
     /// enrichment" at the write itself, closing the read-check-write race.
+    /// Returns true only when a row was actually written — a trimmed (guarded)
+    /// or missing bookmark is a no-op, and callers must not report enrichment,
+    /// so the file-sync journal entry is skipped with it.
     @discardableResult
     public func updateEnrichment(uuid: String, excerpt: String?, endTime: TimeInterval?, syncStatus: SyncStatus = .notSynced) async -> Bool {
         let syncStatusValue = syncStatus.rawValue
 
+        var updatedRows = 0
         let success = dbQueue.write { db in
-            try BookmarkRow
+            updatedRows = try BookmarkRow
                 .filter(BookmarkRow.Columns.uuid == uuid)
                 .filter(BookmarkRow.Columns.trimModified == nil)
                 .updateAll(db,
                            BookmarkRow.Columns.excerpt.set(to: excerpt),
                            BookmarkRow.Columns.endTime.set(to: endTime),
                            BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
-            try recordFileSyncChange(uuid: uuid, isDelete: false, syncStatus: syncStatus, db: db)
+            if updatedRows > 0 {
+                try recordFileSyncChange(uuid: uuid, isDelete: false, syncStatus: syncStatus, db: db)
+            }
         }
         if !success { FileLog.shared.addMessage("BookmarkDataManager.updateEnrichment failed") }
-        return success
+        return success && updatedRows > 0
     }
 
     /// Writes a user-authored trim of the excerpt window: excerpt text, window end,
     /// and the `trimModified` stamp that makes the window authoritative over any
     /// future machine enrichment (ADR-0016). Never touches the title.
+    /// The WHERE clause enforces trim LWW at the write itself: the two sync
+    /// systems' appliers pre-check the stamp in memory but are not serialized
+    /// against each other, so without it an interleave could write an older
+    /// trim over a newer one. Equal stamps pass (idempotent re-apply).
     @discardableResult
     public func updateTrim(uuid: String, excerpt: String, endTime: TimeInterval, trimModified: Date = Date(), syncStatus: SyncStatus = .notSynced) async -> Bool {
         let syncStatusValue = syncStatus.rawValue
         let trimModifiedInterval = trimModified.timeIntervalSince1970
 
+        var updatedRows = 0
         let success = dbQueue.write { db in
-            try BookmarkRow
+            updatedRows = try BookmarkRow
                 .filter(BookmarkRow.Columns.uuid == uuid)
+                // Half-ms tolerance: stamps cross the wire at ms resolution, so
+                // a sub-ms difference is the same stamp, not a newer local one.
+                .filter(BookmarkRow.Columns.trimModified == nil || BookmarkRow.Columns.trimModified <= trimModifiedInterval + 0.0005)
                 .updateAll(db,
                            BookmarkRow.Columns.excerpt.set(to: excerpt),
                            BookmarkRow.Columns.endTime.set(to: endTime),
                            BookmarkRow.Columns.trimModified.set(to: trimModifiedInterval),
                            BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
-            try recordFileSyncChange(uuid: uuid, isDelete: false, syncStatus: syncStatus, db: db)
+            if updatedRows > 0 {
+                try recordFileSyncChange(uuid: uuid, isDelete: false, syncStatus: syncStatus, db: db)
+            }
         }
         if !success { FileLog.shared.addMessage("BookmarkDataManager.updateTrim failed") }
-        return success
+        return success && updatedRows > 0
     }
 
     // MARK: - Tags
@@ -206,7 +222,21 @@ public struct BookmarkDataManager: Sendable {
         let syncStatusValue = syncStatus.rawValue
         let modifiedInterval = modified.timeIntervalSince1970
 
+        var applied = false
         let success = dbQueue.write { db in
+            // A vanished bookmark (raced permanent delete, mistyped uuid) must
+            // not leave orphan tag rows or a phantom sync-journal entry behind.
+            guard let row = try BookmarkRow.filter(BookmarkRow.Columns.uuid == uuid).fetchOne(db) else { return }
+
+            // Whole-set LWW enforced at the write itself (the tag mirror of
+            // `updateTrim`'s stamp guard): the sync appliers pre-check stamps
+            // against a row read outside this transaction, so without this a
+            // user edit landing in between could be clobbered by an older
+            // remote set. Equal stamps pass (idempotent re-apply); the half-ms
+            // tolerance treats sub-ms drift from the ms wire format as equal.
+            guard (row.tagsModified ?? 0) <= modifiedInterval + 0.0005 else { return }
+            applied = true
+
             _ = try BookmarkTagRow.filter(BookmarkTagRow.Columns.bookmarkUuid == uuid).deleteAll(db)
             for tag in normalized {
                 var row = BookmarkTagRow()
@@ -222,19 +252,21 @@ public struct BookmarkDataManager: Sendable {
             try recordFileSyncChange(uuid: uuid, isDelete: false, syncStatus: syncStatus, db: db)
         }
         if !success { FileLog.shared.addMessage("BookmarkDataManager.setTags failed") }
-        return success
+        return success && applied
     }
 
     /// The user's tag vocabulary for autocomplete: distinct tags across
-    /// non-deleted bookmarks, most-used first, ties alphabetical.
+    /// non-deleted bookmarks, most-used first, ties alphabetical. Grouping is
+    /// case-insensitive to match the tag model ("AI" on one bookmark and "ai"
+    /// on another are one tag); MIN picks a deterministic display casing.
     public func allTags() -> [String] {
         dbQueue.read { db in
             // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - aggregate over a join the query interface can't express tersely
             try String.fetchAll(db, sql: """
-                SELECT bt.tag FROM BookmarkTag bt
+                SELECT MIN(bt.tag) FROM BookmarkTag bt
                 JOIN \(Self.tableName) b ON b.uuid = bt.bookmarkUuid AND b.deleted = 0
-                GROUP BY bt.tag
-                ORDER BY COUNT(*) DESC, bt.tag ASC
+                GROUP BY bt.tag COLLATE NOCASE
+                ORDER BY COUNT(*) DESC, MIN(bt.tag) COLLATE NOCASE ASC
                 """)
         } ?? []
     }

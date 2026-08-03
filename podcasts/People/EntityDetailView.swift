@@ -83,7 +83,10 @@ final class EntityDetailModel: ObservableObject {
         let kind = kind
         let canonicalKey = canonicalKey
 
-        Task { [weak self] in
+        // Detached: an inherited Task would stay on the main actor (this
+        // target's default isolation) and run every GRDB read in these
+        // library-wide aggregates on the main thread.
+        Task.detached { [weak self] in
             let dataManager = DataManager.sharedManager
             let rows = dataManager.mentionedEntities.appearances(kind: kind, canonicalKey: canonicalKey)
 
@@ -145,7 +148,7 @@ final class EntityDetailModel: ObservableObject {
     }
 }
 
-extension MentionedEntityRecord {
+nonisolated extension MentionedEntityRecord {
     /// Display identity: one row per episode+source.
     var rowIdentity: String { "\(episodeUuid)-\(source)" }
 }

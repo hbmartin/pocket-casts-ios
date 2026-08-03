@@ -231,11 +231,23 @@ nonisolated struct SalientSegmentGenerator: Sendable {
             }
         }
 
-        // Clamp the final stop clear of the episode end.
+        // Re-cap after merging: a chain of overlapping candidates can union far
+        // past the per-candidate cap, and an oversized stop defeats the tour
+        // budgets (a "5 minute" tour must not play a 30-minute stop).
+        merged = merged.map { candidate in
+            var candidate = candidate
+            candidate.end = min(candidate.end, candidate.start + maximumSegmentLength)
+            return candidate
+        }
+
+        // Clamp the final stop clear of the episode end, then drop anything the
+        // clamps shrank below the minimum — a blink-and-miss stop isn't worth
+        // touring or suggesting.
         if var last = merged.last {
             last.end = min(last.end, max(duration - endClearance, last.start + 1))
             merged[merged.count - 1] = last
         }
+        merged = merged.filter { $0.end - $0.start >= minimumSegmentLength }
 
         // Rank by salience, cap, then emit chronologically with rank attached.
         let rankOrder = merged.enumerated()

@@ -161,7 +161,7 @@ extension SyncTask {
                     FileLog.shared.addMessage("SyncTask: Process Server Bookmarks - Could not add bookmark: \(String(describing: try? apiBookmark.jsonString()))")
                 } else if let addedUuid {
                     if FeatureFlag.highlightAccountSync.enabled {
-                        await bookmarkManager.applyHighlightFields(from: apiBookmark, uuid: addedUuid)
+                        await bookmarkManager.mergeHighlightFields(from: apiBookmark, local: localBookmark, uuid: addedUuid)
                     } else if let localBookmark {
                         await bookmarkManager.restoreLocalHighlightFields(from: localBookmark, uuid: addedUuid)
                     }
@@ -172,8 +172,12 @@ extension SyncTask {
         }
 
         semaphore.wait()
-        UserDefaults.standard.set(FeatureFlag.highlightAccountSync.enabled,
-                                  forKey: ServerConstants.UserDefaults.highlightAccountSyncCompleted)
+        // A full sync is download-only: nothing local was uploaded, so it can
+        // never complete the highlight-upload transition. Re-arm the one-shot
+        // requeue instead — the next incremental sync re-uploads highlight
+        // fields the server may lack (fresh login, account switch, fields
+        // captured while the flag was dark). Re-upload is stamp-LWW idempotent.
+        UserDefaults.standard.set(false, forKey: ServerConstants.UserDefaults.highlightAccountSyncCompleted)
     }
 }
 
@@ -188,29 +192,61 @@ private extension BookmarkDataManager {
             syncStatus: .synced)
     }
 
-    /// Full-sync restore of the highlight fields (ADR-0016). The row was just
-    /// created, so this is plain application, not merging: a trim stamp restores
-    /// the trimmed window, otherwise a bare excerpt restores machine enrichment;
-    /// a tag stamp restores the tag set.
-    func applyHighlightFields(from apiBookmark: Api_BookmarkResponse, uuid: String) async {
-        if !apiBookmark.excerpt.isEmpty {
-            if apiBookmark.trimModified > 0 {
+    /// Full-sync merge of the highlight fields (ADR-0016). The base row was
+    /// just replaced from the server, but the server copy is not authoritative
+    /// for these fields: fields captured while the flag was dark (or offline)
+    /// were never uploaded, and a plain apply would destroy them. Standard
+    /// stamp LWW instead — a local-newer trim or tag set is restored and marked
+    /// `.notSynced` so the next incremental sync uploads it; otherwise the
+    /// server copy applies as `.synced`.
+    func mergeHighlightFields(from apiBookmark: Api_BookmarkResponse, local: Bookmark?, uuid: String) async {
+        let serverTrimMs = apiBookmark.trimModified
+        let localTrimMs = local?.trimModified.map { Int64(($0.timeIntervalSince1970 * 1000).rounded()) } ?? 0
+
+        if localTrimMs > serverTrimMs,
+           let local, let excerpt = local.excerpt, let trimModified = local.trimModified {
+            await updateTrim(uuid: uuid,
+                             excerpt: excerpt,
+                             endTime: local.endTime ?? local.time,
+                             trimModified: trimModified,
+                             syncStatus: .notSynced)
+        } else if !apiBookmark.excerpt.isEmpty {
+            // end_time is a bare proto3 double, so absent decodes as 0 — fall
+            // back to the bookmark's own timestamp (the incremental path's
+            // rule) rather than storing a nonsense [time, 0] window.
+            let endTime = apiBookmark.endTime > 0 ? apiBookmark.endTime : TimeInterval(apiBookmark.time)
+            if serverTrimMs > 0 {
                 await updateTrim(uuid: uuid,
                                  excerpt: apiBookmark.excerpt,
-                                 endTime: apiBookmark.endTime,
-                                 trimModified: Date(timeIntervalSince1970: TimeInterval(apiBookmark.trimModified) / 1000),
+                                 endTime: endTime,
+                                 trimModified: Date(timeIntervalSince1970: TimeInterval(serverTrimMs) / 1000),
                                  syncStatus: .synced)
             } else {
                 await updateEnrichment(uuid: uuid,
                                        excerpt: apiBookmark.excerpt,
-                                       endTime: apiBookmark.endTime,
+                                       endTime: endTime,
                                        syncStatus: .synced)
             }
+        } else if let local, let excerpt = local.excerpt, local.trimModified == nil {
+            // Machine enrichment the server has no copy of: keep it and let the
+            // next incremental sync upload it rather than re-deriving on device.
+            await updateEnrichment(uuid: uuid,
+                                   excerpt: excerpt,
+                                   endTime: local.endTime,
+                                   syncStatus: .notSynced)
         }
-        if apiBookmark.tagsModified > 0 {
+
+        let serverTagsMs = apiBookmark.tagsModified
+        let localTagsMs = local?.tagsModified.map { Int64(($0.timeIntervalSince1970 * 1000).rounded()) } ?? 0
+        if localTagsMs > serverTagsMs, let local, let tagsModified = local.tagsModified {
+            await setTags(uuid: uuid,
+                          tags: local.tags,
+                          modified: tagsModified,
+                          syncStatus: .notSynced)
+        } else if serverTagsMs > 0 {
             await setTags(uuid: uuid,
                           tags: apiBookmark.tags,
-                          modified: Date(timeIntervalSince1970: TimeInterval(apiBookmark.tagsModified) / 1000),
+                          modified: Date(timeIntervalSince1970: TimeInterval(serverTagsMs) / 1000),
                           syncStatus: .synced)
         }
     }

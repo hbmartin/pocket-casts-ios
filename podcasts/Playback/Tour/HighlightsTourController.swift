@@ -92,12 +92,16 @@ final class HighlightsTourController {
                 spokenTransitions: false
             )
         }
-        dispatch(.cancelRequested)
+        dispatch(.cancelRequested(reason: reason))
     }
 
     /// Called from `progressTimerFired` (1 Hz, runs while backgrounded).
+    /// Ticks are dropped while a seek is landing: on a slow (streaming) seek
+    /// the player still reports the pre-seek position, which the reducer would
+    /// misread as a user jump. Times are mapped into the plan's own timeline.
     func playbackTicked(time: TimeInterval, rate: Double) {
-        dispatch(.tick(time: time, rate: rate))
+        guard pendingSeekTarget == nil, !playbackManager.isSeeking() else { return }
+        dispatch(.tick(time: resolvedReferenceTime(time), rate: rate))
     }
 
     /// Called from `seekTo` for EVERY seek; matches our own pending jumps.
@@ -106,7 +110,7 @@ final class HighlightsTourController {
             self.pendingSeekTarget = nil
             return
         }
-        dispatch(.externalSeek(time: time))
+        dispatch(.externalSeek(time: resolvedReferenceTime(time)))
     }
 
     // MARK: - Preparation
@@ -239,8 +243,14 @@ final class HighlightsTourController {
                 self?.dispatch(.speechFinished)
             case .unavailable:
                 self?.dispatch(.speechUnavailable)
-            case .interrupted, nil:
-                break // a suspend/cancel path already handled the transition
+            case .interrupted:
+                // Either our own .stopSpeech settled it (the machine has moved
+                // on — the reducer ignores this) or the OS killed the utterance
+                // (call/Siri): suspend so a resume can pick the tour back up
+                // instead of wedging in the speech state with ticks stopped.
+                self?.dispatch(.speechInterrupted)
+            case nil:
+                break
             }
         }
     }
@@ -255,6 +265,19 @@ final class HighlightsTourController {
               let mapped = FingerprintTimingManager.shared.playbackTime(
                   forReferenceTime: referenceTime, episodeUuid: episode.uuid) else {
             return referenceTime
+        }
+        return mapped
+    }
+
+    /// Inverse of `resolvedSeekTime`: the plan's stop bounds live on the
+    /// transcript's reference timeline, so player times (ticks, external
+    /// seeks) map back before the reducer compares them.
+    private func resolvedReferenceTime(_ playbackTime: TimeInterval) -> TimeInterval {
+        guard transcriptSource == "provided",
+              case .active = FingerprintTimingManager.shared.state,
+              let mapped = FingerprintTimingManager.shared.referenceTime(
+                  forPlaybackTime: playbackTime, episodeUuid: episode.uuid) else {
+            return playbackTime
         }
         return mapped
     }

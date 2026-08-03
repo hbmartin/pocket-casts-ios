@@ -151,7 +151,64 @@ final class TourStateMachineTests: XCTestCase {
 
         // Terminal states swallow further events.
         XCTAssertTrue(machine.handle(.tick(time: 160, rate: 1)).isEmpty)
-        XCTAssertTrue(machine.handle(.cancelRequested).isEmpty)
+        XCTAssertTrue(machine.handle(.cancelRequested(reason: .userCancelled)).isEmpty)
+    }
+
+    func testCancelRequestedCarriesItsReason() {
+        var machine = spokenMachine()
+        _ = machine.handle(.planReady)
+
+        XCTAssertEqual(machine.handle(.cancelRequested(reason: .episodeChanged)), [.stopSpeech, .notifyStateChanged])
+        XCTAssertEqual(machine.state, .cancelled(reason: .episodeChanged))
+    }
+
+    // MARK: - Speech interruption (call / Siri killed the utterance)
+
+    func testInterruptedIntroSuspendsAndResumesAtFirstStop() {
+        var machine = spokenMachine()
+        _ = machine.handle(.planReady) // speakingIntro
+
+        XCTAssertEqual(machine.handle(.speechInterrupted), [.stopSpeech, .notifyStateChanged])
+        XCTAssertEqual(machine.state, .suspended(resume: .atSegmentStart(index: 0)))
+
+        XCTAssertEqual(machine.handle(.userResumed), [.seek(to: 100, startPlayback: true), .notifyStateChanged])
+        XCTAssertEqual(machine.state, .touring(index: 0))
+    }
+
+    func testInterruptedBridgeSuspendsAndResumesAtNextStop() {
+        var machine = spokenMachine()
+        _ = machine.handle(.planReady)
+        _ = machine.handle(.speechFinished)           // touring(0)
+        _ = machine.handle(.tick(time: 160, rate: 1)) // bridging(1)
+
+        XCTAssertEqual(machine.handle(.speechInterrupted), [.stopSpeech, .notifyStateChanged])
+        XCTAssertEqual(machine.state, .suspended(resume: .atSegmentStart(index: 1)))
+
+        XCTAssertEqual(machine.handle(.userResumed), [.seek(to: 300, startPlayback: true), .notifyStateChanged])
+        XCTAssertEqual(machine.state, .touring(index: 1))
+    }
+
+    func testInterruptedOutroStillFinishesTheTour() {
+        var machine = spokenMachine()
+        _ = machine.handle(.planReady)
+        _ = machine.handle(.speechFinished)
+        _ = machine.handle(.tick(time: 160, rate: 1))
+        _ = machine.handle(.speechFinished)
+        _ = machine.handle(.tick(time: 400, rate: 1))
+        _ = machine.handle(.speechFinished)
+        _ = machine.handle(.tick(time: 800, rate: 1)) // speakingOutro
+
+        XCTAssertEqual(machine.handle(.speechInterrupted), [.stopSpeech, .notifyFinished, .notifyStateChanged])
+        XCTAssertEqual(machine.state, .finished)
+    }
+
+    func testStopSpeechSettleAfterSuspensionIsIgnored() {
+        var machine = spokenMachine()
+        _ = machine.handle(.planReady)
+        _ = machine.handle(.userPaused) // suspended; our own .stopSpeech settles .interrupted late
+
+        XCTAssertTrue(machine.handle(.speechInterrupted).isEmpty)
+        XCTAssertEqual(machine.state, .suspended(resume: .atSegmentStart(index: 0)))
     }
 
     func testPlanFailureReportsAndTerminates() {

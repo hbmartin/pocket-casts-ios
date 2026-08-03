@@ -68,12 +68,17 @@ class MultiSelectListViewModel<Model: Hashable>: ListViewModel<Model> {
 
     // MARK: - Select All / Deselect All
 
+    /// The items bulk-selection operates on. Subclasses whose rendered list is
+    /// narrowed (search, tag filter) override this so Select All can never
+    /// select — and a later Delete never destroys — rows the user can't see.
+    var selectableItems: [Model] { items }
+
     func toggleSelectAll() {
         hasSelectedAll ? deselectAll() : selectAll()
     }
 
     func selectAll() {
-        selectedItems = Set(items)
+        selectedItems = Set(selectableItems)
     }
 
     func deselectAll() {
@@ -83,15 +88,17 @@ class MultiSelectListViewModel<Model: Hashable>: ListViewModel<Model> {
     // MARK: - Select All Before/After
 
     func selectAllBefore(_ item: Model) {
-        guard let index = items.firstIndex(of: item) else { return }
+        let selectable = selectableItems
+        guard let index = selectable.firstIndex(of: item) else { return }
 
-        selectedItems.formUnion(items[...index])
+        selectedItems.formUnion(selectable[...index])
     }
 
     func selectAllAfter(_ item: Model) {
-        guard let index = items.firstIndex(of: item) else { return }
+        let selectable = selectableItems
+        guard let index = selectable.firstIndex(of: item) else { return }
 
-        selectedItems.formUnion(items[index...])
+        selectedItems.formUnion(selectable[index...])
     }
 
     // MARK: - Long Press
@@ -136,7 +143,7 @@ private extension MultiSelectListViewModel {
     func updateCounts() {
         let selected = selectedItems.count
         numberOfSelectedItems = selected
-        hasSelectedAll = selected == items.count
+        hasSelectedAll = selected == selectableItems.count
     }
 
     func validateSelectedItems() {

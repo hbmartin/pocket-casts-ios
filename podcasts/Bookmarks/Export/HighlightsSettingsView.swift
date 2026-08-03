@@ -121,6 +121,11 @@ struct HighlightsSettingsView: View {
                 }
                 .font(style: .body)
             } else {
+                if model.readwiseNeedsReauth, !model.readwiseValidationFailed {
+                    Text(L10n.settingsHighlightsReadwiseReconnect)
+                        .font(style: .caption)
+                        .foregroundStyle(AppTheme.color(for: .support05, theme: theme))
+                }
                 SecureField(L10n.settingsHighlightsReadwiseTokenPlaceholder, text: $model.readwiseTokenInput)
                     .font(style: .body)
                     .autocorrectionDisabled()
@@ -184,6 +189,9 @@ final class HighlightsSettingsViewModel: ObservableObject {
     @Published private(set) var readwiseConnected: Bool
     @Published private(set) var readwiseValidating = false
     @Published private(set) var readwiseValidationFailed = false
+    /// The stored token was rejected server-side: show the token field with an
+    /// explanation instead of a false "Connected" state.
+    @Published private(set) var readwiseNeedsReauth: Bool
 
     private let exporter: HighlightFolderExporter
     private let readwise: ReadwiseSyncManager
@@ -197,7 +205,8 @@ final class HighlightsSettingsViewModel: ObservableObject {
         self.promptStyle = HighlightPromptStyle(rawValue: SettingsStore.appSettings.highlightStylePreset) ?? .standard
         self.promptCustomText = SettingsStore.appSettings.highlightStyleCustom
         self.exportFolderName = exporter.isEnabled ? exporter.folderDisplayName : nil
-        self.readwiseConnected = readwise.isEnabled
+        self.readwiseConnected = readwise.isEnabled && !readwise.needsReauthorization
+        self.readwiseNeedsReauth = readwise.needsReauthorization
     }
 
     func connectReadwise() async {
@@ -207,6 +216,7 @@ final class HighlightsSettingsViewModel: ObservableObject {
         readwiseValidating = false
         if accepted {
             readwiseConnected = true
+            readwiseNeedsReauth = false
             readwiseTokenInput = ""
         } else {
             readwiseValidationFailed = true
@@ -217,6 +227,7 @@ final class HighlightsSettingsViewModel: ObservableObject {
         let removed = await readwise.updateToken(nil)
         if removed {
             readwiseConnected = false
+            readwiseNeedsReauth = false
         } else {
             readwiseValidationFailed = true
         }

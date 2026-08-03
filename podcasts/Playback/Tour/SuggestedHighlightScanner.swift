@@ -189,11 +189,24 @@ struct SuggestedHighlightsManager {
     func accept(_ suggestion: SalientSegmentRecord) async {
         guard let episode = dataManager.findBaseEpisode(uuid: suggestion.episodeUuid) else { return }
 
-        let bookmark = bookmarkManager.add(to: episode, at: suggestion.startTime, title: suggestion.title)
+        // ADR-0018: segment times live in the transcript's own time domain
+        // (recorded in meta) — apply `resolvedSeekTime` semantics when the
+        // suggestion becomes a real bookmark, or an ad offset lands the
+        // highlight seconds away from the actual moment.
+        let mapsReferenceTime = dataManager.salientSegments
+            .generation(episodeUuid: suggestion.episodeUuid)?.meta.transcriptSource == "provided"
+        let startTime = resolvedPlaybackTime(suggestion.startTime,
+                                             mapsReferenceTime: mapsReferenceTime,
+                                             episodeUuid: suggestion.episodeUuid)
+        let endTime = resolvedPlaybackTime(suggestion.endTime,
+                                           mapsReferenceTime: mapsReferenceTime,
+                                           episodeUuid: suggestion.episodeUuid)
+
+        let bookmark = bookmarkManager.add(to: episode, at: startTime, title: suggestion.title)
         guard let bookmark else { return }
 
         if let excerpt = suggestion.excerpt, !excerpt.isEmpty {
-            await bookmarkManager.updateTrim(excerpt: excerpt, endTime: suggestion.endTime, for: bookmark)
+            await bookmarkManager.updateTrim(excerpt: excerpt, endTime: endTime, for: bookmark)
         }
         dataManager.salientSegments.setStatus(.accepted, episodeUuid: suggestion.episodeUuid,
                                               rank: suggestion.rank, bookmarkUuid: bookmark.uuid)
@@ -205,6 +218,23 @@ struct SuggestedHighlightsManager {
         dataManager.salientSegments.setStatus(.dismissed, episodeUuid: suggestion.episodeUuid, rank: suggestion.rank)
         NotificationCenter.postOnMainThread(SuggestedHighlightsUpdated())
         Analytics.track(.suggestedHighlightDismissed, properties: ["episode_uuid": suggestion.episodeUuid])
+    }
+
+    /// Same mapping rule as the tour's `resolvedSeekTime`: only reference-
+    /// timeline transcripts, and only while the episode's fingerprint
+    /// alignment is already active.
+    private func resolvedPlaybackTime(
+        _ referenceTime: TimeInterval,
+        mapsReferenceTime: Bool,
+        episodeUuid: String
+    ) -> TimeInterval {
+        guard mapsReferenceTime,
+              case .active = FingerprintTimingManager.shared.state,
+              let mapped = FingerprintTimingManager.shared.playbackTime(
+                  forReferenceTime: referenceTime, episodeUuid: episodeUuid) else {
+            return referenceTime
+        }
+        return mapped
     }
 }
 

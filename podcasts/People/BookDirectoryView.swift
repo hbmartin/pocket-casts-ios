@@ -86,7 +86,10 @@ final class BookDirectoryModel: ObservableObject {
         hasStartedLoading = true
         let podcastUuid = podcastUuid
         let loadBooks = loadBooks
-        Task { [weak self] in
+        // Detached: an inherited Task (and, under approachable concurrency,
+        // the nonisolated async closure it awaits) would run the library-wide
+        // aggregate query on the main actor.
+        Task.detached { [weak self] in
             let books = await loadBooks(podcastUuid)
             await MainActor.run {
                 self?.books = books
