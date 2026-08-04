@@ -5638,9 +5638,13 @@ rules:
               - pattern-not: "$SESSION.data(using: $ENCODING, allowLossyConversion: $LOSSY)"
               - pattern-not: "$SESSION.data(forKey: $KEY)"
               # A lowercase receiver path covers stored/injected URLSession
-              # values - including nested ones such as deps.session - without
-              # mistaking static helpers such as
-              # AppAttestCanonicalRequest.data(for:) for network transports.
+              # values - including nested ones such as deps.session - and the
+              # second alternative covers singleton-rooted paths such as
+              # NetworkDependencies.shared.session (uppercase type head, at
+              # least one lowercase member segment). One-segment uppercase
+              # receivers stay excluded so static helpers such as
+              # AppAttestCanonicalRequest.data(for:) are not mistaken for
+              # network transports.
               - metavariable-regex:
                   metavariable: $SESSION
-                  regex: ^(?:self\.)?[a-z_][A-Za-z0-9_]*(?:\.[a-z_][A-Za-z0-9_]*)*$
+                  regex: ^(?:(?:self\.)?[a-z_][A-Za-z0-9_]*(?:\.[a-z_][A-Za-z0-9_]*)*|[A-Z][A-Za-z0-9_]*(?:\.[a-z_][A-Za-z0-9_]*)+)$

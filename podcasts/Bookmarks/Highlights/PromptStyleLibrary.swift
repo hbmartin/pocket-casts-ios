@@ -87,8 +87,12 @@ nonisolated enum PromptStyleLibrary {
         if !trimmed.isEmpty {
             // Neutralize the frame itself: a literal marker inside the text
             // would close the fence early and promote the rest to instruction
-            // level. Angle brackets carry no styling meaning, so fold them.
-            let capped = String(trimmed.prefix(customStyleCharacterCap))
+            // level. Angle brackets carry no styling meaning, so fold them —
+            // after NFKC, so full-width look-alikes (＜, U+FF1C) can't smuggle
+            // a marker past the ASCII replacement. (Self-injection only — the
+            // text styles the user's own titles — so no confusable-table
+            // chase beyond compatibility normalization.)
+            let capped = String(trimmed.precomposedStringWithCompatibilityMapping.prefix(customStyleCharacterCap))
                 .replacingOccurrences(of: "<", with: "(")
                 .replacingOccurrences(of: ">", with: ")")
             parts.append("""

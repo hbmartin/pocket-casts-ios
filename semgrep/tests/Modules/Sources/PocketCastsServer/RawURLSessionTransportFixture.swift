@@ -108,3 +108,26 @@ struct EvasiveRawURLSessionTransportFixture {
         try AppAttestCanonicalRequest.data(for: request)
     }
 }
+
+enum NetworkDependenciesFixture {
+    static let shared = NetworkDependenciesFixtureValue(session: .shared)
+}
+
+struct NetworkDependenciesFixtureValue {
+    let session: URLSession
+}
+
+struct SingletonPathRawURLSessionTransportFixture {
+    func bypassesTransportViaSingletonPath(request: URLRequest) async throws -> Data {
+        // ruleid: pocketcasts.server-module-raw-urlsession-transport
+        let (data, _) = try await NetworkDependenciesFixture.shared.session.data(for: request)
+        return data
+    }
+
+    func bypassesTransportViaSingletonPathTask(request: URLRequest, completion: @escaping @Sendable (Data?) -> Void) {
+        // ruleid: pocketcasts.server-module-raw-urlsession-transport
+        NetworkDependenciesFixture.shared.session.dataTask(with: request) { data, _, _ in
+            completion(data)
+        }.resume()
+    }
+}

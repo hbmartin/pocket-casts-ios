@@ -69,6 +69,11 @@ struct HighlightEditorView: View {
         .task { await model.sheetAppeared() }
         .onChange(of: model.selectionStart) { _, newValue in clipTime.start = newValue }
         .onChange(of: model.selectionEnd) { _, newValue in clipTime.end = newValue }
+        // The manager can stop on its own (teardown, interruption); mirror its
+        // state so the button never shows active playback over silence.
+        .onReceive(ClipPlaybackManager.shared.$isPlaying) { playing in
+            if isPlaying != playing { isPlaying = playing }
+        }
         .onDisappear { ClipPlaybackManager.shared.stop() }
     }
 
@@ -144,7 +149,8 @@ struct HighlightEditorView: View {
         }
         guard let episode = model.episode,
               let start = model.playbackTime(forTranscriptTime: model.selectionStart),
-              let end = model.playbackTime(forTranscriptTime: model.selectionEnd) else {
+              let end = model.playbackTime(forTranscriptTime: model.selectionEnd),
+              start.isFinite, end.isFinite, end > start else {
             isPlaying = false
             return
         }
@@ -152,6 +158,12 @@ struct HighlightEditorView: View {
         clipTime.end = end
         clipTime.playback = start
         ClipPlaybackManager.shared.play(episode: episode, clipTime: ObservedObject(wrappedValue: clipTime))
+        // play() bails without touching its state when no player item is
+        // available (nothing to observe in that case) — don't leave the
+        // button showing playback that never started.
+        if !ClipPlaybackManager.shared.isPlaying {
+            isPlaying = false
+        }
     }
 
     private func offsetBinding(_ binding: Binding<TimeInterval>) -> Binding<TimeInterval> {

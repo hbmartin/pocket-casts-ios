@@ -105,7 +105,7 @@ The main iOS app lives in `podcasts/` with:
 
 ## Data Access - DataManager (Singleton Facade)
 
-All data operations go through `DataManager.sharedManager`:
+All data operations go through the `DataManager` facade — never raw SQL or direct GRDB access outside the DataModel module. Use an injected `DataManager` where the surrounding code already provides one (module code, sync engines, tests with isolated stores); reach for `DataManager.sharedManager` only where no injected instance exists:
 
 ```swift
 // Located at: Modules/DataModel/Sources/PocketCastsDataModel/Public/DataManager.swift

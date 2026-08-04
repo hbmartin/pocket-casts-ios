@@ -37,9 +37,11 @@ final class ReadwiseSyncManager {
     /// readwise.io). Pushes stay paused — retrying a dead token on every
     /// capture would just grow the queue — until a fresh token is saved, and
     /// the settings screen shows the reconnect state instead of "Connected".
-    private(set) var needsReauthorization: Bool {
-        get { UserDefaults.standard.bool(forKey: Self.authFailedKey) }
-        set { UserDefaults.standard.set(newValue, forKey: Self.authFailedKey) }
+    /// Published (stored, mirrored to UserDefaults) so an already-open
+    /// settings screen sees a mid-session revocation instead of a stale
+    /// "Connected".
+    @Published private(set) var needsReauthorization = UserDefaults.standard.bool(forKey: ReadwiseSyncManager.authFailedKey) {
+        didSet { UserDefaults.standard.set(needsReauthorization, forKey: Self.authFailedKey) }
     }
 
     /// Idempotent; called at app start (flag-gated) and after a token is saved.

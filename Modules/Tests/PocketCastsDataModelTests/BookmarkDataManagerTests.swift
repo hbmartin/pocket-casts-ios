@@ -558,6 +558,24 @@ final class BookmarkDataManagerTests: DataManagerTestCase {
         }
     }
 
+    func testAllTagsMergesCaseAndDiacriticEquivalents() async throws {
+        try await runWithBothImplementations { dataManager, impl in
+            let first = addBookmark(time: 1, dataManager: dataManager)
+            let second = addBookmark(time: 2, dataManager: dataManager)
+            let third = addBookmark(time: 3, dataManager: dataManager)
+
+            _ = await dataManager.bookmarks.setTags(uuid: first.uuid, tags: ["Café"])
+            _ = await dataManager.bookmarks.setTags(uuid: second.uuid, tags: ["cafe"])
+            _ = await dataManager.bookmarks.setTags(uuid: third.uuid, tags: ["cafe", "unique"])
+
+            XCTAssertEqual(
+                dataManager.bookmarks.allTags(),
+                ["Café", "unique"],
+                "\(impl): case- and diacritic-equivalent tags are one vocabulary entry with summed usage"
+            )
+        }
+    }
+
     func testPermanentDeleteRemovesTagRows() async throws {
         try await runWithBothImplementations { dataManager, impl in
             let bookmark = addBookmark(dataManager: dataManager)

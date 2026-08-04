@@ -211,6 +211,13 @@ private extension BookmarkDataManager {
                              trimModified: trimModified,
                              syncStatus: .notSynced)
         } else if !apiBookmark.excerpt.isEmpty {
+            // Gating on the excerpt (not trim_modified) is deliberate: these
+            // response fields are bare proto3, so an empty excerpt is
+            // indistinguishable from an absent one, and a trim always carries
+            // a nonempty excerpt (updateTrim takes a non-optional string and
+            // the editor derives it from transcript cues). A stamp arriving
+            // without an excerpt would therefore be a server-side bug, and
+            // honoring it here would clobber a real local excerpt with "".
             // end_time is a bare proto3 double, so absent decodes as 0 — fall
             // back to the bookmark's own timestamp (the incremental path's
             // rule) rather than storing a nonsense [time, 0] window.

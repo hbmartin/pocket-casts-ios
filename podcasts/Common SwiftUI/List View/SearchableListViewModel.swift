@@ -19,6 +19,11 @@ class SearchableListViewModel<Model: SearchableDataModel>: MultiSelectListViewMo
     @Published private(set) var filteredItems: [Model] = [] {
         didSet {
             numberOfFilteredItems = filteredItems.count
+            // Item churn (sync, edits) or a narrower query can hide selected
+            // rows mid-multi-select; they must not stay selected.
+            if isMultiSelecting {
+                selectableItemsChanged()
+            }
         }
     }
 
@@ -45,8 +50,11 @@ class SearchableListViewModel<Model: SearchableDataModel>: MultiSelectListViewMo
     /// Reset the search state
     func cancelSearch() {
         searchText = ""
-        filteredItems = []
+        // Order matters: leave search mode before clearing the results, so the
+        // filteredItems observer sees the full list as selectable and doesn't
+        // wipe a selection that just became fully visible again.
         isSearching = false
+        filteredItems = []
     }
 
     override func isLast(item: Model) -> Bool {

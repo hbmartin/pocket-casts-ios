@@ -93,7 +93,11 @@ nonisolated enum HighlightExcerptBuilder {
         // Reach back cue-by-cue until a sentence start, a silence boundary, or the
         // leading cap. The cap is checked against the candidate's start, so a cue
         // that begins before the cap is excluded even if it straddles it — the
-        // wall-clock cap beats taking a straddling cue whole.
+        // wall-clock cap beats taking a straddling cue whole. The SEED cues are
+        // deliberately exempt: a single degenerate cue long enough to start
+        // before the cap while overlapping the base window is taken whole,
+        // because dropping it could empty the window and lose the excerpt
+        // entirely — a long excerpt degrades better than none.
         var start = firstSeed
         while start > ordered.startIndex {
             let previous = ordered.index(before: start)

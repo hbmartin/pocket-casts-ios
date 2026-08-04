@@ -1,3 +1,4 @@
+import GRDB
 @testable import PocketCastsDataModel
 @testable import PocketCastsUtils
 import XCTest
@@ -82,6 +83,28 @@ final class SalientSegmentDataManagerTests: DataManagerTestCase {
             let pending = dataManager.salientSegments.pendingSuggestions()
             XCTAssertEqual(pending.map(\.rank), [1, 2],
                            "\(impl): dismissed rows never resurface as pending")
+        }
+    }
+
+    func testPendingSuggestionsExcludeStaleGenerations() throws {
+        try runWithBothImplementations { dataManager, impl in
+            dataManager.salientSegments.replaceGeneration(
+                episodeUuid: "ep-stale", podcastUuid: nil, transcriptSource: "generated",
+                generatedAt: Date(), segments: [segment(rank: 0)], markPendingTop: 1
+            )
+            XCTAssertEqual(dataManager.salientSegments.pendingSuggestions().count, 1, "\(impl)")
+
+            // Simulate a later app version bumping the generator: the meta row
+            // keeps the old version until the episode regenerates lazily.
+            _ = dataManager.dbQueue.write { db in
+                _ = try SalientSegmentMetaRecord
+                    .filter(SalientSegmentMetaRecord.Columns.episodeUuid == "ep-stale")
+                    .updateAll(db, SalientSegmentMetaRecord.Columns.generatorVersion
+                        .set(to: SalientSegmentDataManager.generatorVersion - 1))
+            }
+
+            XCTAssertTrue(dataManager.salientSegments.pendingSuggestions().isEmpty,
+                          "\(impl): stale-generation rows must not surface — accept could no longer map their times")
         }
     }
 
