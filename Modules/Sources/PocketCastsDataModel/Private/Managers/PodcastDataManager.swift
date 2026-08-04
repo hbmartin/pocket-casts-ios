@@ -341,10 +341,6 @@ class PodcastDataManager {
         var unsyncedPodcasts = [Podcast]()
         cachedPodcastsQueue.sync {
             for podcast in cachedPodcasts.values {
-                // Local-feed podcasts never account-sync: their hash UUIDs are meaningless
-                // to the Pocket Casts servers (FileSync is their cross-device mechanism).
-                if podcast.isLocalFeedSourced { continue }
-
                 if podcast.syncStatus == SyncStatus.notSynced.rawValue {
                     unsyncedPodcasts.append(podcast)
                 }
@@ -375,36 +371,6 @@ class PodcastDataManager {
 
             return podcast
         }
-    }
-
-    /// Looks a podcast up by its feed URL, tolerating trivial differences (scheme/host case,
-    /// trailing slash). `podcastUrl` is nullable and sparse on legacy rows, so a nil result
-    /// only means no row *with a known feed URL* matches. Scans the in-memory cache, which
-    /// mirrors the whole table.
-    func find(feedURL: String, dbQueue: GRDBQueue) -> Podcast? {
-        guard let target = Self.normalizedFeedURL(feedURL) else { return nil }
-
-        return cachedPodcastsQueue.sync {
-            cachedPodcasts.values.first { podcast in
-                guard let podcastUrl = podcast.podcastUrl else { return false }
-                return Self.normalizedFeedURL(podcastUrl) == target
-            }
-        }
-    }
-
-    private static func normalizedFeedURL(_ urlString: String) -> String? {
-        let trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return nil }
-        guard var components = URLComponents(string: trimmed) else { return trimmed }
-        components.user = nil
-        components.password = nil
-        components.scheme = components.scheme?.lowercased()
-        components.host = components.host?.lowercased()
-        var normalized = components.string ?? trimmed
-        if normalized.hasSuffix("/") {
-            normalized = String(normalized.dropLast())
-        }
-        return normalized
     }
 
     func searchPodcasts(term: String, dbQueue: GRDBQueue) -> [Podcast] {

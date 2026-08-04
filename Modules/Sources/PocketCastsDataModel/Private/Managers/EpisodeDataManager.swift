@@ -182,24 +182,16 @@ final class EpisodeDataManager: Sendable {
         loadMultiple(query: query, values: arguments, dbQueue: dbQueue)
     }
 
-    /// `excludingLocalFeedPodcasts` is true for account sync (hash UUIDs must never
-    /// reach the Pocket Casts servers) and false for FileSync seeding, where local-feed
-    /// episodes are exactly the point.
-    func unsyncedEpisodes(limit: Int, excludingLocalFeedPodcasts: Bool, dbQueue: GRDBQueue) -> [Episode] {
-        var request = Episode
-            .filter(
-                Episode.Columns.playingStatusModified > 0
-                    || Episode.Columns.playedUpToModified > 0
-                    || Episode.Columns.durationModified > 0
-                    || Episode.Columns.keepEpisodeModified > 0
-                    || Episode.Columns.archivedModified > 0
-            )
-        if excludingLocalFeedPodcasts {
-            request = request.filter(sql: "podcastUuid NOT IN (SELECT uuid FROM SJPodcast WHERE refreshSource = ?)",
-                                     arguments: [PodcastRefreshSource.localFeed.rawValue])
-        }
-        return dbQueue.fetchAll(
-            request
+    func unsyncedEpisodes(limit: Int, dbQueue: GRDBQueue) -> [Episode] {
+        dbQueue.fetchAll(
+            Episode
+                .filter(
+                    Episode.Columns.playingStatusModified > 0
+                        || Episode.Columns.playedUpToModified > 0
+                        || Episode.Columns.durationModified > 0
+                        || Episode.Columns.keepEpisodeModified > 0
+                        || Episode.Columns.archivedModified > 0
+                )
                 .order(Episode.Columns.publishedDate.desc, Episode.Columns.addedDate.desc)
                 .limit(limit)
         )

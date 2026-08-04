@@ -14,7 +14,7 @@ public enum TranscriptionStatus: Int32, Sendable, CaseIterable {
 
 /// Row record for the `EpisodeTranscription` table. One row per episode; the row is the
 /// durable job/state record for locally generated diarized transcriptions. Device-local
-/// only — no `sync_status`, no FileSyncJournal writes. Date columns are raw
+/// only — no `sync_status`, no sync writes of any kind. Date columns are raw
 /// `timeIntervalSince1970` Doubles, matching the other row records.
 @GRDBRecord(table: "EpisodeTranscription")
 public struct EpisodeTranscriptionRecord: Equatable, Sendable {

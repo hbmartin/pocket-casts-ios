@@ -21,7 +21,6 @@ public class DataManager {
     private let folderManager = FolderDataManager()
     private let upNextHistoryManager = UpNextHistoryManager()
     private let folderHistoryManager = FolderHistoryManager()
-    let fileSyncJournalManager = FileSyncJournalDataManager()
 
     public let autoAddCandidates: AutoAddCandidatesDataManager
     public let bookmarks: BookmarkDataManager
@@ -103,7 +102,7 @@ public class DataManager {
         upNextManager.setup(dbQueue: dbQueue)
 
         autoAddCandidates = AutoAddCandidatesDataManager(dbQueue: dbQueue)
-        bookmarks = BookmarkDataManager(dbQueue: dbQueue, fileSyncJournalManager: fileSyncJournalManager)
+        bookmarks = BookmarkDataManager(dbQueue: dbQueue)
         ratings = RatingsDataManager()
         networkDataUsageManager = NetworkDataUsageManager(dbQueue: dbQueue)
         transcriptions = TranscriptionDataManager(dbQueue: dbQueue)
@@ -277,35 +276,30 @@ public class DataManager {
     public func saveUpNextRemove(episodeUuid: String) {
         dbQueue.inTransaction { db in
             try upNextChangesManager.saveUpNextRemove(episodeUuid: episodeUuid, db: db)
-            try journalFileSyncUpNext(op: .upNextRemove, episodeUuid: episodeUuid, db: db)
         }
     }
 
     public func saveUpNextAddToTop(episodeUuid: String) {
         dbQueue.inTransaction { db in
             try upNextChangesManager.saveUpNextAddToTop(episodeUuid: episodeUuid, db: db)
-            try journalFileSyncUpNext(op: .upNextPlayNext, episodeUuid: episodeUuid, db: db)
         }
     }
 
     public func saveUpNextAddToBottom(episodeUuid: String) {
         dbQueue.inTransaction { db in
             try upNextChangesManager.saveUpNextAddToBottom(episodeUuid: episodeUuid, db: db)
-            try journalFileSyncUpNext(op: .upNextPlayLast, episodeUuid: episodeUuid, db: db)
         }
     }
 
     public func saveUpNextAddNowPlaying(episodeUuid: String) {
         dbQueue.inTransaction { db in
             try upNextChangesManager.saveUpNextAddNowPlaying(episodeUuid: episodeUuid, db: db)
-            try journalFileSyncUpNext(op: .upNextPlayNow, episodeUuid: episodeUuid, db: db)
         }
     }
 
     public func saveReplace(episodeList: [String]) {
         dbQueue.inTransaction { db in
             try upNextChangesManager.saveReplace(episodeList: episodeList, db: db)
-            try journalFileSyncUpNext(op: .upNextReplace, episodeUuid: nil, episodeUuids: episodeList, db: db)
         }
     }
 
@@ -341,13 +335,6 @@ public class DataManager {
 
     public func findPodcast(uuid: String, includeUnsubscribed: Bool = false) -> Podcast? {
         podcastManager.find(uuid: uuid, includeUnsubscribed: includeUnsubscribed, dbQueue: dbQueue)
-    }
-
-    /// Finds a podcast (subscribed or not) by its feed URL, tolerating trivial URL
-    /// differences. Used to dedup add-by-feed subscriptions against existing rows,
-    /// whichever refresh source owns them.
-    public func findPodcast(feedURL: String) -> Podcast? {
-        podcastManager.find(feedURL: feedURL, dbQueue: dbQueue)
     }
 
     public func allUnsubscribedPodcastUuids() -> [String] {
@@ -409,7 +396,6 @@ public class DataManager {
     public func delete(podcast: Podcast) {
         let success = dbQueue.inTransaction { db in
             try podcastManager.delete(podcast: podcast, db: db)
-            try journalFileSyncDelete(entityType: .podcast, uuid: podcast.uuid, db: db)
         }
         if success {
             podcastManager.cachePodcasts(dbQueue: dbQueue)
@@ -421,7 +407,6 @@ public class DataManager {
         var saved = podcast
         let success = dbQueue.inTransaction { db in
             saved = try podcastManager.save(podcast: podcast, db: db)
-            try journalFileSyncUpsert(entityType: .podcast, uuid: saved.uuid, changedFields: [], db: db)
         }
         if success {
             podcastManager.cachePodcasts(dbQueue: dbQueue)
@@ -617,15 +602,8 @@ public class DataManager {
         episodeManager.findLatestEpisodes(podcast: podcast, limit: limit, dbQueue: dbQueue)
     }
 
-    /// Feeds account sync: local-feed podcasts are excluded so their hash UUIDs never
-    /// reach the Pocket Casts servers.
     public func unsyncedEpisodes(limit: Int) -> [Episode] {
-        episodeManager.unsyncedEpisodes(limit: limit, excludingLocalFeedPodcasts: true, dbQueue: dbQueue)
-    }
-
-    /// Feeds FileSync seeding, where local-feed episodes are exactly the point.
-    public func unsyncedEpisodesIncludingLocalFeed(limit: Int) -> [Episode] {
-        episodeManager.unsyncedEpisodes(limit: limit, excludingLocalFeedPodcasts: false, dbQueue: dbQueue)
+        episodeManager.unsyncedEpisodes(limit: limit, dbQueue: dbQueue)
     }
 
     public func episodesWithListenHistory(limit: Int) -> [Episode] {
@@ -753,9 +731,6 @@ public class DataManager {
             } else if let episode = episode as? UserEpisode {
                 try userEpisodeManager.saveEpisode(playedUpTo: playedUpTo, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
             }
-            if updateSyncFlag {
-                try journalFileSyncEpisodeChange(episode: episode, changedFields: ["playedUpTo"], db: db)
-            }
         }
     }
 
@@ -766,18 +741,12 @@ public class DataManager {
             } else if let episode = episode as? UserEpisode {
                 try userEpisodeManager.saveEpisode(playingStatus: playingStatus, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
             }
-            if updateSyncFlag {
-                try journalFileSyncEpisodeChange(episode: episode, changedFields: ["playingStatus"], db: db)
-            }
         }
     }
 
     public func saveEpisode(archived: Bool, episode: Episode, updateSyncFlag: Bool) {
         dbQueue.inTransaction { db in
             try episodeManager.saveEpisode(archived: archived, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
-            if updateSyncFlag {
-                try journalFileSyncEpisodeChange(episode: episode, changedFields: ["archived"], db: db)
-            }
         }
     }
 
@@ -856,9 +825,6 @@ public class DataManager {
     public func saveEpisode(starred: Bool, starredModified: Int64? = nil, episode: Episode, updateSyncFlag: Bool) {
         dbQueue.inTransaction { db in
             try episodeManager.saveEpisode(starred: starred, starredModified: starredModified, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
-            if updateSyncFlag {
-                try journalFileSyncEpisodeChange(episode: episode, changedFields: ["starred"], db: db)
-            }
         }
     }
 
@@ -868,9 +834,6 @@ public class DataManager {
                 try episodeManager.saveEpisode(duration: duration, episode: episode, updateSyncFlag: updateSyncFlag, db: db)
             } else if let episode = episode as? UserEpisode {
                 try userEpisodeManager.saveEpisode(duration: duration, episode: episode, db: db)
-            }
-            if updateSyncFlag {
-                try journalFileSyncEpisodeChange(episode: episode, changedFields: ["duration"], db: db)
             }
         }
     }
@@ -1180,7 +1143,6 @@ public class DataManager {
         var saved = playlist
         dbQueue.inTransaction { db in
             saved = try playlistManager.save(playlist: playlist, db: db)
-            try journalFileSyncUpsert(entityType: .playlist, uuid: saved.uuid, changedFields: [], db: db)
         }
         return saved
     }
@@ -1197,7 +1159,6 @@ public class DataManager {
     public func delete(playlist: EpisodeFilter) {
         dbQueue.inTransaction { db in
             try playlistManager.delete(playlist: playlist, db: db)
-            try journalFileSyncDelete(entityType: .playlist, uuid: playlist.uuid, db: db)
         }
     }
 
@@ -1253,7 +1214,6 @@ public class DataManager {
         var saved = folder
         let success = dbQueue.inTransaction { db in
             saved = try folderManager.save(folder: folder, db: db)
-            try journalFileSyncUpsert(entityType: .folder, uuid: saved.uuid, changedFields: [], db: db)
         }
         if success {
             folderManager.cacheFolders(dbQueue: dbQueue)
@@ -1307,7 +1267,6 @@ public class DataManager {
             } else {
                 try folderManager.delete(folderUuid: folderUuid, db: db)
             }
-            try journalFileSyncDelete(entityType: .folder, uuid: folderUuid, db: db)
         }
         if success {
             podcastManager.cachePodcasts(dbQueue: dbQueue)

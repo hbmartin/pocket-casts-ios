@@ -19,10 +19,11 @@ class DatabaseHelper {
             try db.executeUpdate("ALTER TABLE SJPodcast ADD COLUMN isExplicit INTEGER DEFAULT 0;", values: nil)
         },
         // File-based sync (local-first): the change journal + per-device
-        // cursors that back PocketCastsFileSync, and the folder-identity
-        // columns that let SJUserEpisode rows reference files living in the
-        // user's sync folder (identityState: 0 = legacy app-local file,
-        // 1 = provisional path-keyed identity, 2 = canonical content-hash).
+        // cursors that backed the since-removed sync engine (dropped again by
+        // migration 90), and the folder-identity columns that let SJUserEpisode
+        // rows reference files living in the user's uploads folder — still in
+        // use (identityState: 0 = legacy app-local file, 1 = provisional
+        // path-keyed identity, 2 = canonical content-hash).
         SchemaMigration(toVersion: 75) { db in
             try db.executeUpdate("""
             CREATE TABLE FileSyncJournal (
@@ -61,8 +62,8 @@ class DatabaseHelper {
                 values: nil)
         },
         // Local-first ingest: which regime owns refreshing each podcast (0 = Pocket Casts
-        // refresh servers, 1 = on-device feed fetch/parse). Local-feed podcasts use
-        // deterministic hash UUIDs and are excluded from account sync.
+        // refresh servers, 1 = on-device feed fetch/parse). Reversed by migration 90,
+        // which purges the on-device rows and drops the column.
         SchemaMigration(toVersion: 76) { db in
             try db.executeUpdate("ALTER TABLE SJPodcast ADD COLUMN refreshSource INTEGER DEFAULT 0;", values: nil)
         },
@@ -453,6 +454,56 @@ class DatabaseHelper {
             CREATE INDEX IF NOT EXISTS mentioned_entity_episode
             ON MentionedEntity (episodeUuid, source);
             """, values: nil)
+        },
+        // Local-first reversal: the on-device feed pipeline and the file-sync
+        // engine are removed. Purge every podcast the removed pipeline owned
+        // (refreshSource = 1 — hash UUIDs the servers never issued, so they can
+        // never refresh again) with its dependents, then drop the column and
+        // the file-sync journal/cursor tables. Rows in the self-healing
+        // transcript/search index tables (EpisodeTranscription, Transcript*,
+        // SalientSegment, MentionedEntity) are deliberately left to their own
+        // eviction, as are show-notes URLCache entries (100 MB LRU).
+        SchemaMigration(toVersion: 90) { db in
+            try db.executeUpdate("""
+            DELETE FROM SJPlaylistEpisode
+            WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1)
+               OR episodeUuid IN (SELECT uuid FROM SJEpisode
+                                  WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1));
+            """, values: nil)
+            try db.executeUpdate("""
+            DELETE FROM PlaylistEpisodeHistory
+            WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1)
+               OR episodeUuid IN (SELECT uuid FROM SJEpisode
+                                  WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1));
+            """, values: nil)
+            try db.executeUpdate("""
+            DELETE FROM UpNextChanges
+            WHERE uuid IN (SELECT uuid FROM SJEpisode
+                           WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1));
+            """, values: nil)
+            try db.executeUpdate("""
+            DELETE FROM AutoAddCandidates
+            WHERE podcast_uuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1);
+            """, values: nil)
+            try db.executeUpdate("""
+            DELETE FROM BookmarkTag
+            WHERE bookmarkUuid IN (SELECT uuid FROM Bookmark
+                                   WHERE podcast_uuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1));
+            """, values: nil)
+            try db.executeUpdate("""
+            DELETE FROM Bookmark
+            WHERE podcast_uuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1);
+            """, values: nil)
+            try db.executeUpdate("""
+            DELETE FROM SJEpisode
+            WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1);
+            """, values: nil)
+            try db.executeUpdate("DELETE FROM SJPodcast WHERE refreshSource = 1;", values: nil)
+
+            try db.executeUpdate("ALTER TABLE SJPodcast DROP COLUMN refreshSource;", values: nil)
+
+            try db.executeUpdate("DROP TABLE IF EXISTS FileSyncJournal;", values: nil)
+            try db.executeUpdate("DROP TABLE IF EXISTS FileSyncCursor;", values: nil)
         }
     ]
 

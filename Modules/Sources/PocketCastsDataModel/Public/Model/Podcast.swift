@@ -64,10 +64,6 @@ public struct Podcast: Identifiable, Equatable, Hashable, Sendable {
     public var isPrivate = false
     public var isExplicit = false
     public var fundingURL: String?
-    // Which regime owns refreshing this podcast (see PodcastRefreshSource; 0 = server).
-    // Local-feed podcasts use deterministic hash UUIDs and never account-sync.
-    // (`0 as Int32` literal: the GRDBRecord macro infers the column type from it.)
-    public var refreshSource = 0 as Int32
 
     @GRDBIgnore
     public var settings = PodcastSettings.defaults
@@ -151,26 +147,6 @@ public struct Podcast: Identifiable, Equatable, Hashable, Sendable {
         podcast.uuid = "8a778760-a1de-0138-e66a-0acc26574db2"
 
         return podcast
-    }
-}
-
-/// Which regime owns refreshing a podcast's feed. `server` podcasts refresh via
-/// refresh.pocketcasts.com and sync with the user's account; `localFeed` podcasts are
-/// fetched and parsed on device, keyed by deterministic hash UUIDs, and are excluded
-/// from account sync (FileSync is their cross-device mechanism).
-public enum PodcastRefreshSource: Int32, Codable, Sendable, CaseIterable {
-    case server = 0
-    case localFeed = 1
-}
-
-extension Podcast {
-    public var feedRefreshSource: PodcastRefreshSource {
-        get { PodcastRefreshSource(rawValue: refreshSource) ?? .server }
-        set { refreshSource = newValue.rawValue }
-    }
-
-    public var isLocalFeedSourced: Bool {
-        feedRefreshSource == .localFeed
     }
 }
 
