@@ -10,6 +10,24 @@ import SwiftProtobuf
 public struct ServerPerson: Sendable, Equatable {
     public let id: Int64
     public let displayName: String
+
+    public init(id: Int64, displayName: String) {
+        self.id = id
+        self.displayName = displayName
+    }
+
+    /// The single person whose folded display name exactly matches, or nil.
+    ///
+    /// The search endpoint is a folded-prefix match, so a non-exact result is
+    /// a DIFFERENT person ("John Smit" → "John Smithers"). Canonical names are
+    /// not unique either, so an ambiguous exact match must also refuse:
+    /// binding a follow edge to the wrong numeric person ID would silently
+    /// follow the wrong human.
+    public static func uniqueExactMatch(displayName: String, in persons: [ServerPerson]) -> ServerPerson? {
+        let folded = displayName.foldedEntityKey
+        let exact = persons.filter { $0.displayName.foldedEntityKey == folded }
+        return exact.count == 1 ? exact.first : nil
+    }
 }
 
 enum PersonRequest: Sendable {

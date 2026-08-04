@@ -46,4 +46,39 @@ final class PersonTaskTests: XCTestCase {
         XCTAssertTrue(didComplete)
         XCTAssertNil(result)
     }
+
+    // MARK: - uniqueExactMatch
+
+    func testUniqueExactMatchFoldsCaseAndDiacritics() {
+        let match = ServerPerson.uniqueExactMatch(
+            displayName: "Beyoncé Knowles",
+            in: [ServerPerson(id: 1, displayName: "beyonce knowles"),
+                 ServerPerson(id: 2, displayName: "Beyond Knowledge")]
+        )
+
+        XCTAssertEqual(match?.id, 1, "an exact folded match resolves despite case and diacritic differences")
+    }
+
+    func testUniqueExactMatchRejectsPrefixOnlyResults() {
+        let match = ServerPerson.uniqueExactMatch(
+            displayName: "John Smit",
+            in: [ServerPerson(id: 1, displayName: "John Smithers")]
+        )
+
+        XCTAssertNil(match, "a prefix-only search result is a different person")
+    }
+
+    func testUniqueExactMatchReturnsNilForEmptyResults() {
+        XCTAssertNil(ServerPerson.uniqueExactMatch(displayName: "Ada Lovelace", in: []))
+    }
+
+    func testUniqueExactMatchRejectsAmbiguousDuplicateNames() {
+        let match = ServerPerson.uniqueExactMatch(
+            displayName: "Alex Chen",
+            in: [ServerPerson(id: 1, displayName: "Alex Chen"),
+                 ServerPerson(id: 2, displayName: "alex chen")]
+        )
+
+        XCTAssertNil(match, "two exact matches can't be told apart — following either could bind the wrong person")
+    }
 }

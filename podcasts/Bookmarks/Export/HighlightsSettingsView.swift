@@ -1,3 +1,4 @@
+import Combine
 import PocketCastsServer
 import PocketCastsUtils
 import SwiftUI
@@ -195,6 +196,7 @@ final class HighlightsSettingsViewModel: ObservableObject {
 
     private let exporter: HighlightFolderExporter
     private let readwise: ReadwiseSyncManager
+    private var cancellables = Set<AnyCancellable>()
 
     init(exporter: HighlightFolderExporter = .shared, readwise: ReadwiseSyncManager = .shared) {
         self.exporter = exporter
@@ -207,6 +209,17 @@ final class HighlightsSettingsViewModel: ObservableObject {
         self.exportFolderName = exporter.isEnabled ? exporter.folderDisplayName : nil
         self.readwiseConnected = readwise.isEnabled && !readwise.needsReauthorization
         self.readwiseNeedsReauth = readwise.needsReauthorization
+
+        // A revocation can land while this screen is open (the drain hits a
+        // 401 mid-session); mirror it live instead of showing "Connected".
+        readwise.$needsReauthorization
+            .dropFirst()
+            .sink { [weak self] needsReauth in
+                guard let self else { return }
+                readwiseNeedsReauth = needsReauth
+                readwiseConnected = readwise.isEnabled && !needsReauth
+            }
+            .store(in: &cancellables)
     }
 
     func connectReadwise() async {

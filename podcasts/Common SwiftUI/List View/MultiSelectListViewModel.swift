@@ -73,6 +73,14 @@ class MultiSelectListViewModel<Model: Hashable>: ListViewModel<Model> {
     /// select — and a later Delete never destroys — rows the user can't see.
     var selectableItems: [Model] { items }
 
+    /// Call whenever the rendered list narrows without `items` changing
+    /// (search results shifting mid-multi-select): rows that fell out of view
+    /// must not stay selected, or a later Delete destroys rows the user
+    /// can't see. Always refreshes the counts and Select All state.
+    func selectableItemsChanged() {
+        selectedItems.formIntersection(selectableItems)
+    }
+
     func toggleSelectAll() {
         hasSelectedAll ? deselectAll() : selectAll()
     }
@@ -141,9 +149,11 @@ class MultiSelectListViewModel<Model: Hashable>: ListViewModel<Model> {
 
 private extension MultiSelectListViewModel {
     func updateCounts() {
-        let selected = selectedItems.count
-        numberOfSelectedItems = selected
-        hasSelectedAll = selected == selectableItems.count
+        numberOfSelectedItems = selectedItems.count
+        // Set containment, not count equality: counts alias when hidden rows
+        // are selected, and an empty list has never "selected all".
+        let selectable = Set(selectableItems)
+        hasSelectedAll = !selectable.isEmpty && selectedItems.isSuperset(of: selectable)
     }
 
     func validateSelectedItems() {

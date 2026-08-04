@@ -219,15 +219,23 @@ final class RemoteOpApplierBookmarkTests: XCTestCase {
             bookmarkOp(uuid: "bm-tie", device: "device-b", seq: 1, wallClockMs: 5000,
                        excerpt: "trim from b", endTime: 20, trimModified: 5000),
         ]
+        // Reversed input order on device B: the merge sorts ops internally,
+        // so the read order of the underlying files must not change the winner.
         let state = MergeEngine.merged(snapshots: [], ops: ops)
+        let reversedState = MergeEngine.merged(snapshots: [], ops: ops.reversed())
         _ = await RemoteOpApplier(dataManager: deviceA, delegate: nil).apply(state)
-        _ = await RemoteOpApplier(dataManager: deviceB, delegate: nil).apply(state)
+        _ = await RemoteOpApplier(dataManager: deviceB, delegate: nil).apply(reversedState)
 
+        // The specified winner, not mere convergence: equal wallClockMs ties
+        // break on (deviceID, seq), so device-b's trim must win everywhere.
         let rowA = deviceA.bookmarks.bookmark(for: "bm-tie")!
         let rowB = deviceB.bookmarks.bookmark(for: "bm-tie")!
-        XCTAssertEqual(rowA.excerpt, rowB.excerpt,
-                       "same-millisecond trims must converge to the tiebreak winner on every device")
-        XCTAssertEqual(rowA.endTime, rowB.endTime)
+        XCTAssertEqual(rowA.excerpt, "trim from b",
+                       "same-millisecond trims must converge to the deviceID/seq tiebreak winner")
+        XCTAssertEqual(rowA.endTime, 20)
+        XCTAssertEqual(rowB.excerpt, "trim from b",
+                       "the winner must not depend on op input order")
+        XCTAssertEqual(rowB.endTime, 20)
     }
 
     func testSameMillisecondTagTieConvergesOnBothDevices() async {
@@ -245,12 +253,14 @@ final class RemoteOpApplierBookmarkTests: XCTestCase {
                        tags: ["from-b"], tagsModified: 5000),
         ]
         let state = MergeEngine.merged(snapshots: [], ops: ops)
+        let reversedState = MergeEngine.merged(snapshots: [], ops: ops.reversed())
         _ = await RemoteOpApplier(dataManager: deviceA, delegate: nil).apply(state)
-        _ = await RemoteOpApplier(dataManager: deviceB, delegate: nil).apply(state)
+        _ = await RemoteOpApplier(dataManager: deviceB, delegate: nil).apply(reversedState)
 
-        XCTAssertEqual(deviceA.bookmarks.bookmark(for: "bm-tagtie")!.tags,
-                       deviceB.bookmarks.bookmark(for: "bm-tagtie")!.tags,
-                       "same-millisecond tag sets must converge to the tiebreak winner on every device")
+        XCTAssertEqual(deviceA.bookmarks.bookmark(for: "bm-tagtie")!.tags, ["from-b"],
+                       "same-millisecond tag sets must converge to the deviceID/seq tiebreak winner")
+        XCTAssertEqual(deviceB.bookmarks.bookmark(for: "bm-tagtie")!.tags, ["from-b"],
+                       "the winner must not depend on op input order")
     }
 
     func testNewBookmarkArrivesWithTrimAndTags() async {

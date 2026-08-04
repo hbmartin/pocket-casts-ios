@@ -38,7 +38,10 @@ public struct SalientSegmentDataManager: Sendable {
     }
 
     /// Pending suggestions across episodes, newest generation first (ties by
-    /// rank so one episode's suggestions stay in quality order).
+    /// rank so one episode's suggestions stay in quality order). Stale
+    /// generations are excluded like everywhere else: after a version bump,
+    /// `generation()` can no longer resolve their metadata, so surfacing them
+    /// would let `accept` skip the reference-time conversion.
     public func pendingSuggestions(limit: Int = 50) -> [SalientSegmentRecord] {
         dbQueue.read { db in
             // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - ordering by a joined meta column
@@ -46,9 +49,14 @@ public struct SalientSegmentDataManager: Sendable {
                 SELECT s.* FROM SalientSegment s
                 JOIN SalientSegmentMeta m ON m.episodeUuid = s.episodeUuid
                 WHERE s.suggestionStatus = ?
+                  AND m.generatorVersion = ?
                 ORDER BY m.generatedAt DESC, s.rank ASC
                 LIMIT ?
-                """, arguments: [SalientSuggestionStatus.pending.rawValue, limit])
+                """, arguments: [
+                    SalientSuggestionStatus.pending.rawValue,
+                    Self.generatorVersion,
+                    limit
+                ])
         } ?? []
     }
 

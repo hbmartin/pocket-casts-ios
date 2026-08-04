@@ -256,19 +256,38 @@ public struct BookmarkDataManager: Sendable {
     }
 
     /// The user's tag vocabulary for autocomplete: distinct tags across
-    /// non-deleted bookmarks, most-used first, ties alphabetical. Grouping is
-    /// case-insensitive to match the tag model ("AI" on one bookmark and "ai"
-    /// on another are one tag); MIN picks a deterministic display casing.
+    /// non-deleted bookmarks, most-used first, ties alphabetical. Grouping
+    /// folds case AND diacritics to match `normalizedTags` ("Café" on one
+    /// bookmark and "cafe" on another are one tag) — SQLite's NOCASE can't
+    /// fold diacritics, so the aggregation happens here; the byte-wise MIN
+    /// picks a deterministic display form.
     public func allTags() -> [String] {
-        dbQueue.read { db in
-            // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - aggregate over a join the query interface can't express tersely
+        let tags: [String] = dbQueue.read { db in
+            // nosemgrep: pocketcasts.no-new-raw-sql-in-data-managers - join the query interface can't express tersely
             try String.fetchAll(db, sql: """
-                SELECT MIN(bt.tag) FROM BookmarkTag bt
+                SELECT bt.tag FROM BookmarkTag bt
                 JOIN \(Self.tableName) b ON b.uuid = bt.bookmarkUuid AND b.deleted = 0
-                GROUP BY bt.tag COLLATE NOCASE
-                ORDER BY COUNT(*) DESC, MIN(bt.tag) COLLATE NOCASE ASC
                 """)
         } ?? []
+
+        var groups: [String: (display: String, count: Int)] = [:]
+        for tag in tags {
+            let key = tag.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+            if var group = groups[key] {
+                group.count += 1
+                if tag < group.display { group.display = tag }
+                groups[key] = group
+            } else {
+                groups[key] = (display: tag, count: 1)
+            }
+        }
+        return groups.values
+            .sorted {
+                $0.count != $1.count
+                    ? $0.count > $1.count
+                    : $0.display.localizedCaseInsensitiveCompare($1.display) == .orderedAscending
+            }
+            .map(\.display)
     }
 
     /// Trim → drop empties → case-insensitive dedupe (first casing wins) → sort.

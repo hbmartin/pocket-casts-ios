@@ -189,12 +189,25 @@ struct SuggestedHighlightsManager {
     func accept(_ suggestion: SalientSegmentRecord) async {
         guard let episode = dataManager.findBaseEpisode(uuid: suggestion.episodeUuid) else { return }
 
+        // The suggestion is a render-time snapshot: a regeneration between
+        // render and tap can reuse the same (episode, rank) for a different
+        // segment, and accepting blindly would bookmark the old times while
+        // marking the NEW row accepted. Only proceed while the live row still
+        // carries the snapshot's identity; a stale-generation snapshot
+        // resolves no metadata and bails the same way.
+        guard let generation = dataManager.salientSegments.generation(episodeUuid: suggestion.episodeUuid),
+              let live = generation.segments.first(where: { $0.rank == suggestion.rank }),
+              live.startTime == suggestion.startTime,
+              live.title == suggestion.title else {
+            NotificationCenter.postOnMainThread(SuggestedHighlightsUpdated())
+            return
+        }
+
         // ADR-0018: segment times live in the transcript's own time domain
         // (recorded in meta) — apply `resolvedSeekTime` semantics when the
         // suggestion becomes a real bookmark, or an ad offset lands the
         // highlight seconds away from the actual moment.
-        let mapsReferenceTime = dataManager.salientSegments
-            .generation(episodeUuid: suggestion.episodeUuid)?.meta.transcriptSource == "provided"
+        let mapsReferenceTime = generation.meta.transcriptSource == "provided"
         let startTime = resolvedPlaybackTime(suggestion.startTime,
                                              mapsReferenceTime: mapsReferenceTime,
                                              episodeUuid: suggestion.episodeUuid)
@@ -206,7 +219,12 @@ struct SuggestedHighlightsManager {
         guard let bookmark else { return }
 
         if let excerpt = suggestion.excerpt, !excerpt.isEmpty {
-            await bookmarkManager.updateTrim(excerpt: excerpt, endTime: endTime, for: bookmark)
+            let trimmed = await bookmarkManager.updateTrim(excerpt: excerpt, endTime: endTime, for: bookmark)
+            if !trimmed {
+                // The bookmark itself is sound (right time, right title), so
+                // the acceptance stands — only the enrichment went missing.
+                FileLog.shared.addMessage("SuggestedHighlights: trim enrichment failed for accepted suggestion \(bookmark.uuid)")
+            }
         }
         dataManager.salientSegments.setStatus(.accepted, episodeUuid: suggestion.episodeUuid,
                                               rank: suggestion.rank, bookmarkUuid: bookmark.uuid)
