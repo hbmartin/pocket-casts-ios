@@ -91,63 +91,16 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
         addFromJson(lastModified: lastModified, podcastInfo: podcastInfo, subscribe: subscribe, autoDownloads: autoDownloads, completion: completion)
     }
 
-    public func addFromJson(lastModified: String?, podcastInfo: [String: Any], subscribe: Bool, autoDownloads: Int, refreshSource: PodcastRefreshSource = .server, completion: ((Bool) -> Void)?) {
+    public func addFromJson(lastModified: String?, podcastInfo: [String: Any], subscribe: Bool, autoDownloads: Int, completion: ((Bool) -> Void)?) {
         // Handed wholesale to the subscribe queue; not touched by the caller afterwards.
         let podcastInfo = UncheckedSendable(podcastInfo)
         let completion = UncheckedSendable(completion)
         subscribeQueue.addOperation { [weak self] in
             guard let strongSelf = self else { return }
 
-            let added = strongSelf.addPodcast(podcastInfo: podcastInfo.value, subscribe: subscribe, autoDownloads: autoDownloads, lastModified: lastModified, refreshSource: refreshSource)
+            let added = strongSelf.addPodcast(podcastInfo: podcastInfo.value, subscribe: subscribe, autoDownloads: autoDownloads, lastModified: lastModified)
             if subscribe, added { ServerConfig.shared.syncDelegate?.subscribedToPodcast() } // addFromUuid and addFromiTunesId end up here, so just need this one analytic
             completion.value?(added)
-        }
-    }
-
-    /// Subscribes to (or adds) a feed parsed entirely on device — no Pocket Casts servers
-    /// involved. Dedups by feed URL first so a feed already in the library (under either
-    /// refresh regime) is subscribed in place instead of duplicated under a hash UUID.
-    public func addLocalFeed(feedURL: String, subscribe: Bool, autoDownloads: Int = 0, completion: (@Sendable (Bool) -> Void)?) {
-        if var existing = DataManager.sharedManager.findPodcast(feedURL: feedURL) {
-            // The dedup match ignores userinfo, so freshly re-entered credentials
-            // (e.g. an unsubscribe/resubscribe with `user:pass@`) would otherwise be
-            // dropped here — keep them for the existing row's refreshes.
-            if let credentials = LocalFeedURL.credentials(from: feedURL),
-               !LocalFeedCredentials.save(user: credentials.user, password: credentials.password, podcastUuid: existing.uuid) {
-                FileLog.shared.addMessage("ServerPodcastManager: failed to store re-entered credentials for \(LocalFeedURL.redactedForLogging(feedURL))")
-                // Only the unsubscribed→subscribed transition depends on the fresh
-                // credential to produce working refreshes; abort just that case. An
-                // already-subscribed row (or a plain non-subscribing add) keeps whatever
-                // credential state it had, so log-and-succeed as before.
-                if subscribe, !existing.isSubscribed() {
-                    completion?(false)
-                    return
-                }
-            }
-            if subscribe, !existing.isSubscribed() {
-                existing.subscribed = 1
-                // A signed-out resubscribe of a server-sourced row flips it to on-device
-                // refresh (sticky); the identity matcher keeps its canonical catalog safe.
-                if !SyncManager.isUserLoggedIn(), existing.feedRefreshSource == .server, !(existing.podcastUrl ?? "").isEmpty {
-                    existing.feedRefreshSource = .localFeed
-                }
-                // resubscribes to a server-sourced row must sync; local rows never do
-                existing.syncStatus = (existing.isLocalFeedSourced ? SyncStatus.synced : SyncStatus.notSynced).rawValue
-                DataManager.sharedManager.save(podcast: existing)
-                updateLatestEpisodeInfo(podcast: existing, setDefaults: true, autoDownloadLimit: autoDownloads)
-                ServerConfig.shared.syncDelegate?.podcastAdded(podcastUuid: existing.uuid)
-                refreshAfterSignedOutFlip(podcast: existing)
-            }
-            completion?(true)
-            return
-        }
-
-        Task { [weak self] in
-            guard let podcastInfo = await LocalPodcastSource().loadPodcastInfo(feedURL: feedURL) else {
-                completion?(false)
-                return
-            }
-            self?.addFromJson(lastModified: nil, podcastInfo: podcastInfo, subscribe: subscribe, autoDownloads: autoDownloads, refreshSource: .localFeed, completion: completion)
         }
     }
 
@@ -262,7 +215,7 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
         DataManager.sharedManager.save(episode: episode)
     }
 
-    private func addPodcast(podcastInfo: [String: Any], subscribe: Bool, autoDownloads: Int = 0, lastModified: String?, refreshSource: PodcastRefreshSource = .server) -> Bool {
+    private func addPodcast(podcastInfo: [String: Any], subscribe: Bool, autoDownloads: Int = 0, lastModified: String?) -> Bool {
         guard let podcastJson = podcastInfo["podcast"] as? [String: Any], let podcastUuid = podcastJson["uuid"] as? String else { return false }
 
         // check if we already have this podcast, and if we do treat it differently
@@ -276,20 +229,7 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
                 // we have this podcast, just in a non-subscribed state, so subscribe to it
                 existingPodcast.subscribed = 1
                 existingPodcast.autoDownloadSetting = (autoDownloads > 0 ? AutoDownloadSetting.latest : AutoDownloadSetting.off).rawValue
-
-                // Signed-out subscribes must be self-sufficient: hand the row to the
-                // on-device refresh pipeline (sticky — sign-in later doesn't move it
-                // back; the episode-identity matcher keeps its server-canonical catalog
-                // safe under local refresh). Rows without a feed URL stay on .server —
-                // .localFeed without a URL never refreshes.
-                if !SyncManager.isUserLoggedIn(),
-                   existingPodcast.feedRefreshSource == .server,
-                   !(existingPodcast.podcastUrl ?? "").isEmpty {
-                    existingPodcast.feedRefreshSource = .localFeed
-                }
-                // Derive sync state from the final source, not only from whether this
-                // invocation performed the source flip. Existing local-feed rows never sync.
-                existingPodcast.syncStatus = (existingPodcast.isLocalFeedSourced ? SyncStatus.synced : SyncStatus.notSynced).rawValue
+                existingPodcast.syncStatus = SyncStatus.notSynced.rawValue
             }
             DataManager.sharedManager.save(podcast: existingPodcast)
             updateLatestEpisodeInfo(podcast: existingPodcast, setDefaults: true, autoDownloadLimit: autoDownloads)
@@ -297,33 +237,10 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
             ServerConfig.shared.syncDelegate?.podcastAdded(podcastUuid: existingPodcast.uuid)
             PodcastExistsHelper.shared.markExists(uuid: podcastUuid)
 
-            if existingPodcast.feedRefreshSource == .localFeed, subscribe {
-                refreshAfterSignedOutFlip(podcast: existingPodcast)
-            }
-
             return true
         }
 
         var podcast = Podcast.from(podcastJson: podcastJson, podcastInfo: podcastInfo, uuid: podcastUuid, subscribe: subscribe, autoDownloads: autoDownloads, lastModified: lastModified, isoFormatter: isoFormatter)
-
-        // Signed-out subscribes flip to on-device refresh at subscribe time (a persisted,
-        // deterministic decision — sticky across sign-in/out). The podcast keeps its
-        // canonical UUID and server-seeded episodes; the episode-identity matcher makes
-        // subsequent local refreshes safe.
-        let feedUrlPresent = !((podcastJson["url"] as? String) ?? "").isEmpty
-        let effectiveSource = Self.effectiveRefreshSource(
-            requested: refreshSource,
-            subscribe: subscribe,
-            isLoggedIn: SyncManager.isUserLoggedIn(),
-            feedUrlPresent: feedUrlPresent
-        )
-
-        podcast.feedRefreshSource = effectiveSource
-        if effectiveSource == .localFeed {
-            // never queued for account sync — the server either never issued this row a
-            // sync identity (hash UUID) or will never be told about it (signed-out add)
-            podcast.syncStatus = SyncStatus.synced.rawValue
-        }
 
         podcast.sortOrder = highestSortOrderForHomeGrid() + 1
 
@@ -346,38 +263,7 @@ public final class ServerPodcastManager: NSObject, @unchecked Sendable {
         if subscribe { ServerConfig.shared.syncDelegate?.podcastAdded(podcastUuid: podcast.uuid) }
         PodcastExistsHelper.shared.markExists(uuid: podcastUuid)
 
-        if effectiveSource == .localFeed, refreshSource == .server {
-            // The row flipped to on-device refresh but its episodes were seeded from the
-            // server cache JSON, so the local show-notes cache is empty for it. One
-            // immediate local refresh closes that gap for every subscribe route at once.
-            refreshAfterSignedOutFlip(podcast: podcast)
-        }
-
         return true
-    }
-
-    /// One immediate on-device refresh after a subscribe leaves a row on `.localFeed`
-    /// with a server-seeded catalog: parses the feed once so the offline
-    /// show-notes/chapters/transcripts cache is populated (the display path reads it
-    /// cache-only for `.localFeed` podcasts) and any episodes newer than the server
-    /// cache land straight away.
-    private func refreshAfterSignedOutFlip(podcast: Podcast) {
-        RefreshManager.shared.refresh(podcast: podcast, from: "")
-    }
-
-    /// The subscribe-time refresh-source policy (pure; unit-tested). A signed-out
-    /// subscribe of a server-sourced podcast lands on `.localFeed` so the library is
-    /// fully self-sufficient without an account. Rows without a feed URL stay on
-    /// `.server` — `.localFeed` without a URL never refreshes. Explicit `.localFeed`
-    /// requests (the on-device ingest pipeline) are never overridden.
-    static func effectiveRefreshSource(
-        requested: PodcastRefreshSource,
-        subscribe: Bool,
-        isLoggedIn: Bool,
-        feedUrlPresent: Bool
-    ) -> PodcastRefreshSource {
-        guard requested == .server, subscribe, !isLoggedIn, feedUrlPresent else { return requested }
-        return .localFeed
     }
 
     private func addEpisode(podcastInfo: [String: Any], shouldUpdate: Bool = false) -> Episode? {

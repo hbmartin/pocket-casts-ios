@@ -12,9 +12,9 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
 
     let debounce = Debounce(delay: Constants.defaultDebounceTime)
 
-    enum TableRow { case skipForward, skipBack, seekAcceleration, keepScreenAwake, openPlayer, intelligentPlaybackResumption, defaultRowAction, extraMediaActions, defaultAddToUpNextSwipe, defaultGrouping, defaultArchive, playUpNextOnTap, tapToPlay, legacyBluetooth, multiSelectGesture, openLinksInBrowser, publishChapterTitles, autoplay, autoRestartSleepTimer, shakeToRestartSleepTimer, isLockScreenScrubberDisabled, voiceBoostN, normalizeVolume, localFeedIngest }
+    enum TableRow { case skipForward, skipBack, seekAcceleration, keepScreenAwake, openPlayer, intelligentPlaybackResumption, defaultRowAction, extraMediaActions, defaultAddToUpNextSwipe, defaultGrouping, defaultArchive, playUpNextOnTap, tapToPlay, legacyBluetooth, multiSelectGesture, openLinksInBrowser, publishChapterTitles, autoplay, autoRestartSleepTimer, shakeToRestartSleepTimer, isLockScreenScrubberDisabled, voiceBoostN, normalizeVolume }
     private var tableData: [[TableRow]] {
-        [[.defaultRowAction, .defaultGrouping, .defaultArchive, .defaultAddToUpNextSwipe, .openLinksInBrowser], [.skipForward, .skipBack, .seekAcceleration, .keepScreenAwake, .openPlayer, .isLockScreenScrubberDisabled, .intelligentPlaybackResumption], [.autoRestartSleepTimer], [.shakeToRestartSleepTimer], [.playUpNextOnTap], [.tapToPlay], [.extraMediaActions], [.legacyBluetooth], [.multiSelectGesture], [.publishChapterTitles], [.autoplay], [.localFeedIngest], [.voiceBoostN], [.normalizeVolume]]
+        [[.defaultRowAction, .defaultGrouping, .defaultArchive, .defaultAddToUpNextSwipe, .openLinksInBrowser], [.skipForward, .skipBack, .seekAcceleration, .keepScreenAwake, .openPlayer, .isLockScreenScrubberDisabled, .intelligentPlaybackResumption], [.autoRestartSleepTimer], [.shakeToRestartSleepTimer], [.playUpNextOnTap], [.tapToPlay], [.extraMediaActions], [.legacyBluetooth], [.multiSelectGesture], [.publishChapterTitles], [.autoplay], [.voiceBoostN], [.normalizeVolume]]
     }
 
     @IBOutlet var settingsTable: UITableView! {
@@ -150,19 +150,6 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
 
             cell.cellSwitch.removeTarget(self, action: nil, for: .valueChanged)
             cell.cellSwitch.addTarget(self, action: #selector(openLinksInBrowserToggled(_:)), for: .valueChanged)
-
-            return cell
-        case .localFeedIngest:
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: switchCellId, for: indexPath) as? SwitchCell else {
-                return UITableViewCell()
-            }
-
-            cell.cellLabel.text = L10n.settingsGeneralLocalFeedIngest
-
-            cell.cellSwitch.isOn = Settings.localFeedIngestEnabled()
-
-            cell.cellSwitch.removeTarget(self, action: nil, for: .valueChanged)
-            cell.cellSwitch.addTarget(self, action: #selector(localFeedIngestToggled(_:)), for: .valueChanged)
 
             return cell
         case .openPlayer:
@@ -502,8 +489,6 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
             return L10n.settingsGeneralVoiceBoostNSubtitle
         case .normalizeVolume:
             return L10n.settingsGeneralNormalizeVolumeSubtitle
-        case .localFeedIngest:
-            return L10n.settingsGeneralLocalFeedIngestSubtitle
         default:
             return nil
         }
@@ -563,10 +548,6 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
     @objc private func openLinksInBrowserToggled(_ sender: UISwitch) {
         Settings.openLinks = sender.isOn
         Settings.trackValueToggled(.settingsGeneralOpenLinksInBrowserToggled, enabled: sender.isOn)
-    }
-
-    @objc private func localFeedIngestToggled(_ sender: UISwitch) {
-        Settings.setLocalFeedIngestEnabled(sender.isOn)
     }
 
     @objc private func legacyBluetoothToggled(_ sender: UISwitch) {

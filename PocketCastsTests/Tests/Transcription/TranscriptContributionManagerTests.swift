@@ -690,12 +690,10 @@ final class TranscriptContributionManagerTests: XCTestCase {
 
     // MARK: - Sighting enqueue
 
-    private func insertEligibilityFixture(episodeUuid: String, podcastUuid: String,
-                                          refreshSource: PodcastRefreshSource = .server) {
+    private func insertEligibilityFixture(episodeUuid: String, podcastUuid: String) {
         var podcast = Podcast()
         podcast.uuid = podcastUuid
         podcast.addedDate = Date()
-        podcast.feedRefreshSource = refreshSource
         _ = dataManager.save(podcast: podcast)
         var episode = Episode()
         episode.uuid = episodeUuid
@@ -741,45 +739,6 @@ final class TranscriptContributionManagerTests: XCTestCase {
                                                    kickAfterInsert: false)
 
         XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 0)
-    }
-
-    func testNoteSightingRejectsPrivateLocalFeedPodcast() {
-        let previousStore = KeychainHelper.store
-        defer { KeychainHelper.store = previousStore }
-        KeychainHelper.store = InMemoryKeychainStore()
-        LocalFeedCredentials.save(user: "user", password: "pass", podcastUuid: "pod-s")
-        insertEligibilityFixture(episodeUuid: "ep-s", podcastUuid: "pod-s", refreshSource: .localFeed)
-
-        TranscriptContributionManager.noteSighting(episodeUuid: "ep-s",
-                                                   podcastUuid: "pod-s",
-                                                   transcriptUrl: "https://example.com/t.vtt",
-                                                   format: "text/vtt",
-                                                   language: nil,
-                                                   dataManager: dataManager,
-                                                   hasConsent: true,
-                                                   kickAfterInsert: false)
-
-        XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 0,
-                       "A credentialed (private) feed is never sighted")
-    }
-
-    func testNoteSightingAcceptsPublicLocalFeedPodcast() {
-        let previousStore = KeychainHelper.store
-        defer { KeychainHelper.store = previousStore }
-        KeychainHelper.store = InMemoryKeychainStore()
-        insertEligibilityFixture(episodeUuid: "ep-pub", podcastUuid: "pod-pub", refreshSource: .localFeed)
-
-        TranscriptContributionManager.noteSighting(episodeUuid: "ep-pub",
-                                                   podcastUuid: "pod-pub",
-                                                   transcriptUrl: "https://example.com/t.vtt",
-                                                   format: "text/vtt",
-                                                   language: nil,
-                                                   dataManager: dataManager,
-                                                   hasConsent: true,
-                                                   kickAfterInsert: false)
-
-        XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 1,
-                       "A credential-less locally-refreshed feed is public — out-of-catalog episodes are deliberately eligible")
     }
 
     func testNoteSightingRequiresContributionConsent() {

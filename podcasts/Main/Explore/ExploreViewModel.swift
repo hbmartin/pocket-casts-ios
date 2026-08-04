@@ -1,9 +1,8 @@
 import Foundation
-import PocketCastsDataModel
 import PocketCastsServer
 
 /// Drives the Explore tab: Apple top charts (optionally by genre), directory
-/// search, and the serverless subscribe pipeline (`addLocalFeed`).
+/// search, and subscribing through the standard server pipeline.
 @MainActor
 final class ExploreViewModel: ObservableObject {
     enum LoadState: Equatable {
@@ -114,29 +113,20 @@ final class ExploreViewModel: ObservableObject {
         }
     }
 
-    /// Resolves the entry to a feed URL (chart entries need an iTunes lookup),
-    /// subscribes through the on-device feed pipeline — no Pocket Casts servers —
-    /// and returns the resolved podcast uuid for navigation, or nil on failure.
+    /// Resolves the entry through the Pocket Casts catalog by its Apple id,
+    /// subscribes via the standard server pipeline, and returns the resolved
+    /// podcast uuid for navigation, or nil on failure.
     func subscribe(to podcast: ExplorePodcast) async -> String? {
-        guard subscribingPodcastId == nil else { return nil }
+        guard subscribingPodcastId == nil, let itunesId = Int(podcast.id) else { return nil }
 
         subscribingPodcastId = podcast.id
         defer { subscribingPodcastId = nil }
 
-        var feedURL = podcast.feedURL
-        if feedURL == nil {
-            feedURL = try? await directory.lookupFeedURL(id: podcast.id)
-        }
-        guard let feedURL, !feedURL.isEmpty else { return nil }
-
-        let added = await withCheckedContinuation { continuation in
-            ServerPodcastManager.shared.addLocalFeed(feedURL: feedURL, subscribe: true) { added in
-                continuation.resume(returning: added)
+        let (added, uuid) = await withCheckedContinuation { continuation in
+            ServerPodcastManager.shared.subscribeFromItunesId(itunesId) { added, uuid in
+                continuation.resume(returning: (added, uuid))
             }
         }
-        guard added else { return nil }
-
-        // Dedup can attach to an existing row, so resolve the real uuid
-        return DataManager.sharedManager.findPodcast(feedURL: feedURL)?.uuid ?? LocalFeedIdentity.uuid(seed: feedURL)
+        return added ? uuid : nil
     }
 }

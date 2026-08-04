@@ -2,13 +2,10 @@ import Foundation
 
 /// Scrubs secret-bearing URLs out of free-form log text before it leaves the
 /// device (feedback reports, shared diagnostics). Log sites record full request
-/// URLs, and private-feed enclosures can carry signed query tokens or
-/// `user:password` userinfo. Scheme, host, and path are kept so the logs stay
-/// diagnostic; userinfo is stripped, query parameter values are blanked (keys
-/// are kept), and fragments are dropped.
-///
-/// This is the export-time counterpart to `LocalFeedURL.redactedForLogging`
-/// (PocketCastsServer), which redacts a single known feed URL at log-write time.
+/// URLs, and media enclosures can carry signed query tokens or `user:password`
+/// userinfo. Scheme, host, and path are kept so the logs stay diagnostic;
+/// userinfo is stripped, query parameter values are blanked (keys are kept),
+/// and fragments are dropped.
 public enum LogRedaction {
     /// Matches URL-shaped substrings in free text: a scheme, `://`, then
     /// everything up to whitespace or a delimiter that ends a URL in a log line.

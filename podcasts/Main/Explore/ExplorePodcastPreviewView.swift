@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// Lightweight preview sheet for a podcast found in Explore: artwork, title,
-/// author and a subscribe button. Subscribing runs entirely through the
-/// on-device feed pipeline, then navigates to the podcast page.
+/// author and a subscribe button. Subscribing resolves the podcast through
+/// the Pocket Casts catalog, then navigates to the podcast page.
 struct ExplorePodcastPreviewView: View {
     @EnvironmentObject private var theme: Theme
 

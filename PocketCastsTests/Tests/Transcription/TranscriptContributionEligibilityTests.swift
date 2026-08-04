@@ -6,10 +6,9 @@ import XCTest
 /// Truth table for the pure contribution-eligibility gate and the token-free
 /// sighting URL rule (docs/TranscriptContributions.md §1).
 final class TranscriptContributionEligibilityTests: XCTestCase {
-    private func makePodcast(refreshSource: PodcastRefreshSource = .server) -> Podcast {
+    private func makePodcast() -> Podcast {
         var podcast = Podcast()
         podcast.uuid = "podcast-1"
-        podcast.feedRefreshSource = refreshSource
         return podcast
     }
 
@@ -22,44 +21,23 @@ final class TranscriptContributionEligibilityTests: XCTestCase {
 
     // MARK: - Episode eligibility
 
-    func testServerPodcastEpisodeIsEligible() {
-        XCTAssertTrue(TranscriptContributionEligibility.isEligible(episode: makeEpisode(), podcast: makePodcast(), hasStoredFeedCredentials: false))
-    }
-
-    func testPrivateLocalFeedEpisodeIsNotEligible() {
-        XCTAssertFalse(TranscriptContributionEligibility.isEligible(episode: makeEpisode(),
-                                                                    podcast: makePodcast(refreshSource: .localFeed),
-                                                                    hasStoredFeedCredentials: true),
-                       "A credentialed feed is private — nothing from it may leave the device")
-    }
-
-    func testPublicLocalFeedEpisodeIsEligible() {
-        XCTAssertTrue(TranscriptContributionEligibility.isEligible(episode: makeEpisode(),
-                                                                   podcast: makePodcast(refreshSource: .localFeed),
-                                                                   hasStoredFeedCredentials: false),
-                      "Out-of-catalog public feeds are deliberately eligible: deterministic UUIDs are shared by all subscribers")
-    }
-
-    func testCredentialedServerPodcastRemainsEligible() {
-        // Stored credentials only mark localFeed rows private; a server-sourced
-        // row can't have userinfo-derived credentials in practice, but the rule
-        // is scoped to localFeed refresh deliberately.
-        XCTAssertTrue(TranscriptContributionEligibility.isEligible(episode: makeEpisode(), podcast: makePodcast(), hasStoredFeedCredentials: true))
+    func testPodcastEpisodeIsEligible() {
+        XCTAssertTrue(TranscriptContributionEligibility.isEligible(episode: makeEpisode(), podcast: makePodcast()))
     }
 
     func testUserEpisodeIsNotEligible() {
         var uploaded = UserEpisode()
         uploaded.uuid = "user-episode-1"
-        XCTAssertFalse(TranscriptContributionEligibility.isEligible(episode: uploaded, podcast: makePodcast(), hasStoredFeedCredentials: false),
+        XCTAssertFalse(TranscriptContributionEligibility.isEligible(episode: uploaded, podcast: makePodcast()),
                        "Uploaded files are private by definition")
     }
 
     func testMissingEpisodeIsNotEligible() {
-        XCTAssertFalse(TranscriptContributionEligibility.isEligible(episode: nil, podcast: makePodcast(), hasStoredFeedCredentials: false))
+        XCTAssertFalse(TranscriptContributionEligibility.isEligible(episode: nil, podcast: makePodcast()))
     }
 
     func testMissingPodcastIsNotEligible() {
-        XCTAssertFalse(TranscriptContributionEligibility.isEligible(episode: makeEpisode(), podcast: nil, hasStoredFeedCredentials: false))
+        XCTAssertFalse(TranscriptContributionEligibility.isEligible(episode: makeEpisode(), podcast: nil))
     }
 
     // MARK: - Token-free URL rule

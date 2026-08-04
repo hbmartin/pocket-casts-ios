@@ -6,16 +6,6 @@ import UIKit
 public final class RefreshManager: Sendable {
     public static let shared = RefreshManager()
 
-    /// The strategy seam for where refresh episodes come from. The composite partitions
-    /// per podcast: server-sourced podcasts hit the Pocket Casts refresh servers, and
-    /// local-feed podcasts are fetched and parsed on device. Everything downstream only
-    /// consumes the resulting `PodcastRefreshResponse`.
-    let feedRefreshProvider: FeedRefreshProviding
-
-    init(feedRefreshProvider: FeedRefreshProviding = CompositeFeedRefreshProvider()) {
-        self.feedRefreshProvider = feedRefreshProvider
-    }
-
     let refreshQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 1
@@ -93,8 +83,8 @@ public final class RefreshManager: Sendable {
     private func refresh(podcasts: [Podcast], completion: (@Sendable () -> Void)? = nil) {
         UserDefaults.standard.set(Date(), forKey: ServerConstants.UserDefaults.lastRefreshStartTime)
 
-        DispatchQueue.global().async { [feedRefreshProvider] in
-            feedRefreshProvider.refresh(podcasts: podcasts) { [weak self] refreshResponse in
+        DispatchQueue.global().async {
+            MainServerHandler.shared.refresh(podcasts: podcasts) { [weak self] refreshResponse in
                 guard let self else { return }
 
                 self.processPodcastRefreshResponse(refreshResponse) { _ in
@@ -106,9 +96,9 @@ public final class RefreshManager: Sendable {
 
 
     public func refreshPodcasts(completion: @escaping @Sendable (RefreshFetchResult) -> Void) {
-        DispatchQueue.global().async { [feedRefreshProvider] in
+        DispatchQueue.global().async {
             let podcasts = DataManager.sharedManager.allPodcasts(includeUnsubscribed: false)
-            feedRefreshProvider.refresh(podcasts: podcasts) { [weak self] refreshResponse in
+            MainServerHandler.shared.refresh(podcasts: podcasts) { [weak self] refreshResponse in
                 guard let self else { return }
 
                 self.processPodcastRefreshResponse(refreshResponse, completion: completion)

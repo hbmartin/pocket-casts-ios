@@ -225,8 +225,7 @@ actor TranscriptContributionManager {
         let episode = dataManager.findBaseEpisode(uuid: episodeUuid)
         guard let podcastUuid = record.podcastUuid ?? (episode as? Episode)?.podcastUuid else { return false }
         let podcast = dataManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true)
-        let hasCredentials = LocalFeedCredentials.credentials(podcastUuid: podcastUuid) != nil
-        guard TranscriptContributionEligibility.isEligible(episode: episode, podcast: podcast, hasStoredFeedCredentials: hasCredentials) else { return false }
+        guard TranscriptContributionEligibility.isEligible(episode: episode, podcast: podcast) else { return false }
 
         let episodeDuration = episode?.duration ?? 0
         let durationSeconds = episodeDuration > 0 ? episodeDuration : record.durationSecs
@@ -263,8 +262,7 @@ actor TranscriptContributionManager {
         guard hasConsent else { return }
         let episode = dataManager.findBaseEpisode(uuid: episodeUuid)
         let podcast = dataManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true)
-        let hasCredentials = LocalFeedCredentials.credentials(podcastUuid: podcastUuid) != nil
-        guard TranscriptContributionEligibility.isEligible(episode: episode, podcast: podcast, hasStoredFeedCredentials: hasCredentials),
+        guard TranscriptContributionEligibility.isEligible(episode: episode, podcast: podcast),
               TranscriptContributionEligibility.isTokenFreeURL(transcriptUrl) else { return }
 
         let info = SightingInfo(url: transcriptUrl, format: format, language: language)
