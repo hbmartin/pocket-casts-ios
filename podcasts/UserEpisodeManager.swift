@@ -125,28 +125,17 @@ nonisolated struct UserEpisodeManager {
     static func updateUserEpisode(uuid: String, title: String, color: Int) {
         guard var episode = DataManager.sharedManager.findUserEpisode(uuid: uuid) else { return }
 
-        var episodeSyncRequired = false
         if episode.title != title {
             episode.title = title
             episode.titleModified = TimeFormatter.currentUTCTimeInMillis()
-            episodeSyncRequired = true
         }
         if episode.imageColor != Int32(color) || episode.imageColorModified > 0 {
             episode.imageColor = Int32(color)
             episode.imageColorModified = TimeFormatter.currentUTCTimeInMillis()
-            episodeSyncRequired = true
         }
 
         DataManager.sharedManager.save(episode: episode)
         NotificationCenter.postOnMainThread(UserEpisodeUpdated(uuid: episode.uuid))
-
-        if episodeSyncRequired, episode.folderRelativePath != nil {
-            DataManager.sharedManager.journalFileSyncUpsert(
-                entityType: .userEpisode,
-                uuid: episode.uuid,
-                changedFields: ["uploadIdentity"]
-            )
-        }
     }
 
         @MainActor static func updateUserEpisodeImage(

@@ -1,7 +1,0 @@
-device_id: "device-a"
-name: "Test iPhone"
-model: "iPhone16,1"
-app_version: "7.90"
-last_seen_ms: 1767226100000
-head_seq: 100
-format_version: 1

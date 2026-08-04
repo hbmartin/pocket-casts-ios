@@ -2,17 +2,13 @@ import Foundation
 
 /// Pure decision core of the uploads scan.
 ///
-/// Given the current folder listing, the local database's folder-backed
-/// episodes, and the merged cross-device identity manifest, it decides what
-/// to do about each file — without touching the database or filesystem, so
-/// every rule is unit-testable.
+/// Given the current folder listing and the local database's folder-backed
+/// episodes, it decides what to do about each file — without touching the
+/// database or filesystem, so every rule is unit-testable.
 ///
 /// Identity model ("list now, hash on download"):
 /// - A newly discovered file gets a **provisional** episode keyed by
 ///   path+size(+mtime), so it is playable immediately without downloading.
-/// - If the merged manifest already maps this path+size to a uuid (another
-///   device published `UploadIdentity`), the episode **adopts** that uuid —
-///   this is how device B lists device A's uploads without downloading.
 /// - When the file is first fully materialized it is hashed; the hash either
 ///   **promotes** the provisional episode to canonical or **re-keys** it
 ///   onto an existing canonical episode (rename/copy detection).
@@ -44,11 +40,8 @@ public enum UploadScanPlanner {
         /// by the executor). `group` is the first path component under the
         /// uploads root, "" for loose files.
         case createProvisional(entry: FolderEntry, group: String)
-        /// The manifest maps this path+size to an identity published by
-        /// another device: create/point a local episode at that uuid+hash.
-        case adoptIdentity(entry: FolderEntry, identity: Filesync_UploadIdentity)
-        /// A known episode's file moved/renamed (matched by hash via
-        /// manifest, or by size+mtime heuristic for provisional rows).
+        /// A known episode's file moved/renamed (matched by size+mtime
+        /// heuristic).
         case updatePath(episodeUuid: String, entry: FolderEntry, group: String)
         /// The file changed in place (same path, different size/mtime):
         /// identity is void; re-hash on next materialization.
@@ -60,13 +53,11 @@ public enum UploadScanPlanner {
 
     public static func plan(
         mediaEntries: [FolderEntry],
-        knownEpisodes: [KnownEpisode],
-        manifest: [Filesync_UploadIdentity]
+        knownEpisodes: [KnownEpisode]
     ) -> [Action] {
         var actions: [Action] = []
 
         let knownByPath = Dictionary(uniqueKeysWithValues: knownEpisodes.map { ($0.relativePath, $0) })
-        let manifestByPath = Dictionary(manifest.map { ($0.relativePath, $0) }, uniquingKeysWith: { first, _ in first })
         var seenPaths = Set<String>()
         var claimedEpisodes = Set<String>()
 
@@ -82,14 +73,6 @@ public enum UploadScanPlanner {
                 }
                 // Replaced in place: same name, different content.
                 actions.append(.resetIdentity(episodeUuid: known.uuid, entry: entry))
-                continue
-            }
-
-            // New path. Another device may have already identified it.
-            if let identity = manifestByPath[entry.relativePath],
-               identity.sizeBytes == entry.sizeBytes {
-                claimedEpisodes.insert(identity.uuid)
-                actions.append(.adoptIdentity(entry: entry, identity: identity))
                 continue
             }
 
@@ -127,8 +110,7 @@ public enum UploadScanPlanner {
     // MARK: Hash promotion
 
     public enum HashResolution: Equatable, Sendable {
-        /// First device to hash this content: episode becomes canonical and
-        /// the identity op should be published.
+        /// First device to hash this content: episode becomes canonical.
         case promote(episodeUuid: String)
         /// The hash already belongs to another episode (rename across a
         /// re-scan gap, or a duplicate file): merge the provisional row's
@@ -139,8 +121,7 @@ public enum UploadScanPlanner {
     }
 
     /// Decides what a freshly computed hash means for a provisional episode.
-    /// `hashOwners` maps known content hashes to episode uuids (from the DB
-    /// and the merged manifest).
+    /// `hashOwners` maps known content hashes to episode uuids (from the DB).
     public static func resolveHash(
         _ sha256: String,
         for episodeUuid: String,

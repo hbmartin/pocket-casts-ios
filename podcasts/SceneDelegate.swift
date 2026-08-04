@@ -3,7 +3,6 @@ import Combine
 import JLRoutes
 import UIKit
 import PocketCastsDataModel
-import PocketCastsFileSync
 import PocketCastsServer
 import PocketCastsUtils
 
@@ -554,23 +553,6 @@ enum PR263UITestHarness {
             throw HarnessError.restoreDidNotReplaceCachedFolderState
         }
 
-        let password = UUID().uuidString
-        let sanitizedURL = LocalFeedURL.removingCredentials(
-            from: "https://reader:\(password)@example.com/private.xml"
-        )
-        guard sanitizedURL == "https://example.com/private.xml" else {
-            throw HarnessError.credentialsWereNotRemoved
-        }
-
-        let mirrorPath = PodcastMirrorFormat.relativePath(
-            podcastUuid: "../podcast",
-            episodeUuid: "episode/../../secret",
-            fileExtension: "m4a"
-        )
-        guard !mirrorPath.contains(".."), mirrorPath.components(separatedBy: "/").count == 3 else {
-            throw HarnessError.unsafeMirrorPath
-        }
-
         let stagedBackup = try BackupRestoreView.stageBackupFolder()
         defer { try? fileManager.removeItem(at: stagedBackup) }
         let backupName = stagedBackup.lastPathComponent
@@ -580,14 +562,12 @@ enum PR263UITestHarness {
             throw HarnessError.invalidBackupFolder
         }
 
-        return "restore=atomic|folderCache=refreshed|credentials=redacted|mirrorPath=safe|backupFolder=stable"
+        return "restore=atomic|folderCache=refreshed|backupFolder=stable"
     }
 
     private enum HarnessError: LocalizedError {
         case fixtureCreationFailed
         case restoreDidNotReplaceCachedFolderState
-        case credentialsWereNotRemoved
-        case unsafeMirrorPath
         case invalidBackupFolder
 
         var errorDescription: String? {
@@ -606,8 +586,6 @@ enum PR264UITestHarness {
 
     private enum Scenario: String, Sendable {
         case opmlImportState
-        case fileSyncWaiter
-        case showInfoCache
     }
 
     static func exerciseIfRequested() {
@@ -631,10 +609,6 @@ enum PR264UITestHarness {
         switch scenario {
         case .opmlImportState:
             return try await exerciseOpmlImportState()
-        case .fileSyncWaiter:
-            return try await exerciseFileSyncWaiter()
-        case .showInfoCache:
-            return try await exerciseShowInfoCache()
         }
     }
 
@@ -663,66 +637,6 @@ enum PR264UITestHarness {
         return "opmlState=atomic|responses=\(updateCount)|failures=\(state.failureCount)"
     }
 
-    nonisolated private static func exerciseFileSyncWaiter() async throws -> String {
-        let manager = FileSyncManager()
-        guard await manager.exerciseSyncPassWaiterForUITesting() else {
-            throw HarnessError.fileSyncWaiterDidNotResume
-        }
-        return "fileSyncWaiter=continuation|waiters=cleared"
-    }
-
-    nonisolated private static func exerciseShowInfoCache() async throws -> String {
-        let podcastUuid = "pr264-podcast-\(UUID().uuidString)"
-        let episodeUuid = "pr264-episode-\(UUID().uuidString)"
-        let readerCount = 16
-        let showInfo = try JSONSerialization.data(withJSONObject: [
-            "podcast": [
-                "episodes": [[
-                    "uuid": episodeUuid,
-                    "title": "PR 264 locally seeded episode",
-                ]],
-            ],
-        ])
-
-        await ShowInfoDataRetriever.localFeedSeeder.storeLocalShowInfo(
-            data: showInfo,
-            for: podcastUuid
-        )
-
-        let matchingReaders = try await withThrowingTaskGroup(
-            of: Bool.self,
-            returning: Int.self
-        ) { group in
-            for _ in 0..<readerCount {
-                group.addTask {
-                    let reader = ShowInfoDataRetriever()
-                    guard let metadata = try await reader.loadEpisodeDataFromCache(
-                        for: podcastUuid,
-                        episodeUuid: episodeUuid,
-                        useCacheOnly: true
-                    ),
-                    let data = metadata.data(using: .utf8),
-                    let decoded = try JSONSerialization.jsonObject(with: data) as? [String: String] else {
-                        return false
-                    }
-                    return decoded["uuid"] == episodeUuid
-                        && decoded["title"] == "PR 264 locally seeded episode"
-                }
-            }
-
-            var matches = 0
-            for try await matched in group where matched {
-                matches += 1
-            }
-            return matches
-        }
-
-        guard matchingReaders == readerCount else {
-            throw HarnessError.showInfoCacheWasNotShared
-        }
-        return "showInfoCache=shared|readers=\(matchingReaders)"
-    }
-
     private static func publish(identifier: String, value: String) {
         guard let window = UIApplication.shared.connectedScenes
             .compactMap({ $0 as? UIWindowScene })
@@ -733,8 +647,6 @@ enum PR264UITestHarness {
 
     private enum HarnessError: LocalizedError {
         case opmlStateWasNotAtomic
-        case fileSyncWaiterDidNotResume
-        case showInfoCacheWasNotShared
 
         var errorDescription: String? {
             String(describing: self)

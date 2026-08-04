@@ -18,15 +18,6 @@ struct FileSyncSettingsView: View {
             FileSyncFolderSection(showFolderPicker: {
                 model.showingFolderPicker = true
             })
-            FileSyncMirrorSection(model: model)
-            FileSyncDevicesSection(
-                devices: model.status.devices,
-                forgetDevice: { deviceID in Task { await model.forgetDevice(deviceID) } }
-            )
-            FileSyncMaintenanceSection(model: model)
-            FileSyncDiagnosticsSection(exportDiagnostics: {
-                Task { await model.exportDiagnostics() }
-            })
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
@@ -56,7 +47,6 @@ private struct FileSyncStatusSection: View {
                 FileSyncValueRow(title: L10n.fileSyncStatusFolder,
                                  value: kind == .ubiquity ? L10n.fileSyncFolderIcloud : L10n.fileSyncFolderPicked)
             }
-            FileSyncValueRow(title: L10n.fileSyncStatusPendingChanges, value: "\(status.pendingOpCount)")
             if let lastScan = status.lastScanDate {
                 FileSyncValueRow(title: L10n.fileSyncStatusLastSync,
                                  value: lastScan.formatted(.relative(presentation: .named)))
@@ -95,139 +85,6 @@ private struct FileSyncFolderSection: View {
     }
 }
 
-private struct FileSyncDevicesSection: View {
-    @EnvironmentObject private var theme: Theme
-
-    let devices: [FileSyncStatus.Device]
-    let forgetDevice: (String) -> Void
-
-    var body: some View {
-        Section(header: Text(L10n.fileSyncDevicesHeader)
-            .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))) {
-            if devices.isEmpty {
-                Text(L10n.fileSyncDevicesEmpty)
-                    .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
-            }
-            ForEach(devices) { device in
-                FileSyncDeviceRow(device: device)
-                    .swipeActions(edge: .trailing) {
-                        if !device.isThisDevice {
-                            Button(role: .destructive) {
-                                forgetDevice(device.deviceID)
-                            } label: {
-                                Text(L10n.fileSyncDevicesForget)
-                            }
-                        }
-                    }
-            }
-        }
-    }
-}
-
-private struct FileSyncDeviceRow: View {
-    @EnvironmentObject private var theme: Theme
-
-    let device: FileSyncStatus.Device
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            HStack {
-                Text(displayName)
-                    .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
-                if device.isThisDevice {
-                    Text(L10n.fileSyncDevicesThisDevice)
-                        .font(.caption)
-                        .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
-                }
-                if device.isStale {
-                    Text(L10n.fileSyncDevicesStale)
-                        .font(.caption)
-                        .foregroundColor(AppTheme.color(for: .support05, theme: theme))
-                }
-            }
-            if let lastSeen = device.lastSeen {
-                Text(lastSeen.formatted(.relative(presentation: .named)))
-                    .font(.caption)
-                    .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
-            }
-        }
-    }
-
-    private var displayName: String {
-        if !device.name.isEmpty { return device.name }
-        return device.model.isEmpty ? device.deviceID : device.model
-    }
-}
-
-private struct FileSyncMirrorSection: View {
-    @EnvironmentObject private var theme: Theme
-    @ObservedObject var model: FileSyncSettingsViewModel
-
-    var body: some View {
-        Section(header: Text(L10n.fileSyncMirrorHeader)
-            .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme)),
-                footer: Text(L10n.fileSyncMirrorExplanation)
-            .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))) {
-            Toggle(L10n.fileSyncMirrorToggle, isOn: Binding(
-                get: { model.mirrorEnabled },
-                set: { model.setMirrorEnabled($0) }))
-                .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
-            if model.mirrorEnabled {
-                Toggle(L10n.fileSyncMirrorWifiOnly, isOn: Binding(
-                    get: { model.mirrorWifiOnly },
-                    set: { model.setMirrorWifiOnly($0) }))
-                    .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
-            }
-        }
-    }
-}
-
-private struct FileSyncMaintenanceSection: View {
-    @EnvironmentObject private var theme: Theme
-    @ObservedObject var model: FileSyncSettingsViewModel
-
-    @State private var showingResetConfirm = false
-
-    var body: some View {
-        Section(footer: Text(L10n.fileSyncResetExplanation)
-            .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))) {
-            Button(L10n.fileSyncActionReset, role: .destructive) {
-                showingResetConfirm = true
-            }
-            .disabled(!model.status.isEnabled || model.isSyncing)
-        }
-        .alert(L10n.fileSyncResetConfirmTitle, isPresented: $showingResetConfirm) {
-            Button(L10n.fileSyncActionReset, role: .destructive) {
-                Task { await model.resetAndRebootstrap() }
-            }
-            Button(L10n.cancel, role: .cancel) {}
-        } message: {
-            Text(L10n.fileSyncResetConfirmMessage)
-        }
-        .alert(L10n.fileSyncResetConfirmTitle, isPresented: Binding(
-            get: { model.resetError != nil },
-            set: { if !$0 { model.resetError = nil } }
-        )) {
-            Button(L10n.ok) { model.resetError = nil }
-        } message: {
-            Text(model.resetError ?? "")
-        }
-    }
-}
-
-private struct FileSyncDiagnosticsSection: View {
-    @EnvironmentObject private var theme: Theme
-
-    let exportDiagnostics: () -> Void
-
-    var body: some View {
-        Section {
-            Button(L10n.fileSyncActionExportDiagnostics, action: exportDiagnostics)
-                .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
-        }
-    }
-}
-
 private struct FileSyncValueRow: View {
     @EnvironmentObject private var theme: Theme
 
@@ -250,39 +107,9 @@ final class FileSyncSettingsViewModel: ObservableObject {
     @Published var status = FileSyncStatus()
     @Published var isSyncing = false
     @Published var showingFolderPicker = false
-    @Published var mirrorEnabled = false
-    @Published var mirrorWifiOnly = true
-    @Published var resetError: String?
 
     func refresh() async {
         status = await FileSyncManager.shared.status()
-        mirrorEnabled = await FileSyncManager.shared.isMirroringEnabled
-        mirrorWifiOnly = await FileSyncManager.shared.isMirroringWifiOnly
-    }
-
-    func setMirrorEnabled(_ enabled: Bool) {
-        mirrorEnabled = enabled
-        Task {
-            await FileSyncManager.shared.setMirroringEnabled(enabled)
-            if enabled { await FileSyncManager.shared.syncNow() }
-        }
-    }
-
-    func setMirrorWifiOnly(_ wifiOnly: Bool) {
-        mirrorWifiOnly = wifiOnly
-        Task { await FileSyncManager.shared.setMirroringWifiOnly(wifiOnly) }
-    }
-
-    func resetAndRebootstrap() async {
-        isSyncing = true
-        do {
-            try await FileSyncManager.shared.resetAndRebootstrap()
-        } catch {
-            FileLog.shared.addMessage("FileSync: reset & re-bootstrap failed: \(error)")
-            resetError = error.localizedDescription
-        }
-        await refresh()
-        isSyncing = false
     }
 
     func syncNow() async {
@@ -301,38 +128,5 @@ final class FileSyncSettingsViewModel: ObservableObject {
             FileLog.shared.addMessage("FileSync: folder pick failed: \(error)")
         }
         await refresh()
-    }
-
-    func forgetDevice(_ deviceID: String) async {
-        try? await FileSyncManager.shared.forgetDevice(id: deviceID)
-        await refresh()
-    }
-
-    func exportDiagnostics() async {
-        let entries = DataManager.sharedManager.unflushedFileSyncEntries(limit: 500)
-        var lines = ["Pocket Casts File Sync Diagnostics", "Generated: \(Date())", ""]
-        lines.append("Pending journal entries: \(entries.count)")
-        for entry in entries {
-            let entity = entry.entity.map { "\($0)" } ?? "?"
-            let op = entry.op.map { "\($0)" } ?? "?"
-            lines.append("\(entry.wallClockMs) \(entity) \(op) \(entry.entityUuid ?? "-") \(entry.fields ?? "")")
-        }
-        lines.append("")
-        for device in status.devices {
-            lines.append("Device \(device.deviceID) name=\(device.name) model=\(device.model) lastSeen=\(device.lastSeen.map { "\($0)" } ?? "never")")
-        }
-
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("filesync-diagnostics.txt")
-        try? lines.joined(separator: "\n").write(to: url, atomically: true, encoding: .utf8)
-
-        let shareSheet = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-        SceneHelper.rootViewController()?.presentedOrSelf.present(shareSheet, animated: true)
-    }
-}
-
-private extension UIViewController {
-    var presentedOrSelf: UIViewController {
-        presentedViewController?.presentedOrSelf ?? self
     }
 }

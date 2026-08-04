@@ -563,23 +563,6 @@ final class SmokeUITests: PocketCastsUITestCase {
         )
     }
 
-    /// Posts the same queue/playback notifications that drive FileSyncCoordinator,
-    /// including repeated starts and stops, then waits for its debounced timer to fire.
-    /// An actor-isolation regression in any handler crashes the app before the marker appears.
-    func testFileSyncCoordinatorNotificationTimers() throws {
-        let app = launchApp(additionalEnvironment: [
-            "POCKET_CASTS_UI_TEST_EXERCISE_FILE_SYNC_COORDINATOR_EVENTS": "1"
-        ])
-        waitForTabBar(in: app)
-
-        let debounceCompleted = app.descendants(matching: .any)["fileSyncCoordinatorDebounceCompleted"]
-        XCTAssertTrue(debounceCompleted.waitForExistence(timeout: 15),
-                      "File sync notification debounce did not complete")
-        XCTAssertTrue(app.tabBars.firstMatch.exists,
-                      "App lost its main UI while exercising file sync notification timers")
-        XCTAssertEqual(app.state, .runningForeground)
-    }
-
     func testBackupRestoreScreenPresentsDestructiveRestoreConfirmation() throws {
         let app = launchApp()
         waitForTabBar(in: app)
@@ -619,8 +602,6 @@ final class SmokeUITests: PocketCastsUITestCase {
         for fragment in [
             "restore=atomic",
             "folderCache=refreshed",
-            "credentials=redacted",
-            "mirrorPath=safe",
             "backupFolder=stable"
         ] {
             XCTAssertTrue(value.contains(fragment),
@@ -635,19 +616,6 @@ final class SmokeUITests: PocketCastsUITestCase {
         )
     }
 
-    func testPR264FileSyncWaiterResumesThroughContinuation() throws {
-        assertPR264Harness(
-            scenario: "fileSyncWaiter",
-            expectedFragments: ["fileSyncWaiter=continuation", "waiters=cleared"]
-        )
-    }
-
-    func testPR264ShowInfoCacheIsSharedAcrossConcurrentRetrievers() throws {
-        assertPR264Harness(
-            scenario: "showInfoCache",
-            expectedFragments: ["showInfoCache=shared", "readers=16"]
-        )
-    }
 
     /// Calls both NowPlayingHelper artwork request handlers on a detached task.
     /// Without @Sendable, default MainActor isolation traps before the marker appears.
