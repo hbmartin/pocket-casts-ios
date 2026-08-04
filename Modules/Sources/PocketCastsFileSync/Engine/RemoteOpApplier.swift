@@ -191,7 +191,7 @@ struct RemoteOpApplier {
                 endTime: item.hasEndTime ? item.endTime.value : nil,
                 syncStatus: .synced)
             if addedUuid != nil {
-                await applyTrimAndTags(item, uuid: uuid, localTrim: nil, localTags: nil)
+                await applyTrimAndTags(item, uuid: uuid, existing: nil)
             }
             return
         }
@@ -227,31 +227,42 @@ struct RemoteOpApplier {
             }
         }
 
-        await applyTrimAndTags(item, uuid: uuid, localTrim: existing.trimModified, localTags: existing.tagsModified)
+        await applyTrimAndTags(item, uuid: uuid, existing: existing)
     }
 
-    /// Applies the merged record's trim window and tag set (ADR-0016), each
-    /// gated on a strictly-newer stamp so re-applies are idempotent.
-    private func applyTrimAndTags(_ item: Api_SyncUserBookmark, uuid: String, localTrim: Date?, localTags: Date?) async {
+    /// Applies the merged record's trim window and tag set (ADR-0016). The
+    /// merged record is deterministic across devices (the merge layer resolves
+    /// equal-stamp conflicts by deviceID/seq), so the gate is: a strictly newer
+    /// stamp always applies, and an equal stamp applies only when the value
+    /// differs — that's the tiebreak loser adopting the winner's value. Without
+    /// the equality arm, two same-millisecond edits would each survive on their
+    /// own device forever. Identical echoes short-circuit so replays don't
+    /// churn the row. Stamps are compared at wire resolution (rounded ms).
+    private func applyTrimAndTags(_ item: Api_SyncUserBookmark, uuid: String, existing: Bookmark?) async {
         if item.hasTrimModified, item.hasExcerpt {
-            let localMs = localTrim.map { Int64($0.timeIntervalSince1970 * 1000) } ?? 0
-            if item.trimModified.value > localMs {
+            let localMs = existing?.trimModified.map { Int64(($0.timeIntervalSince1970 * 1000).rounded()) } ?? 0
+            let mergedMs = item.trimModified.value
+            let mergedEndTime = item.hasEndTime ? item.endTime.value : TimeInterval(item.time.value)
+            let valueDiffers = item.excerpt.value != existing?.excerpt || mergedEndTime != existing?.endTime
+            if mergedMs > localMs || (mergedMs == localMs && valueDiffers) {
                 _ = await dataManager.bookmarks.updateTrim(
                     uuid: uuid,
                     excerpt: item.excerpt.value,
-                    endTime: item.hasEndTime ? item.endTime.value : TimeInterval(item.time.value),
-                    trimModified: Date(timeIntervalSince1970: Double(item.trimModified.value) / 1000),
+                    endTime: mergedEndTime,
+                    trimModified: Date(timeIntervalSince1970: Double(mergedMs) / 1000),
                     syncStatus: .synced)
             }
         }
 
         if item.hasTagsModified {
-            let localMs = localTags.map { Int64($0.timeIntervalSince1970 * 1000) } ?? 0
-            if item.tagsModified.value > localMs {
+            let localMs = existing?.tagsModified.map { Int64(($0.timeIntervalSince1970 * 1000).rounded()) } ?? 0
+            let mergedMs = item.tagsModified.value
+            let valueDiffers = Set(item.tags) != Set(existing?.tags ?? [])
+            if mergedMs > localMs || (mergedMs == localMs && valueDiffers) {
                 _ = await dataManager.bookmarks.setTags(
                     uuid: uuid,
                     tags: item.tags,
-                    modified: Date(timeIntervalSince1970: Double(item.tagsModified.value) / 1000),
+                    modified: Date(timeIntervalSince1970: Double(mergedMs) / 1000),
                     syncStatus: .synced)
             }
         }

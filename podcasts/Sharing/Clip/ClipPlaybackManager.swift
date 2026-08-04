@@ -81,6 +81,7 @@ class ClipPlaybackManager: ObservableObject {
     }
 
     func stop() {
+        cancellables.removeAll()
         avPlayer?.pause()
         isPlaying = false
         currentTime = 0

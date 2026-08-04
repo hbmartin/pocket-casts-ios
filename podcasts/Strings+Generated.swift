@@ -4163,6 +4163,8 @@ nonisolated internal enum L10n {
   internal static var settingsHighlightsReadwiseFooter: String { return L10n.tr("Localizable", "settings_highlights_readwise_footer", fallback: "New and edited highlights are pushed to your Readwise account, which can forward them to Notion, Roam, and more. Your token is stored securely on this device.") }
   /// Error shown when the Readwise token is rejected by the API.
   internal static var settingsHighlightsReadwiseInvalidToken: String { return L10n.tr("Localizable", "settings_highlights_readwise_invalid_token", fallback: "That token wasn't accepted. Copy it from readwise.io/access_token and try again.") }
+  /// Shown when Readwise rejected the previously saved token (revoked or rotated on readwise.io); syncing is paused until a new token is entered.
+  internal static var settingsHighlightsReadwiseReconnect: String { return L10n.tr("Localizable", "settings_highlights_readwise_reconnect", fallback: "Readwise rejected the saved token and syncing is paused. Enter a new token to resume.") }
   /// Section header for the Readwise integration on the Highlights settings screen.
   internal static var settingsHighlightsReadwiseSection: String { return L10n.tr("Localizable", "settings_highlights_readwise_section", fallback: "Readwise") }
   /// Placeholder for the Readwise access-token field.

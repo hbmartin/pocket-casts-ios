@@ -63,8 +63,11 @@ final class PersonFollowModel: ObservableObject {
             return
         }
         let folded = displayName.foldedEntityKey
-        guard let match = matches.first(where: { $0.displayName.foldedEntityKey == folded }) ?? matches.first else {
-            // The server hasn't ingested this person yet: nothing to follow.
+        guard let match = matches.first(where: { $0.displayName.foldedEntityKey == folded }) else {
+            // The search is a folded-prefix match, so a non-exact result is a
+            // DIFFERENT person ("John Smit" → "John Smithers"); silently
+            // following them would bind the edge to the wrong human. Until the
+            // server has ingested this exact name: nothing to follow.
             state = .unavailable
             return
         }

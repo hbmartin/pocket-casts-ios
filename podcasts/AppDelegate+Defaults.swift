@@ -213,6 +213,23 @@ extension AppDelegate {
             Settings.setMobileDataAllowed(false)
         }
 
+        // Eyes-free capture (Highlights S3) replaces the legacy headphone
+        // bookmark-creation sound with the confirmation style, which defaults
+        // to .sound. A user who had explicitly silenced captures must not
+        // start hearing tones when the flag ships — carry the opt-out over.
+        performUpdateIfRequired(updateKey: "MigrateBookmarkSoundOptOutToConfirmationStyle") {
+            if !Settings.playBookmarkCreationSound {
+                // Settings writes are main-actor; this can run off-main during launch.
+                if Thread.isMainThread {
+                    MainActor.assumeIsolated { Settings.highlightConfirmationStyle = .none }
+                } else {
+                    DispatchQueue.main.sync {
+                        MainActor.assumeIsolated { Settings.highlightConfirmationStyle = .none }
+                    }
+                }
+            }
+        }
+
         defaults.synchronize()
     }
 

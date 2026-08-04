@@ -91,8 +91,9 @@ nonisolated enum HighlightExcerptBuilder {
         let fullText = plainText as NSString
 
         // Reach back cue-by-cue until a sentence start, a silence boundary, or the
-        // leading cap. The cap is checked against the candidate's start so a cue
-        // straddling it is still taken whole (boundaries beat wall-clock).
+        // leading cap. The cap is checked against the candidate's start, so a cue
+        // that begins before the cap is excluded even if it straddles it — the
+        // wall-clock cap beats taking a straddling cue whole.
         var start = firstSeed
         while start > ordered.startIndex {
             let previous = ordered.index(before: start)
@@ -147,12 +148,34 @@ nonisolated enum HighlightExcerptBuilder {
         let ordered = cues.sorted { $0.startTime < $1.startTime }
         let fullText = plainText as NSString
 
-        // The window's last cue: the one whose end lands on the stored endTime
-        // (small tolerance for float round-trips through sync).
-        let exactMatch = ordered.lastIndex { abs($0.endTime - endTime) < 1.5 }
-        let looseMatch = ordered.lastIndex { $0.endTime <= endTime + 1.5 }
-        guard let endIndex = exactMatch ?? looseMatch else { return nil }
+        // The window's last cue: with dense (word-level) cues several ends can
+        // sit inside the tolerance, so try candidates nearest the stored
+        // endTime first — the excerpt's suffix disambiguates the right one.
+        let tolerance: TimeInterval = 1.5
+        let candidates = ordered.indices
+            .filter { abs(ordered[$0].endTime - endTime) < tolerance }
+            .sorted { abs(ordered[$0].endTime - endTime) < abs(ordered[$1].endTime - endTime) }
 
+        for endIndex in candidates {
+            if let window = walkBack(from: endIndex, target: target, ordered: ordered, fullText: fullText) {
+                return window
+            }
+        }
+        if let loose = ordered.lastIndex(where: { $0.endTime <= endTime + tolerance }),
+           !candidates.contains(loose) {
+            return walkBack(from: loose, target: target, ordered: ordered, fullText: fullText)
+        }
+        return nil
+    }
+
+    /// Accumulates cue text backwards from `endIndex` until it reproduces
+    /// `target` exactly; nil when this end cue can't be the excerpt's last.
+    private static func walkBack(
+        from endIndex: Int,
+        target: String,
+        ordered: [TranscriptCue],
+        fullText: NSString
+    ) -> ClosedRange<TimeInterval>? {
         var accumulated = ""
         var index = endIndex
         while true {

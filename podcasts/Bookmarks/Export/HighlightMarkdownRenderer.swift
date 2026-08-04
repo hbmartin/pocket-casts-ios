@@ -117,15 +117,27 @@ nonisolated struct HighlightMarkdownRenderer {
         return result.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
     }
 
-    /// Minimal Markdown escaping for user text in headings.
+    /// Minimal Markdown escaping for user text in headings. Headings are
+    /// single lines, so embedded newlines (feed-controlled titles) fold to
+    /// spaces rather than breaking out of the `#`/`##` line.
     private func escape(_ text: String) -> String {
         text
+            .components(separatedBy: .newlines).joined(separator: " ")
             .replacingOccurrences(of: "[", with: "\\[")
             .replacingOccurrences(of: "]", with: "\\]")
     }
 
+    /// Double-quoted YAML scalar. Newlines encode as `\n` — a literal newline
+    /// in a quoted scalar would let a title containing "\n---" terminate the
+    /// frontmatter block early and dump the remaining keys into the note body.
     private func yamlEscape(_ text: String) -> String {
-        "\"\(text.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\""))\""
+        let escaped = text
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\r\n", with: "\\n")
+            .replacingOccurrences(of: "\n", with: "\\n")
+            .replacingOccurrences(of: "\r", with: "\\n")
+        return "\"\(escaped)\""
     }
 
     /// Tags render as `#tag`; whitespace would break the hashtag, so it folds
@@ -139,6 +151,9 @@ nonisolated struct HighlightMarkdownRenderer {
         let invalid = CharacterSet(charactersIn: "/\\:?%*|\"<>")
         let cleaned = component.components(separatedBy: invalid).joined(separator: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        return cleaned.isEmpty ? "Untitled" : String(cleaned.prefix(120))
+        // "." / ".." survive the character strip but resolve as path
+        // navigation — a podcast titled ".." would escape the export root.
+        guard !cleaned.isEmpty, cleaned != ".", cleaned != ".." else { return "Untitled" }
+        return String(cleaned.prefix(120))
     }
 }

@@ -14,6 +14,7 @@ final class ReadwiseSyncManager {
     static let shared = ReadwiseSyncManager()
 
     private static let pendingKey = "readwise.pendingUuids"
+    private static let authFailedKey = "readwise.authFailed"
     private static let debounceInterval: TimeInterval = 5
     private static let maxBackoff: TimeInterval = 30 * 60
 
@@ -31,6 +32,15 @@ final class ReadwiseSyncManager {
     }
 
     var isEnabled: Bool { ReadwiseKeyStore.token() != nil }
+
+    /// True after the server rejected the stored token (revoked or rotated on
+    /// readwise.io). Pushes stay paused — retrying a dead token on every
+    /// capture would just grow the queue — until a fresh token is saved, and
+    /// the settings screen shows the reconnect state instead of "Connected".
+    private(set) var needsReauthorization: Bool {
+        get { UserDefaults.standard.bool(forKey: Self.authFailedKey) }
+        set { UserDefaults.standard.set(newValue, forKey: Self.authFailedKey) }
+    }
 
     /// Idempotent; called at app start (flag-gated) and after a token is saved.
     func startObservingIfNeeded() {
@@ -61,6 +71,7 @@ final class ReadwiseSyncManager {
                 FileLog.shared.addMessage("[Readwise] failed to remove token from Keychain")
                 return false
             }
+            needsReauthorization = false
             cancellables.removeAll()
             drainTask?.cancel()
             Analytics.track(.readwiseDisabled)
@@ -77,16 +88,20 @@ final class ReadwiseSyncManager {
             FileLog.shared.addMessage("[Readwise] failed to save token to Keychain")
             return false
         }
+        needsReauthorization = false
         startObservingIfNeeded()
         pushAll()
         Analytics.track(.readwiseEnabled)
         return true
     }
 
-    /// Queues every highlight-worthy bookmark (initial backfill after enabling).
+    /// Queues every highlight-worthy bookmark (initial backfill after
+    /// enabling) — the same acceptance rule `resolveHighlight` applies, so the
+    /// backfill corpus matches what steady-state edits would sync.
     func pushAll() {
         guard FeatureFlag.readwiseSync.enabled, isEnabled else { return }
-        for bookmark in bookmarkManager.allBookmarks() where bookmark.excerpt != nil {
+        for bookmark in bookmarkManager.allBookmarks()
+        where bookmark.excerpt != nil || bookmark.title != L10n.bookmarkDefaultTitle {
             enqueue(uuid: bookmark.uuid)
         }
     }
@@ -105,6 +120,8 @@ final class ReadwiseSyncManager {
             pending.append(uuid)
             pendingUuids = pending
         }
+        // The backlog stays durable while auth is broken; re-connecting drains it.
+        guard !needsReauthorization else { return }
         scheduleDrain(after: max(Self.debounceInterval, backoff))
     }
 
@@ -118,7 +135,7 @@ final class ReadwiseSyncManager {
     }
 
     private func drain() async {
-        guard let token = ReadwiseKeyStore.token() else { return }
+        guard !needsReauthorization, let token = ReadwiseKeyStore.token() else { return }
 
         let uuids = pendingUuids
         guard !uuids.isEmpty else { return }
@@ -136,11 +153,16 @@ final class ReadwiseSyncManager {
             backoff = 0
             Analytics.track(.readwisePushed, properties: ["count": highlights.count])
         } catch ReadwiseClient.ClientError.rateLimited(let retryAfter) {
-            scheduleDrain(after: retryAfter)
+            // Raise backoff too: `enqueue` reschedules at max(debounce, backoff),
+            // so without this a capture during the wait would cancel the
+            // Retry-After timer and re-hit the rate-limited API in 5s.
+            backoff = min(max(retryAfter, Self.debounceInterval), Self.maxBackoff)
+            scheduleDrain(after: backoff)
         } catch ReadwiseClient.ClientError.unauthorized {
-            // Token revoked server-side: stop pushing; the settings screen
-            // shows the stored-token state and the user re-validates there.
-            FileLog.shared.addMessage("[Readwise] token rejected; pausing pushes")
+            // Token revoked server-side: pause pushes durably and surface the
+            // reconnect state in Settings; the queue survives for the re-auth.
+            needsReauthorization = true
+            FileLog.shared.addMessage("[Readwise] token rejected; pausing pushes until a new token is saved")
         } catch {
             backoff = min(max(Self.debounceInterval, backoff * 2), Self.maxBackoff)
             FileLog.shared.addMessage("[Readwise] push failed (retry in \(Int(backoff))s): \(error)")

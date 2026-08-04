@@ -201,6 +201,58 @@ final class RemoteOpApplierBookmarkTests: XCTestCase {
         XCTAssertEqual(deviceB.bookmarks.bookmark(for: "bm-7")!.tags, ["ai", "climate"])
     }
 
+    func testSameMillisecondTrimTieConvergesOnBothDevices() async {
+        // Two devices trimmed the same bookmark in the same millisecond. The
+        // merge layer resolves the tie by deviceID/seq, so both devices must
+        // adopt that one winner — a strictly-newer-only apply gate would leave
+        // each device keeping its own trim forever.
+        seedBookmark(on: deviceA, uuid: "bm-tie", excerpt: nil, endTime: nil)
+        _ = await deviceA.bookmarks.updateTrim(uuid: "bm-tie", excerpt: "trim from a", endTime: 10,
+                                               trimModified: Date(timeIntervalSince1970: 5))
+        seedBookmark(on: deviceB, uuid: "bm-tie", excerpt: nil, endTime: nil)
+        _ = await deviceB.bookmarks.updateTrim(uuid: "bm-tie", excerpt: "trim from b", endTime: 20,
+                                               trimModified: Date(timeIntervalSince1970: 5))
+
+        let ops = [
+            bookmarkOp(uuid: "bm-tie", device: "device-a", seq: 1, wallClockMs: 5000,
+                       excerpt: "trim from a", endTime: 10, trimModified: 5000),
+            bookmarkOp(uuid: "bm-tie", device: "device-b", seq: 1, wallClockMs: 5000,
+                       excerpt: "trim from b", endTime: 20, trimModified: 5000),
+        ]
+        let state = MergeEngine.merged(snapshots: [], ops: ops)
+        _ = await RemoteOpApplier(dataManager: deviceA, delegate: nil).apply(state)
+        _ = await RemoteOpApplier(dataManager: deviceB, delegate: nil).apply(state)
+
+        let rowA = deviceA.bookmarks.bookmark(for: "bm-tie")!
+        let rowB = deviceB.bookmarks.bookmark(for: "bm-tie")!
+        XCTAssertEqual(rowA.excerpt, rowB.excerpt,
+                       "same-millisecond trims must converge to the tiebreak winner on every device")
+        XCTAssertEqual(rowA.endTime, rowB.endTime)
+    }
+
+    func testSameMillisecondTagTieConvergesOnBothDevices() async {
+        seedBookmark(on: deviceA, uuid: "bm-tagtie", excerpt: nil, endTime: nil)
+        _ = await deviceA.bookmarks.setTags(uuid: "bm-tagtie", tags: ["from-a"],
+                                            modified: Date(timeIntervalSince1970: 5))
+        seedBookmark(on: deviceB, uuid: "bm-tagtie", excerpt: nil, endTime: nil)
+        _ = await deviceB.bookmarks.setTags(uuid: "bm-tagtie", tags: ["from-b"],
+                                            modified: Date(timeIntervalSince1970: 5))
+
+        let ops = [
+            bookmarkOp(uuid: "bm-tagtie", device: "device-a", seq: 1, wallClockMs: 5000,
+                       tags: ["from-a"], tagsModified: 5000),
+            bookmarkOp(uuid: "bm-tagtie", device: "device-b", seq: 1, wallClockMs: 5000,
+                       tags: ["from-b"], tagsModified: 5000),
+        ]
+        let state = MergeEngine.merged(snapshots: [], ops: ops)
+        _ = await RemoteOpApplier(dataManager: deviceA, delegate: nil).apply(state)
+        _ = await RemoteOpApplier(dataManager: deviceB, delegate: nil).apply(state)
+
+        XCTAssertEqual(deviceA.bookmarks.bookmark(for: "bm-tagtie")!.tags,
+                       deviceB.bookmarks.bookmark(for: "bm-tagtie")!.tags,
+                       "same-millisecond tag sets must converge to the tiebreak winner on every device")
+    }
+
     func testNewBookmarkArrivesWithTrimAndTags() async {
         let ops = [
             bookmarkOp(uuid: "bm-8", device: "device-b", seq: 1, wallClockMs: 2000,

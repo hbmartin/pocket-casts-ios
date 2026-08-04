@@ -13,6 +13,12 @@ struct HighlightEditorView: View {
     /// Bridges the editor's absolute-time selection into the clip player's model.
     @StateObject private var clipTime: ClipTime
 
+    /// Inert mirror of the clip player's state: `TrimPlayButton` writes every
+    /// `$isPlaying` emission back into its binding, so binding it straight to
+    /// an action-performing Binding would loop (emission → action → emission).
+    /// `.onChange` below only reacts to genuine value changes.
+    @State private var isPlaying = false
+
     init(model: HighlightEditorViewModel) {
         self.model = model
         _clipTime = StateObject(wrappedValue: ClipTime(start: 0, end: 0))
@@ -97,9 +103,12 @@ struct HighlightEditorView: View {
 
     @ViewBuilder private var trimBar: some View {
         HStack(spacing: 12) {
-            if let episode = model.episode {
-                TrimPlayButton(isPlaying: playingBinding(for: episode))
+            if model.episode != nil {
+                TrimPlayButton(isPlaying: $isPlaying)
                     .frame(width: 56, height: 40)
+                    .onChange(of: isPlaying) { _, playing in
+                        playStateChanged(playing)
+                    }
             }
 
             // MediaTrimView spans the pannable window; its bindings are offset
@@ -128,22 +137,21 @@ struct HighlightEditorView: View {
         )
     }
 
-    private func playingBinding(for episode: BaseEpisode) -> Binding<Bool> {
-        Binding(
-            get: { ClipPlaybackManager.shared.isPlaying },
-            set: { playing in
-                if playing {
-                    guard let start = model.playbackTime(forTranscriptTime: model.selectionStart),
-                          let end = model.playbackTime(forTranscriptTime: model.selectionEnd) else { return }
-                    clipTime.start = start
-                    clipTime.end = end
-                    clipTime.playback = start
-                    ClipPlaybackManager.shared.play(episode: episode, clipTime: ObservedObject(wrappedValue: clipTime))
-                } else {
-                    ClipPlaybackManager.shared.stop()
-                }
-            }
-        )
+    private func playStateChanged(_ playing: Bool) {
+        guard playing else {
+            ClipPlaybackManager.shared.stop()
+            return
+        }
+        guard let episode = model.episode,
+              let start = model.playbackTime(forTranscriptTime: model.selectionStart),
+              let end = model.playbackTime(forTranscriptTime: model.selectionEnd) else {
+            isPlaying = false
+            return
+        }
+        clipTime.start = start
+        clipTime.end = end
+        clipTime.playback = start
+        ClipPlaybackManager.shared.play(episode: episode, clipTime: ObservedObject(wrappedValue: clipTime))
     }
 
     private func offsetBinding(_ binding: Binding<TimeInterval>) -> Binding<TimeInterval> {
@@ -222,7 +230,8 @@ struct HighlightTagChip: View {
     }
 }
 
-/// Minimal wrapping layout for tag chips.
+/// Minimal wrapping layout for tag chips. Rows fill leading-to-trailing, so
+/// positions mirror horizontally under right-to-left layout.
 struct FlowLayout: Layout {
     var spacing: CGFloat = 8
 
@@ -232,17 +241,21 @@ struct FlowLayout: Layout {
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         let arrangement = arrange(proposal: proposal, subviews: subviews)
-        for (subview, position) in zip(subviews, arrangement.positions) {
-            subview.place(
-                at: CGPoint(x: bounds.minX + position.x, y: bounds.minY + position.y),
-                proposal: .unspecified
-            )
+        let mirrored = subviews.layoutDirection == .rightToLeft
+        for (index, subview) in subviews.enumerated() {
+            let position = arrangement.positions[index]
+            let size = arrangement.sizes[index]
+            let x = mirrored
+                ? bounds.maxX - position.x - size.width
+                : bounds.minX + position.x
+            subview.place(at: CGPoint(x: x, y: bounds.minY + position.y), proposal: .unspecified)
         }
     }
 
-    private func arrange(proposal: ProposedViewSize, subviews: Subviews) -> (size: CGSize, positions: [CGPoint]) {
+    private func arrange(proposal: ProposedViewSize, subviews: Subviews) -> (size: CGSize, positions: [CGPoint], sizes: [CGSize]) {
         let maxWidth = proposal.width ?? .infinity
         var positions: [CGPoint] = []
+        var sizes: [CGSize] = []
         var origin = CGPoint.zero
         var rowHeight: CGFloat = 0
         var totalWidth: CGFloat = 0
@@ -255,11 +268,12 @@ struct FlowLayout: Layout {
                 rowHeight = 0
             }
             positions.append(origin)
+            sizes.append(size)
             origin.x += size.width + spacing
             rowHeight = max(rowHeight, size.height)
             totalWidth = max(totalWidth, origin.x - spacing)
         }
 
-        return (CGSize(width: totalWidth, height: origin.y + rowHeight), positions)
+        return (CGSize(width: totalWidth, height: origin.y + rowHeight), positions, sizes)
     }
 }

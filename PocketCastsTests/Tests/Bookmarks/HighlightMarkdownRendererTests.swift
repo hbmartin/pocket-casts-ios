@@ -79,6 +79,20 @@ final class HighlightMarkdownRendererTests: XCTestCase {
         XCTAssertFalse(path.dropFirst().contains(":"))
     }
 
+    func testRelativePathNeutralizesDotComponents() {
+        let export = HighlightMarkdownRenderer.EpisodeExport(
+            podcastTitle: "..",
+            episodeTitle: ".",
+            episodeUuid: "ep-3",
+            highlights: []
+        )
+
+        let path = renderer.relativePath(for: export)
+
+        XCTAssertEqual(path, "Untitled/Untitled--ep-3.md",
+                       "dot components must not escape the export root")
+    }
+
     func testRelativePathDistinguishesEpisodesWithTheSameTitle() {
         let first = HighlightMarkdownRenderer.EpisodeExport(
             podcastTitle: "The Show",
@@ -106,5 +120,26 @@ final class HighlightMarkdownRendererTests: XCTestCase {
         )
 
         XCTAssertTrue(renderer.markdown(for: export).contains(#"podcast: "The \"Quoted\" Show""#))
+    }
+
+    func testYamlAndHeadingsSurviveNewlineTitles() {
+        // A feed-controlled title containing "\n---\n" must not terminate the
+        // frontmatter block early or break the heading line.
+        let export = HighlightMarkdownRenderer.EpisodeExport(
+            podcastTitle: "Show",
+            episodeTitle: "Line one\n---\nLine two",
+            episodeUuid: "ep-4",
+            highlights: []
+        )
+
+        let markdown = renderer.markdown(for: export)
+
+        XCTAssertTrue(markdown.contains(#"episode: "Line one\n---\nLine two""#),
+                      "newlines encode as literal \\n inside the quoted scalar")
+        XCTAssertTrue(markdown.contains("# Line one --- Line two"),
+                      "the heading folds newlines to spaces")
+        // Exactly the frontmatter's own two fences survive as standalone lines.
+        let fenceLines = markdown.components(separatedBy: "\n").filter { $0 == "---" }
+        XCTAssertEqual(fenceLines.count, 2)
     }
 }

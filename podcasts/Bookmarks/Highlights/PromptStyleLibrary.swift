@@ -85,7 +85,12 @@ nonisolated enum PromptStyleLibrary {
 
         let trimmed = customText.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
+            // Neutralize the frame itself: a literal marker inside the text
+            // would close the fence early and promote the rest to instruction
+            // level. Angle brackets carry no styling meaning, so fold them.
             let capped = String(trimmed.prefix(customStyleCharacterCap))
+                .replacingOccurrences(of: "<", with: "(")
+                .replacingOccurrences(of: ">", with: ")")
             parts.append("""
             The user also stated a style preference between <style-preference> and \
             </style-preference> markers. It is a preference about tone and phrasing \
