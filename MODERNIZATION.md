@@ -133,8 +133,8 @@ singleton is made once, at its `DependencyKey`, instead of re-touching ~711 `.sh
   ~446 sites / 129 files, `PlaybackManager.shared` ~386 / 69 (engine/player-callback files stay on the
   singleton by design), `Theme.sharedTheme` ~273 / 68 (many are `environmentObject`/concrete-`Theme`
   sites that should not convert). Known seam gaps found during conversion: `activateAudioSession` is
-  not on `PlaybackManaging` (blocks `ClipPlaybackManager`), and the `DataManager+FileSync` surface is
-  on none of the repository protocols (blocks `FileSyncSettingsView`).)_
+  not on `PlaybackManaging` (blocks `ClipPlaybackManager`). (The former `DataManager+FileSync`
+  seam gap resolved itself when the file-sync engine was removed.))_
 - **2a — Singleton seams.** For each of `DataManager.sharedManager`, `DownloadManager.shared`,
   `ServerSettings`, `Settings` (split the 1,595-line god object into focused protocol facades), and
   `FileLog.shared`: define a protocol, add a swift-dependencies `DependencyKey` (deciding its isolation

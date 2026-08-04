@@ -104,21 +104,14 @@ cheapest first coverage for SwiftUI portions; VC logic tests follow DI conversio
 **Why deferred:** depends on items 7 (DI) and 49 (file organization) to be tractable.
 
 **Candidates (in extraction order):** Bookmarks (cleanest boundaries), Analytics adapters,
-Sharing, Onboarding. `PocketCastsFileSync` is the extraction template (protocol-injected app
-dependencies, no UIKit in module).
+Sharing, Onboarding. `PocketCastsFileSync` (now uploads-folder-only) is the extraction template
+(protocol-injected app dependencies, no UIKit in module).
 
 ## Item 57 — Podping / WebSub instant feed updates
 
-**Why deferred:** Track A's polling refresh must ship and soak first; instant-update plumbing is an
-optimization on top. Deliberately skipped by the 2026-07-13 program (a draft plan exists at
-`plans/podping.md`).
-
-**Concept:** subscribe to Podping (podcast-index socket/relay) for followed feeds with
-`refreshSource == .localFeed`; on ping, trigger `RefreshManager.refresh(podcast:)` for just that
-podcast. WebSub as fallback for feeds advertising hubs.
-
-**Re-entry:** after A2/A3 soak. Needs a battery/socket strategy decision (BGAppRefresh polling of a
-relay vs push-via-server is likely the realistic iOS answer).
+**DEAD (2026-08-04):** premised on the on-device feed refresh pipeline (`refreshSource ==
+.localFeed`), which the local-first reversal removed — the app relies on the backend refresh
+service again. `plans/podping.md` is retained as a historical draft only.
 
 ## Item 67 — Shake-to-report in beta
 

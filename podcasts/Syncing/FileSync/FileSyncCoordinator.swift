@@ -17,6 +17,12 @@ final class FileSyncCoordinator {
         guard !isSetup else { return }
         isSetup = true
 
+        // One-shot cleanup of keys owned by the removed sync engine.
+        for deadKey in ["FileSync.deviceId", "FileSync.mirrorEnabled", "FileSync.mirrorWifiOnly",
+                        "FileSync.mirrorMaxBytes", "FileSyncBannerDismissed"] {
+            UserDefaults.standard.removeObject(forKey: deadKey)
+        }
+
         Task {
             await FileSyncManager.shared.configure(
                 isSupportedFile: { FileTypeUtil.isSupportedUserFileType(fileName: $0) },

@@ -1,5 +1,8 @@
 # Podping/WebSub Instant Feed Updates for `.localFeed` Podcasts (Item 57)
 
+> **DEAD (2026-08-04):** the local-first reversal removed `.localFeed` podcasts and the
+> on-device refresh pipeline this plan is premised on. Retained as a historical draft.
+
 ## Context
 
 Research this session established a hard constraint the original one-line concept didn't

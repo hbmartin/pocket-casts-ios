@@ -2545,74 +2545,20 @@
 /* Prompt to navigate the user to the files setting screen. */
 "settings_files" = "Files Settings";
 
-/* Fallback label in the file-sync device list when a peer device name cannot be read. */
-"file_sync_unknown_device" = "Unknown device";
-
 /* Button title that lets the user pick a different local file-sync folder. */
 "file_sync_action_choose_folder" = "Choose Folder";
-
-/* Button title that exports local file-sync diagnostics. */
-"file_sync_action_export_diagnostics" = "Export Diagnostics";
 
 /* Button title that starts a manual file-sync pass. */
 "file_sync_action_sync_now" = "Sync Now";
 
-/* Button title in the profile banner that opens file-sync settings. */
-"file_sync_banner_action" = "View Settings";
-
-/* Message in the profile banner explaining local file sync was enabled. */
-"file_sync_banner_message" = "Your podcasts, playback, and files can now sync through your local iCloud Drive folder.";
-
-/* Title in the profile banner announcing local file sync. */
-"file_sync_banner_title" = "Local File Sync Is On";
-
 /* Destructive action that deletes a folder-backed upload from the sync folder and all devices. */
 "file_sync_delete_everywhere" = "Delete Everywhere";
 
-/* Empty-state text for the file-sync device list. */
-"file_sync_devices_empty" = "No synced devices yet.";
-
-/* Swipe action that removes a stale peer device folder from file sync. */
-"file_sync_devices_forget" = "Forget";
-
-/* Section title for devices participating in file sync. */
-"file_sync_devices_header" = "Devices";
-
-/* Label shown next to a device that has not written presence recently. */
-"file_sync_devices_stale" = "Stale";
-
-/* Label shown next to the current device in the file-sync device list. */
-"file_sync_devices_this_device" = "This Device";
-
 /* Empty-state message shown in Files when local file sync is enabled and no files exist. */
-"file_sync_files_empty_message" = "Add files here or drop supported audio files into your Pocket Casts sync folder.";
+"file_sync_files_empty_message" = "Add files here or drop supported audio files into your Pocket Casts uploads folder.";
 
-/* Footer text explaining where local file-sync data is stored. */
-"file_sync_folder_explanation" = "Pocket Casts stores sync logs and uploaded files in this folder. You can use iCloud Drive for automatic Apple-device sync or choose another Files location.";
-
-/* Section header for the download-mirroring settings in file sync. */
-"file_sync_mirror_header" = "Download Mirroring";
-
-/* Toggle that mirrors downloaded episode audio into the sync folder. */
-"file_sync_mirror_toggle" = "Mirror Downloads";
-
-/* Explanation of the download-mirroring toggle. */
-"file_sync_mirror_explanation" = "Copies downloaded episode audio into the sync folder so your other devices can fetch it without re-downloading from the internet.";
-
-/* Toggle that restricts pulling mirrored audio to unmetered connections. */
-"file_sync_mirror_wifi_only" = "Pull Audio on Wi-Fi Only";
-
-/* Destructive button that resets file-sync state and re-seeds the library. */
-"file_sync_action_reset" = "Reset & Re-bootstrap";
-
-/* Explanation of the reset & re-bootstrap button. */
-"file_sync_reset_explanation" = "Forgets this device's sync progress and re-seeds your full library into the sync folder. Use this if your devices seem out of step.";
-
-/* Title of the confirmation shown before resetting file-sync state. */
-"file_sync_reset_confirm_title" = "Reset Sync State?";
-
-/* Message of the confirmation shown before resetting file-sync state. */
-"file_sync_reset_confirm_message" = "This re-seeds your entire library into the sync folder and replays history from your other devices. It can take a while on large libraries.";
+/* Footer text explaining where uploaded files are stored. */
+"file_sync_folder_explanation" = "Pocket Casts stores your uploaded files in this folder, and files added to it appear on every device using the same folder. You can use iCloud Drive or choose another Files location.";
 
 /* Label for the default iCloud Drive file-sync folder. */
 "file_sync_folder_icloud" = "iCloud Drive";
@@ -2634,9 +2580,6 @@
 
 /* Value shown when file sync is enabled. */
 "file_sync_status_on" = "On";
-
-/* Row label for the number of local changes waiting to be written to file sync. */
-"file_sync_status_pending_changes" = "Pending Changes";
 
 /* Row label for the current file-sync enabled state. */
 "file_sync_status_state" = "State";
@@ -2730,12 +2673,6 @@
 
 /* Message of the alert shown when the chosen folder does not contain a valid backup. */
 "settings_restore_invalid_backup" = "The selected folder doesn't contain a Pocket Casts backup.";
-
-/* Setting toggle that makes newly added podcasts fetch and parse their feeds on this device instead of via the Pocket Casts servers. */
-"settings_general_local_feed_ingest" = "On-Device Feed Refresh";
-
-/* Subtitle explaining the on-device feed refresh toggle. */
-"settings_general_local_feed_ingest_subtitle" = "New podcasts added by URL or OPML import are fetched and refreshed directly from their feeds on this device, without Pocket Casts servers. They won't sync with your account.";
 
 /* Setting toggle to enable the app to open the links in an external browser. */
 "settings_general_open_in_browser" = "Open Links In Browser";

@@ -83,10 +83,9 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
   URL (with format and language). No content leaves the device; a Sighting asks
   the server to fetch the transcript itself from the publisher.
 - **Eligible episode** — an episode whose transcripts may be contributed or
-  sighted: every episode except those of private local feeds. Episodes outside
-  the Pocket Casts catalog are eligible — their deterministic feed-derived
-  identity is shared by all subscribers of the same feed. A transcript URL
-  carrying credentials or access tokens is never sighted.
+  sighted: every podcast episode (uploaded files are private by definition and
+  never qualify). A transcript URL carrying credentials or access tokens is
+  never sighted.
 
 ## Playback intelligence
 

@@ -157,8 +157,6 @@ A valid cache replaces the whole streaming pass; anything less reruns it from sc
 - `syncedTranscripts` — whether the fingerprint alignment layer runs. Without it, transcripts
   render but follow-along/tap-to-seek use raw cue times (correct only when the played audio happens
   to match the reference).
-- Local-feed podcasts (`refreshSource == .localFeed`) have no server-generated transcripts or
-  fingerprints; the subsystem resolves `.unavailable` for them by construction.
 
 ## Tests
 

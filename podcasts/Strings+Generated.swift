@@ -1456,54 +1456,20 @@ nonisolated internal enum L10n {
   internal static var feedbackMailNotConfiguredTitle: String { return L10n.tr("Localizable", "feedback_mail_not_configured_title", fallback: "Mail Not Configured") }
   /// Button title that lets the user pick a different local file-sync folder.
   internal static var fileSyncActionChooseFolder: String { return L10n.tr("Localizable", "file_sync_action_choose_folder", fallback: "Choose Folder") }
-  /// Button title that exports local file-sync diagnostics.
-  internal static var fileSyncActionExportDiagnostics: String { return L10n.tr("Localizable", "file_sync_action_export_diagnostics", fallback: "Export Diagnostics") }
-  /// Destructive button that resets file-sync state and re-seeds the library.
-  internal static var fileSyncActionReset: String { return L10n.tr("Localizable", "file_sync_action_reset", fallback: "Reset & Re-bootstrap") }
   /// Button title that starts a manual file-sync pass.
   internal static var fileSyncActionSyncNow: String { return L10n.tr("Localizable", "file_sync_action_sync_now", fallback: "Sync Now") }
-  /// Button title in the profile banner that opens file-sync settings.
-  internal static var fileSyncBannerAction: String { return L10n.tr("Localizable", "file_sync_banner_action", fallback: "View Settings") }
-  /// Message in the profile banner explaining local file sync was enabled.
-  internal static var fileSyncBannerMessage: String { return L10n.tr("Localizable", "file_sync_banner_message", fallback: "Your podcasts, playback, and files can now sync through your local iCloud Drive folder.") }
-  /// Title in the profile banner announcing local file sync.
-  internal static var fileSyncBannerTitle: String { return L10n.tr("Localizable", "file_sync_banner_title", fallback: "Local File Sync Is On") }
   /// Destructive action that deletes a folder-backed upload from the sync folder and all devices.
   internal static var fileSyncDeleteEverywhere: String { return L10n.tr("Localizable", "file_sync_delete_everywhere", fallback: "Delete Everywhere") }
-  /// Empty-state text for the file-sync device list.
-  internal static var fileSyncDevicesEmpty: String { return L10n.tr("Localizable", "file_sync_devices_empty", fallback: "No synced devices yet.") }
-  /// Swipe action that removes a stale peer device folder from file sync.
-  internal static var fileSyncDevicesForget: String { return L10n.tr("Localizable", "file_sync_devices_forget", fallback: "Forget") }
-  /// Section title for devices participating in file sync.
-  internal static var fileSyncDevicesHeader: String { return L10n.tr("Localizable", "file_sync_devices_header", fallback: "Devices") }
-  /// Label shown next to a device that has not written presence recently.
-  internal static var fileSyncDevicesStale: String { return L10n.tr("Localizable", "file_sync_devices_stale", fallback: "Stale") }
-  /// Label shown next to the current device in the file-sync device list.
-  internal static var fileSyncDevicesThisDevice: String { return L10n.tr("Localizable", "file_sync_devices_this_device", fallback: "This Device") }
   /// Empty-state message shown in Files when local file sync is enabled and no files exist.
-  internal static var fileSyncFilesEmptyMessage: String { return L10n.tr("Localizable", "file_sync_files_empty_message", fallback: "Add files here or drop supported audio files into your Pocket Casts sync folder.") }
-  /// Footer text explaining where local file-sync data is stored.
-  internal static var fileSyncFolderExplanation: String { return L10n.tr("Localizable", "file_sync_folder_explanation", fallback: "Pocket Casts stores sync logs and uploaded files in this folder. You can use iCloud Drive for automatic Apple-device sync or choose another Files location.") }
+  internal static var fileSyncFilesEmptyMessage: String { return L10n.tr("Localizable", "file_sync_files_empty_message", fallback: "Add files here or drop supported audio files into your Pocket Casts uploads folder.") }
+  /// Footer text explaining where uploaded files are stored.
+  internal static var fileSyncFolderExplanation: String { return L10n.tr("Localizable", "file_sync_folder_explanation", fallback: "Pocket Casts stores your uploaded files in this folder, and files added to it appear on every device using the same folder. You can use iCloud Drive or choose another Files location.") }
   /// Label for the default iCloud Drive file-sync folder.
   internal static var fileSyncFolderIcloud: String { return L10n.tr("Localizable", "file_sync_folder_icloud", fallback: "iCloud Drive") }
   /// Label for a user-picked file-sync folder.
   internal static var fileSyncFolderPicked: String { return L10n.tr("Localizable", "file_sync_folder_picked", fallback: "Picked Folder") }
-  /// Explanation of the download-mirroring toggle.
-  internal static var fileSyncMirrorExplanation: String { return L10n.tr("Localizable", "file_sync_mirror_explanation", fallback: "Copies downloaded episode audio into the sync folder so your other devices can fetch it without re-downloading from the internet.") }
-  /// Section header for the download-mirroring settings in file sync.
-  internal static var fileSyncMirrorHeader: String { return L10n.tr("Localizable", "file_sync_mirror_header", fallback: "Download Mirroring") }
-  /// Toggle that mirrors downloaded episode audio into the sync folder.
-  internal static var fileSyncMirrorToggle: String { return L10n.tr("Localizable", "file_sync_mirror_toggle", fallback: "Mirror Downloads") }
-  /// Toggle that restricts pulling mirrored audio to unmetered connections.
-  internal static var fileSyncMirrorWifiOnly: String { return L10n.tr("Localizable", "file_sync_mirror_wifi_only", fallback: "Pull Audio on Wi-Fi Only") }
   /// Action that removes only the local cached copy of a folder-backed upload.
   internal static var fileSyncRemoveDownload: String { return L10n.tr("Localizable", "file_sync_remove_download", fallback: "Remove Download") }
-  /// Message of the confirmation shown before resetting file-sync state.
-  internal static var fileSyncResetConfirmMessage: String { return L10n.tr("Localizable", "file_sync_reset_confirm_message", fallback: "This re-seeds your entire library into the sync folder and replays history from your other devices. It can take a while on large libraries.") }
-  /// Title of the confirmation shown before resetting file-sync state.
-  internal static var fileSyncResetConfirmTitle: String { return L10n.tr("Localizable", "file_sync_reset_confirm_title", fallback: "Reset Sync State?") }
-  /// Explanation of the reset & re-bootstrap button.
-  internal static var fileSyncResetExplanation: String { return L10n.tr("Localizable", "file_sync_reset_explanation", fallback: "Forgets this device's sync progress and re-seeds your full library into the sync folder. Use this if your devices seem out of step.") }
   /// Row label for the current file-sync folder type.
   internal static var fileSyncStatusFolder: String { return L10n.tr("Localizable", "file_sync_status_folder", fallback: "Folder") }
   /// Row label for the most recent successful file-sync pass.
@@ -1512,12 +1478,8 @@ nonisolated internal enum L10n {
   internal static var fileSyncStatusOff: String { return L10n.tr("Localizable", "file_sync_status_off", fallback: "Off") }
   /// Value shown when file sync is enabled.
   internal static var fileSyncStatusOn: String { return L10n.tr("Localizable", "file_sync_status_on", fallback: "On") }
-  /// Row label for the number of local changes waiting to be written to file sync.
-  internal static var fileSyncStatusPendingChanges: String { return L10n.tr("Localizable", "file_sync_status_pending_changes", fallback: "Pending Changes") }
   /// Row label for the current file-sync enabled state.
   internal static var fileSyncStatusState: String { return L10n.tr("Localizable", "file_sync_status_state", fallback: "State") }
-  /// Fallback label in the file-sync device list when a peer device name cannot be read.
-  internal static var fileSyncUnknownDevice: String { return L10n.tr("Localizable", "file_sync_unknown_device", fallback: "Unknown device") }
   /// Title for the file upload settings screen. This is used when a user is uploading a new file.
   internal static var fileUploadAddFile: String { return L10n.tr("Localizable", "file_upload_add_file", fallback: "Add File") }
   /// Prompt to add a custom image to the uploaded file.
@@ -4053,10 +4015,6 @@ nonisolated internal enum L10n {
   internal static var settingsGeneralLegacyBluetooth: String { return L10n.tr("Localizable", "settings_general_legacy_bluetooth", fallback: "Legacy Bluetooth Support") }
   /// Subtitle explaining the toggle to modify which bluetooth protocol to use.
   internal static var settingsGeneralLegacyBluetoothSubtitle: String { return L10n.tr("Localizable", "settings_general_legacy_bluetooth_subtitle", fallback: "If you have a Bluetooth Device or Car Stereo that seems to be pausing Pocket Casts while it's playing, or resetting the playback position to 0, try turning this setting on to fix it.") }
-  /// Setting toggle that makes newly added podcasts fetch and parse their feeds on this device instead of via the Pocket Casts servers.
-  internal static var settingsGeneralLocalFeedIngest: String { return L10n.tr("Localizable", "settings_general_local_feed_ingest", fallback: "On-Device Feed Refresh") }
-  /// Subtitle explaining the on-device feed refresh toggle.
-  internal static var settingsGeneralLocalFeedIngestSubtitle: String { return L10n.tr("Localizable", "settings_general_local_feed_ingest_subtitle", fallback: "New podcasts added by URL or OPML import are fetched and refreshed directly from their feeds on this device, without Pocket Casts servers. They won't sync with your account.") }
   /// Setting toggle to enable the feature that disables the lock screen scrubber.
   internal static var settingsGeneralLockScreenDisabled: String { return L10n.tr("Localizable", "settings_general_lock_screen_disabled", fallback: "Enable Lock Screen Scrubbing") }
   /// Setting toggle to enable the gesture for multi-select.
