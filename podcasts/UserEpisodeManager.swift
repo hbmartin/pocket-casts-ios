@@ -4,6 +4,23 @@ import PocketCastsFileSync
 import PocketCastsUtils
 import UIKit
 
+/// Where a new user episode's audio lives.
+///
+/// Files the user added by hand belong in the sync folder, so they appear on
+/// every device pointing at it. Read Aloud output deliberately does not
+/// (ADR-0019): it is regenerable audio that would silently consume the user's
+/// iCloud quota, and its provenance — the source document and the Narration row
+/// — is device-local, so a copy arriving on a second device would be an episode
+/// with no way to view or re-narrate its text.
+nonisolated enum UserEpisodeStorage: Sendable {
+    /// Copy into the Uploads folder and take on folder-backed identity.
+    case syncFolder
+    /// Stay in the local download cache. `groupName` labels the Files-screen
+    /// section; `UploadsScanner` never sees these rows because it only projects
+    /// `allFolderBackedUserEpisodes()`.
+    case deviceLocal(groupName: String?)
+}
+
 nonisolated struct UserEpisodeManager {
         static func addUserEpisode(
             uuid: String,
@@ -12,7 +29,8 @@ nonisolated struct UserEpisodeManager {
             artwork: UIImage?,
             color: Int,
             fileSize: Int,
-            duration: TimeInterval
+            duration: TimeInterval,
+            storage: UserEpisodeStorage = .syncFolder
         ) throws -> UserEpisode {
             var episode = UserEpisode()
             episode.title = title
@@ -34,21 +52,27 @@ nonisolated struct UserEpisodeManager {
                 episode.hasCustomImage = false
             }
 
+            if case .deviceLocal(let groupName) = storage {
+                episode.groupName = groupName
+            }
+
             episode = DataManager.sharedManager.save(episode: episode)
 
             let episodeUuid = episode.uuid
-            Task {
-                do {
-                    let relativePath = try await FileSyncManager.shared.importUpload(from: localFileUrl)
-                    if var saved = DataManager.sharedManager.findUserEpisode(uuid: episodeUuid) {
-                        saved.folderRelativePath = relativePath
-                        saved.groupName = ""
-                        saved.identity = .provisional
-                        DataManager.sharedManager.save(episode: saved)
-                        try await FileSyncManager.shared.materializeUpload(episodeUuid: episodeUuid)
+            if case .syncFolder = storage {
+                Task {
+                    do {
+                        let relativePath = try await FileSyncManager.shared.importUpload(from: localFileUrl)
+                        if var saved = DataManager.sharedManager.findUserEpisode(uuid: episodeUuid) {
+                            saved.folderRelativePath = relativePath
+                            saved.groupName = ""
+                            saved.identity = .provisional
+                            DataManager.sharedManager.save(episode: saved)
+                            try await FileSyncManager.shared.materializeUpload(episodeUuid: episodeUuid)
+                        }
+                    } catch {
+                        FileLog.shared.addMessage("FileSync: import into sync folder failed: \(error)")
                     }
-                } catch {
-                    FileLog.shared.addMessage("FileSync: import into sync folder failed: \(error)")
                 }
             }
 

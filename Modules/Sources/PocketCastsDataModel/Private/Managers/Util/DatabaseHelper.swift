@@ -504,6 +504,65 @@ class DatabaseHelper {
 
             try db.executeUpdate("DROP TABLE IF EXISTS FileSyncJournal;", values: nil)
             try db.executeUpdate("DROP TABLE IF EXISTS FileSyncCursor;", values: nil)
+        },
+
+        // Read Aloud: one row per Narration — a text document rendered by one
+        // voice into one episode (ADR-0019). Device-local and never synced: the
+        // source document lives on this device only, and the generated audio is
+        // deliberately NOT folder-backed, so nothing here has a counterpart on
+        // another device to reconcile with.
+        //
+        // Deliberately one table, not two. There is no separate source-document
+        // table because the file *is* the document: `sourcePath` points at the
+        // retained copy under Documents/read_aloud/sources, and the row is
+        // pipeline state. The document outliving its audio is expressed by
+        // `episodeUuid` going NULL (state = detached), not by a foreign key.
+        //
+        // Synthesis settings (engineKind, providerId, voiceId, rate) are frozen
+        // here at enqueue and never mutated. That immutability is what lets
+        // resume work off `completedChunkCount` alone: settings cannot drift
+        // mid-run, so a checkpoint can never disagree with what is being
+        // rendered. Changing a voice means a new row.
+        SchemaMigration(toVersion: 91) { db in
+            try db.executeUpdate("""
+            CREATE TABLE IF NOT EXISTS Narration (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                uuid TEXT NOT NULL UNIQUE,
+                title TEXT NOT NULL,
+                originalFilename TEXT,
+                sourceKind INTEGER NOT NULL DEFAULT 0,
+                utType TEXT,
+                sourcePath TEXT NOT NULL,
+                characterCount INTEGER NOT NULL DEFAULT 0,
+                language TEXT,
+                engineKind INTEGER NOT NULL DEFAULT 0,
+                providerId TEXT,
+                voiceId TEXT NOT NULL,
+                voiceName TEXT NOT NULL,
+                rate REAL NOT NULL DEFAULT 1,
+                state INTEGER NOT NULL DEFAULT 0,
+                chunkCount INTEGER NOT NULL DEFAULT 0,
+                completedChunkCount INTEGER NOT NULL DEFAULT 0,
+                episodeUuid TEXT,
+                errorCode TEXT,
+                errorDetails TEXT,
+                createdDate REAL NOT NULL DEFAULT 0,
+                completedDate REAL,
+                outputDuration REAL,
+                outputSizeInBytes INTEGER
+            );
+            """, values: nil)
+            // Detaching on episode deletion looks a narration up by its episode.
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS narration_episode
+            ON Narration (episodeUuid);
+            """, values: nil)
+            // Resume-on-launch scans for unfinished work; the library screen
+            // orders by recency.
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS narration_state
+            ON Narration (state, createdDate);
+            """, values: nil)
         }
     ]
 

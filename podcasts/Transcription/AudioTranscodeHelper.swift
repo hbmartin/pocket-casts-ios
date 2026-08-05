@@ -38,13 +38,33 @@ nonisolated struct AudioTranscodeHelper: Sendable {
             return Output(url: sourceURL, mimeType: "audio/mp4", isTemporary: false)
         }
 
-        let asset = AVURLAsset(url: sourceURL)
-        guard let audioTrack = try? await asset.loadTracks(withMediaType: .audio).first else {
+        let outputURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("transcription-upload-\(UUID().uuidString).m4a")
+
+        do {
+            try await Self.encodeToMonoAAC(asset: AVURLAsset(url: sourceURL), outputURL: outputURL, bitRate: Self.outputBitRate)
+        } catch {
             throw TranscriptionError.audioUnreadable
         }
 
-        let outputURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("transcription-upload-\(UUID().uuidString).m4a")
+        return Output(url: outputURL, mimeType: "audio/mp4", isTemporary: true)
+    }
+
+    /// Encodes any asset's audio to mono AAC in an `.m4a` at `outputURL`.
+    ///
+    /// Split out of `transcodeForUpload` so Read Aloud can reuse it over an
+    /// `AVMutableComposition` of synthesized chunks (ADR-0019) instead of a file
+    /// on disk — the reader/writer loop never cared where the asset came from,
+    /// and duplicating it would mean two copies of the ready-callback and
+    /// single-shot-continuation handling to keep correct.
+    ///
+    /// Mono is right for both callers: speech, and smaller files.
+    static func encodeToMonoAAC(asset: AVAsset, outputURL: URL, bitRate: Int) async throws {
+        guard let audioTrack = try? await asset.loadTracks(withMediaType: .audio).first else {
+            throw AudioEncodeError.failed
+        }
+
+        try? FileManager.default.removeItem(at: outputURL)
 
         let reader: AVAssetReader
         let writer: AVAssetWriter
@@ -52,7 +72,7 @@ nonisolated struct AudioTranscodeHelper: Sendable {
             reader = try AVAssetReader(asset: asset)
             writer = try AVAssetWriter(outputURL: outputURL, fileType: .m4a)
         } catch {
-            throw TranscriptionError.audioUnreadable
+            throw AudioEncodeError.failed
         }
 
         // Decode to PCM; the writer input converts (downmix + resample + AAC).
@@ -60,23 +80,23 @@ nonisolated struct AudioTranscodeHelper: Sendable {
             AVFormatIDKey: kAudioFormatLinearPCM,
         ])
         readerOutput.alwaysCopiesSampleData = false
-        guard reader.canAdd(readerOutput) else { throw TranscriptionError.audioUnreadable }
+        guard reader.canAdd(readerOutput) else { throw AudioEncodeError.failed }
         reader.add(readerOutput)
 
         let writerInput = AVAssetWriterInput(mediaType: .audio, outputSettings: [
             AVFormatIDKey: kAudioFormatMPEG4AAC,
             AVNumberOfChannelsKey: 1,
             AVSampleRateKey: 44_100,
-            AVEncoderBitRateKey: Self.outputBitRate,
+            AVEncoderBitRateKey: bitRate,
         ])
         writerInput.expectsMediaDataInRealTime = false
-        guard writer.canAdd(writerInput) else { throw TranscriptionError.audioUnreadable }
+        guard writer.canAdd(writerInput) else { throw AudioEncodeError.failed }
         writer.add(writerInput)
 
-        guard reader.startReading() else { throw TranscriptionError.audioUnreadable }
+        guard reader.startReading() else { throw AudioEncodeError.failed }
         guard writer.startWriting() else {
             reader.cancelReading()
-            throw TranscriptionError.audioUnreadable
+            throw AudioEncodeError.failed
         }
         writer.startSession(atSourceTime: .zero)
 
@@ -114,9 +134,14 @@ nonisolated struct AudioTranscodeHelper: Sendable {
 
         guard reader.status != .failed, writer.status == .completed else {
             try? FileManager.default.removeItem(at: outputURL)
-            throw TranscriptionError.audioUnreadable
+            throw AudioEncodeError.failed
         }
-
-        return Output(url: outputURL, mimeType: "audio/mp4", isTemporary: true)
     }
+}
+
+/// The shared encoder's only failure. Callers map it onto their own taxonomy —
+/// `TranscriptionError.audioUnreadable` for uploads, `ReadAloudError.assemblyFailed`
+/// for narrations — so neither feature's error surface leaks into the other's.
+nonisolated enum AudioEncodeError: Error, Sendable {
+    case failed
 }
