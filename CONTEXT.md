@@ -103,16 +103,16 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
   episode. The result is an ordinary uploaded file: a `UserEpisode` that plays,
   scrubs and archives like any other, distinguished only by the Narration record
   behind it.
-- **Narration** — one source document rendered by one voice into one episode.
-  The unit of work and the record. A document may be narrated more than once
-  (a better voice, a different engine); each narration produces its own episode.
+- **Document** — a text file the user imported to be read aloud, together with
+  the retained copy of it on disk. The durable half: it outlives every Narration
+  made from it, and having none is an ordinary resting state. Deleting the
+  generated episode leaves the document untouched; only deleting the document
+  destroys the text.
+- **Narration** — one attempt to render a Document in one voice, and the episode
+  it produced. Several may exist for a Document over time (a better voice, a
+  retry after a failure); they all read the Document's single retained file.
   Device-local, never syncs. Deliberately *not* called a "generation" — that word
   belongs to Salient Segments and Generated transcripts.
-- **Source document** — the retained `.txt`/`.md` copy a Narration was rendered
-  from. Not an entity of its own: the file *is* the document and the Narration
-  points at it. It outlives the audio — deleting the episode detaches the
-  Narration and leaves the document, so it can be read on screen or narrated
-  again; only deleting the document itself destroys both.
 - **Chunk** — the unit of synthesis: whole sentences packed to fit the engine's
   per-request limit, never split mid-sentence, never spanning a paragraph.
   Chunking is pure and deterministic, which is what makes an interrupted

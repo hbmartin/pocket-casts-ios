@@ -553,26 +553,29 @@ class DatabaseHelper {
             try db.executeUpdate("DROP TABLE IF EXISTS FileSyncCursor;", values: nil)
         },
 
-        // Read Aloud: one row per Narration — a text document rendered by one
-        // voice into one episode (ADR-0019). Device-local and never synced: the
-        // source document lives on this device only, and the generated audio is
-        // deliberately NOT folder-backed, so nothing here has a counterpart on
-        // another device to reconcile with.
+        // Read Aloud (ADR-0019, ADR-0020). Both tables are device-local and
+        // never synced: the source document lives on this device only, and the
+        // generated audio is deliberately NOT folder-backed, so nothing here has
+        // a counterpart on another device to reconcile with.
         //
-        // Deliberately one table, not two. There is no separate source-document
-        // table because the file *is* the document: `sourcePath` points at the
-        // retained copy under Documents/read_aloud/sources, and the row is
-        // pipeline state. The document outliving its audio is expressed by
-        // `episodeUuid` going NULL (state = detached), not by a foreign key.
+        // Two tables because the durable thing is the *document*, not the audio.
+        // A ReadAloudDocument owns the retained .txt/.md under
+        // Documents/read_aloud/sources/<uuid> and everything derived from
+        // reading it (title, character count, detected language); a Narration is
+        // one attempt to render that document in one voice, and several may
+        // exist over time. A document with no narrations is an ordinary resting
+        // state — it is what deleting the generated episode leaves behind — so
+        // there is no "detached" narration state.
         //
         // Synthesis settings (engineKind, providerId, voiceId, rate) are frozen
-        // here at enqueue and never mutated. That immutability is what lets
-        // resume work off `completedChunkCount` alone: settings cannot drift
-        // mid-run, so a checkpoint can never disagree with what is being
-        // rendered. Changing a voice means a new row.
+        // on the narration at enqueue and never mutated. That immutability is
+        // what lets resume work off `completedChunkCount` alone: settings cannot
+        // drift mid-run, so a checkpoint can never disagree with what is being
+        // rendered. Re-narrating in another voice is a new Narration row against
+        // the same document, sharing its one source file.
         SchemaMigration(toVersion: 91) { db in
             try db.executeUpdate("""
-            CREATE TABLE IF NOT EXISTS Narration (
+            CREATE TABLE IF NOT EXISTS ReadAloudDocument (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 uuid TEXT NOT NULL UNIQUE,
                 title TEXT NOT NULL,
@@ -582,6 +585,14 @@ class DatabaseHelper {
                 sourcePath TEXT NOT NULL,
                 characterCount INTEGER NOT NULL DEFAULT 0,
                 language TEXT,
+                addedDate REAL NOT NULL DEFAULT 0
+            );
+            """, values: nil)
+            try db.executeUpdate("""
+            CREATE TABLE IF NOT EXISTS Narration (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                uuid TEXT NOT NULL UNIQUE,
+                documentUuid TEXT NOT NULL,
                 engineKind INTEGER NOT NULL DEFAULT 0,
                 providerId TEXT,
                 voiceId TEXT NOT NULL,
@@ -599,16 +610,24 @@ class DatabaseHelper {
                 outputSizeInBytes INTEGER
             );
             """, values: nil)
-            // Detaching on episode deletion looks a narration up by its episode.
+            // The library screen lists a document's narrations newest-first.
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS narration_document
+            ON Narration (documentUuid, createdDate);
+            """, values: nil)
+            // Episode deletion looks a narration up by its episode.
             try db.executeUpdate("""
             CREATE INDEX IF NOT EXISTS narration_episode
             ON Narration (episodeUuid);
             """, values: nil)
-            // Resume-on-launch scans for unfinished work; the library screen
-            // orders by recency.
+            // Resume-on-launch scans for unfinished work.
             try db.executeUpdate("""
             CREATE INDEX IF NOT EXISTS narration_state
             ON Narration (state, createdDate);
+            """, values: nil)
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS read_aloud_document_added
+            ON ReadAloudDocument (addedDate);
             """, values: nil)
         }
     ]

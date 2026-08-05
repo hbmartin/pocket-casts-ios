@@ -7,10 +7,11 @@ import PocketCastsUtils
 /// excluded from backups — but for opposite reasons:
 ///
 /// - **Sources** must survive: the retained document is user content that
-///   outlives its audio, and the reading screen and any re-narration read it
-///   back. `Caches/` would let the system purge it under disk pressure and
-///   silently orphan every narration made from it. It skips backups only
-///   because the user has the original elsewhere.
+///   outlives every narration made from it, and the reading screen and any
+///   re-narration read it back. `Caches/` would let the system purge it under
+///   disk pressure and silently orphan the document. It skips backups only
+///   because the user has the original elsewhere. One file per document, shared
+///   by all of that document's narrations.
 /// - **Workspaces** must survive too, which is the non-obvious half: chunk files
 ///   *are* the resume checkpoint. Putting them in `Caches/` would mean a purge
 ///   between launches quietly discards completed work the DB still claims
@@ -32,9 +33,9 @@ nonisolated struct ReadAloudStorage: Sendable {
     // MARK: - Sources
 
     /// Copies a picked or shared file in and returns the path to store on the
-    /// narration row, relative to the sources directory.
-    func importSource(from url: URL, narrationUuid: String) throws -> String {
-        let relativePath = Self.sourceFilename(narrationUuid: narrationUuid, pathExtension: url.pathExtension)
+    /// document row, relative to the sources directory.
+    func importSource(from url: URL, documentUuid: String) throws -> String {
+        let relativePath = Self.sourceFilename(documentUuid: documentUuid, pathExtension: url.pathExtension)
         let destination = try preparedSourcesDirectory().appendingPathComponent(relativePath, isDirectory: false)
 
         try? FileManager.default.removeItem(at: destination)
@@ -44,8 +45,8 @@ nonisolated struct ReadAloudStorage: Sendable {
 
     /// Writes composed text as a source document, so pasted text is not a
     /// special case anywhere downstream.
-    func writeSource(text: String, narrationUuid: String) throws -> String {
-        let relativePath = Self.sourceFilename(narrationUuid: narrationUuid, pathExtension: "txt")
+    func writeSource(text: String, documentUuid: String) throws -> String {
+        let relativePath = Self.sourceFilename(documentUuid: documentUuid, pathExtension: "txt")
         let destination = try preparedSourcesDirectory().appendingPathComponent(relativePath, isDirectory: false)
 
         try text.write(to: destination, atomically: true, encoding: .utf8)
@@ -62,9 +63,9 @@ nonisolated struct ReadAloudStorage: Sendable {
         try? FileManager.default.removeItem(at: sourceURL(relativePath: relativePath))
     }
 
-    private static func sourceFilename(narrationUuid: String, pathExtension: String) -> String {
+    private static func sourceFilename(documentUuid: String, pathExtension: String) -> String {
         let ext = pathExtension.isEmpty ? "txt" : pathExtension.lowercased()
-        return "\(narrationUuid).\(ext)"
+        return "\(documentUuid).\(ext)"
     }
 
     // MARK: - Workspaces

@@ -66,7 +66,7 @@ actor NarrationQueue {
     /// exactly as it was mid-run — there is no chance to write a "stopped" state
     /// on the way down.
     func restorePending() {
-        for narration in dataManager.narrations.narrationsPendingResume() {
+        for narration in dataManager.readAloud.narrationsPendingResume() {
             enqueue(uuid: narration.uuid)
         }
     }
@@ -74,14 +74,14 @@ actor NarrationQueue {
     /// Retries a failed or cancelled narration. Rendered chunks are kept, so a
     /// retry after a network blip resumes rather than restarting.
     func retry(uuid: String) {
-        guard dataManager.narrations.markQueued(uuid: uuid) else { return }
+        guard dataManager.readAloud.markQueued(uuid: uuid) else { return }
         Self.postChanged()
         enqueue(uuid: uuid)
     }
 
     func cancel(uuid: String) {
         pending.removeAll { $0 == uuid }
-        dataManager.narrations.markCancelled(uuid: uuid)
+        dataManager.readAloud.markCancelled(uuid: uuid)
         if runningUuid == uuid {
             runningTask?.cancel()
         }
@@ -131,22 +131,23 @@ actor NarrationQueue {
     // MARK: - Rendering one narration
 
     private func run(uuid: String) async {
-        guard let narration = dataManager.narrations.narration(uuid: uuid),
-              NarrationState.resumable.contains(narration.narrationState) else { return }
+        guard let narration = dataManager.readAloud.narration(uuid: uuid),
+              NarrationState.resumable.contains(narration.narrationState),
+              let document = dataManager.readAloud.document(uuid: narration.documentUuid) else { return }
 
         do {
-            try await render(narration)
+            try await render(narration, document: document)
         } catch is CancellationError {
-            dataManager.narrations.markCancelled(uuid: uuid)
+            dataManager.readAloud.markCancelled(uuid: uuid)
             storage.deleteWorkspace(narrationUuid: uuid)
         } catch {
             let readAloudError = error as? ReadAloudError ?? .engineFailure
             if case .cancelled = readAloudError {
-                dataManager.narrations.markCancelled(uuid: uuid)
+                dataManager.readAloud.markCancelled(uuid: uuid)
                 storage.deleteWorkspace(narrationUuid: uuid)
             } else {
                 FileLog.shared.addMessage("ReadAloud: narration \(uuid) failed: \(readAloudError.sanitizedDescription)")
-                dataManager.narrations.markFailed(
+                dataManager.readAloud.markFailed(
                     uuid: uuid,
                     errorCode: readAloudError.code,
                     errorDetails: readAloudError.sanitizedDescription
@@ -159,30 +160,30 @@ actor NarrationQueue {
         Self.postChanged()
     }
 
-    private func render(_ narration: NarrationRecord) async throws {
-        let document = try loadDocument(narration)
+    private func render(_ narration: NarrationRecord, document: ReadAloudDocumentRecord) async throws {
+        let extracted = try loadText(of: document)
         let engine = try engineFactory.makeEngine(for: narration.engine, providerId: narration.providerId)
         let apiKey = engineFactory.apiKey(providerId: narration.providerId)
         if engine.capabilities.requiresAPIKey, apiKey?.isEmpty != false {
             throw ReadAloudError.apiKeyMissing
         }
 
-        let chunks = TextChunker().chunks(for: document, maxCharacters: engine.capabilities.maxCharactersPerChunk)
+        let chunks = TextChunker().chunks(for: extracted, maxCharacters: engine.capabilities.maxCharactersPerChunk)
         guard !chunks.isEmpty else { throw ReadAloudError.emptyDocument }
 
-        dataManager.narrations.markRendering(uuid: narration.uuid, chunkCount: chunks.count)
+        dataManager.readAloud.markRendering(uuid: narration.uuid, chunkCount: chunks.count)
         Self.postChanged()
 
         try storage.prepareWorkspace(narrationUuid: narration.uuid)
 
-        let voice = SynthesisVoice(id: narration.voiceId, name: narration.voiceName, language: narration.language ?? "")
+        let voice = SynthesisVoice(id: narration.voiceId, name: narration.voiceName, language: document.language ?? "")
         let settings = SynthesisSettings(rate: Float(narration.rate))
 
         // The filesystem is the authority on what is already rendered, not the
         // stored count: the count is bumped after the file lands, so a kill in
         // between leaves it one behind.
         var rendered = storage.renderedChunkIndices(narrationUuid: narration.uuid, chunkCount: chunks.count)
-        dataManager.narrations.updateProgress(uuid: narration.uuid, completedChunkCount: rendered.count)
+        dataManager.readAloud.updateProgress(uuid: narration.uuid, completedChunkCount: rendered.count)
 
         for chunk in chunks {
             try Task.checkCancellation()
@@ -206,7 +207,7 @@ actor NarrationQueue {
             }
 
             rendered.insert(chunk.index)
-            dataManager.narrations.updateProgress(uuid: narration.uuid, completedChunkCount: rendered.count)
+            dataManager.readAloud.updateProgress(uuid: narration.uuid, completedChunkCount: rendered.count)
             Self.postChanged()
         }
 
@@ -220,13 +221,14 @@ actor NarrationQueue {
         )
 
         let episodeUuid = try await materializer.materialize(
+            document: document,
             narration: narration,
             audioURL: output.url,
             duration: output.duration,
             sizeInBytes: output.sizeInBytes
         )
 
-        dataManager.narrations.markCompleted(
+        dataManager.readAloud.markCompleted(
             uuid: narration.uuid,
             episodeUuid: episodeUuid,
             duration: output.duration,
@@ -235,15 +237,19 @@ actor NarrationQueue {
         storage.deleteWorkspace(narrationUuid: narration.uuid)
     }
 
-    private func loadDocument(_ narration: NarrationRecord) throws -> ExtractedDocument {
-        let sourceURL = storage.sourceURL(relativePath: narration.sourcePath)
+    /// Re-reads and re-extracts the document's retained file. Done afresh on
+    /// every run — including a resume — because extraction and chunking are
+    /// deterministic, so this reproduces exactly the chunk indices already on
+    /// disk.
+    private func loadText(of document: ReadAloudDocumentRecord) throws -> ExtractedDocument {
+        let sourceURL = storage.sourceURL(relativePath: document.sourcePath)
         guard let data = try? Data(contentsOf: sourceURL) else {
             throw ReadAloudError.sourceUnreadable
         }
         return try extractors.extract(
             data: data,
-            filename: narration.originalFilename ?? narration.sourcePath,
-            type: narration.utType.flatMap(UTType.init(_:))
+            filename: document.originalFilename ?? document.sourcePath,
+            type: document.utType.flatMap(UTType.init(_:))
         )
     }
 

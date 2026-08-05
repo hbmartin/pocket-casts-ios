@@ -8,7 +8,13 @@ import PocketCastsUtils
 /// store.
 nonisolated protocol NarrationMaterializing: Sendable {
     /// - Returns: the uuid of the created episode.
-    func materialize(narration: NarrationRecord, audioURL: URL, duration: TimeInterval, sizeInBytes: Int64) async throws -> String
+    func materialize(
+        document: ReadAloudDocumentRecord,
+        narration: NarrationRecord,
+        audioURL: URL,
+        duration: TimeInterval,
+        sizeInBytes: Int64
+    ) async throws -> String
 }
 
 /// Production materialization: move the rendered file into the download cache,
@@ -25,7 +31,13 @@ nonisolated struct NarrationMaterializer: NarrationMaterializing {
     /// afterwards like any other file.
     private static let imageColor = 3
 
-    func materialize(narration: NarrationRecord, audioURL: URL, duration: TimeInterval, sizeInBytes: Int64) async throws -> String {
+    func materialize(
+        document: ReadAloudDocumentRecord,
+        narration: NarrationRecord,
+        audioURL: URL,
+        duration: TimeInterval,
+        sizeInBytes: Int64
+    ) async throws -> String {
         let episodeUuid = UUID().uuidString.lowercased()
 
         // `addUserEpisode` expects the audio to already sit in the download
@@ -37,7 +49,7 @@ nonisolated struct NarrationMaterializer: NarrationMaterializing {
         do {
             _ = try UserEpisodeManager.addUserEpisode(
                 uuid: episodeUuid,
-                title: narration.title,
+                title: document.title,
                 localFileUrl: cachedURL,
                 artwork: nil,
                 color: Self.imageColor,

@@ -53,9 +53,8 @@ final class ReadAloudCoordinator {
         }
     }
 
-    /// The user deleted a generated episode. The audio is gone; the source
-    /// document is not (ADR-0019) — the narration becomes detached and offers a
-    /// regenerate.
+    /// The user deleted a generated episode. Its narration goes with it; the
+    /// document survives and the library offers to narrate it again (ADR-0019).
     private func observeEpisodeDeletion() {
         episodeDeletionObserver = NotificationCenter.default.addObserver(
             forName: UserEpisodeDeleted.name,
@@ -67,9 +66,12 @@ final class ReadAloudCoordinator {
             guard let episodeUuid = notification.object as? String else { return }
 
             Task.detached(priority: .utility) {
-                if DataManager.sharedManager.narrations.detachEpisode(episodeUuid: episodeUuid) {
-                    NotificationCenter.postOnMainThread(NarrationsChanged())
+                guard let narration = DataManager.sharedManager.readAloud.deleteNarration(episodeUuid: episodeUuid) else {
+                    // An ordinary uploaded file, which is the common case.
+                    return
                 }
+                ReadAloudStorage.default.deleteWorkspace(narrationUuid: narration.uuid)
+                NotificationCenter.postOnMainThread(NarrationsChanged())
             }
         }
     }

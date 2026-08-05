@@ -6,7 +6,7 @@ into `Uploads/` (iCloud Drive by default), stamps `folderRelativePath` and a
 provisional identity, and `UploadsScanner` reconciles it from then on. Read
 Aloud deliberately creates the one class of user episode that is *not* that. Its
 rendered `.m4a` stays in the local download cache with `folderRelativePath ==
-nil`, carrying `groupName = "Read Aloud"` for its Files-screen section, via a new
+nil`, carrying `groupName = "Read Aloud"` for its Files-screen section, via a
 `UserEpisodeStorage` parameter whose `.syncFolder` default leaves every existing
 call site behaving exactly as before.
 
@@ -28,10 +28,12 @@ all three above), and a `.pcnarration` sidecar in the folder to carry provenance
 
 - Narration audio does not follow the user to another device. Re-narrating there
   is the intended path, and it is cheap because the built-in engine is free.
-- Deleting the episode is not deleting the document. `UserEpisodeDeleted`
-  detaches the Narration (`episodeUuid` → NULL, state `detached`) and the source
-  file survives, so a swipe on a crowded Files screen can never destroy user
-  content. Only deleting the document itself removes both.
+- Deleting the episode is not deleting the document. `UserEpisodeDeleted` removes
+  the Narration that produced it (and its workspace), while the
+  `ReadAloudDocument` and its retained source file survive — so a swipe on a
+  crowded Files screen can never destroy user content, and the library offers to
+  narrate the document again. Only deleting the document itself removes both;
+  see ADR-0020 for why the document is the durable half.
 - `folderRelativePath == nil` means the existing "Delete from device" path
   applies and the "Delete Everywhere" / re-download affordances do not — correct,
   since there is no remote copy. Recovery is regeneration, which is why the

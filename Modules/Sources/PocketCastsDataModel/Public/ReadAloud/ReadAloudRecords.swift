@@ -2,31 +2,31 @@ import Foundation
 import GRDB
 import GRDBMacros
 
-/// One Narration (migration 91, ADR-0019): a text document rendered by one voice
-/// into one episode.
+/// A text document the user imported to be read aloud (migration 91, ADR-0020).
 ///
-/// The row is pipeline state, not content. The document itself is the file at
-/// `sourcePath`; the audio is the `UserEpisode` at `episodeUuid`. Both can
-/// outlive the other — deleting the episode nulls `episodeUuid` and leaves the
-/// document narratable again, and deleting the document takes the episode with
-/// it.
+/// The durable half of Read Aloud. It owns the retained `.txt`/`.md` file and
+/// everything derived from reading it; narrations come and go against it. A
+/// document with no narrations is an ordinary resting state — it is what
+/// deleting the generated episode leaves behind.
 ///
 /// Device-local: no `syncStatus`, no journal hooks, nothing here ever leaves the
 /// device.
-@GRDBRecord(table: "Narration")
-public struct NarrationRecord: Equatable, Sendable {
+@GRDBRecord(table: "ReadAloudDocument")
+public struct ReadAloudDocumentRecord: Equatable, Sendable {
     public var uuid = ""
+
+    /// Editable display name, seeded from a leading heading or the filename.
     public var title = ""
 
     /// The picked file's name, kept for display when the user renamed the
-    /// narration. Nil for composed text, which never had a file.
+    /// document. Nil for composed text, which never had a file.
     public var originalFilename: String?
 
     /// Raw `NarrationSourceKind`.
     public var sourceKind: Int32 = 0
 
-    /// UTType identifier the document was extracted as, so a re-extract on
-    /// resume routes to the same extractor even if the extension is ambiguous.
+    /// UTType identifier the document was extracted as, so a re-extract routes
+    /// to the same extractor even when the extension is ambiguous.
     public var utType: String?
 
     /// Path of the retained source copy, relative to the sources directory.
@@ -34,11 +34,36 @@ public struct NarrationRecord: Equatable, Sendable {
     /// between installs and OS upgrades.
     public var sourcePath = ""
 
+    /// Narratable characters — what the duration estimate and any cost
+    /// confirmation are computed from. Not the file's byte count.
     public var characterCount: Int32 = 0
 
     /// BCP-47 identifier detected at import, or nil when detection was
     /// inconclusive.
     public var language: String?
+
+    public var addedDate: Double = 0
+
+    public init() {}
+
+    public var source: NarrationSourceKind {
+        get { NarrationSourceKind(rawValue: sourceKind) ?? .picked }
+        set { sourceKind = newValue.rawValue }
+    }
+}
+
+/// One attempt to render a document in one voice (migration 91, ADR-0020).
+///
+/// Pipeline state, not content: the document is the file at its `sourcePath`,
+/// and the audio is the `UserEpisode` at `episodeUuid`. Several narrations may
+/// exist for a document over time — a different voice, a retry after a failure —
+/// and they all share the document's single source file.
+@GRDBRecord(table: "Narration")
+public struct NarrationRecord: Equatable, Sendable {
+    public var uuid = ""
+
+    /// The `ReadAloudDocumentRecord` this renders.
+    public var documentUuid = ""
 
     /// Raw `NarrationEngineKind`.
     public var engineKind: Int32 = 0
@@ -49,7 +74,9 @@ public struct NarrationRecord: Equatable, Sendable {
     public var voiceId = ""
     public var voiceName = ""
 
-    /// Speaking rate as a multiplier of normal pace.
+    /// Speaking rate as a multiplier of normal pace. Not exposed in the UI — the
+    /// player's own speed control does that job live and reversibly — but kept
+    /// so a per-narration rate can be added without a migration.
     public var rate: Double = 1
 
     /// Raw `NarrationState`.
@@ -63,8 +90,9 @@ public struct NarrationRecord: Equatable, Sendable {
     /// rendering something different from what the completed chunks hold.
     public var completedChunkCount: Int32 = 0
 
-    /// The generated episode, or nil before completion and after the user
-    /// deletes it.
+    /// The generated episode, or nil until completion. Deleting the episode
+    /// deletes this narration rather than nulling the link — the document is
+    /// what survives (ADR-0019).
     public var episodeUuid: String?
 
     /// Stable `ReadAloudError.code` of the last failure.
@@ -90,26 +118,21 @@ public struct NarrationRecord: Equatable, Sendable {
         get { NarrationEngineKind(rawValue: engineKind) ?? .appleBuiltIn }
         set { engineKind = newValue.rawValue }
     }
-
-    public var source: NarrationSourceKind {
-        get { NarrationSourceKind(rawValue: sourceKind) ?? .picked }
-        set { sourceKind = newValue.rawValue }
-    }
 }
 
 /// Lifecycle of a Narration. Raw values are persisted in `Narration.state` —
 /// never renumber.
 ///
-/// `detached` is reached when the user deletes the generated episode: the audio
-/// is gone but the source document survives, so the row stays and offers a
-/// regenerate. It is a resting state, not a failure.
+/// Every case is an attempt in flight or an attempt that ended. There is no
+/// state meaning "finished, but the audio is gone": deleting the episode deletes
+/// the narration, and the document it belonged to expresses "nothing narrated
+/// right now" all by itself.
 public enum NarrationState: Int32, Sendable, CaseIterable {
     case queued = 0
     case rendering = 1
     case completed = 2
     case failed = 3
     case cancelled = 4
-    case detached = 5
 
     /// States a launch-time resume should pick up. `rendering` is included
     /// because a process kill leaves the row exactly as it was mid-run — there
@@ -129,7 +152,7 @@ public enum NarrationEngineKind: Int32, Sendable, CaseIterable {
     case remoteProvider = 2
 }
 
-/// How the source document arrived. Persisted in `Narration.sourceKind` — never
+/// How a document arrived. Persisted in `ReadAloudDocument.sourceKind` — never
 /// renumber.
 public enum NarrationSourceKind: Int32, Sendable, CaseIterable {
     /// Picked from the Files screen's document picker.
