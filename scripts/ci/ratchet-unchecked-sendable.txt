@@ -13,8 +13,6 @@ Modules/Sources/PocketCastsDataModelTesting/PodcastRepositoryMock.swift: 1
 Modules/Sources/PocketCastsDataModelTesting/RepositoryMock.swift: 1
 Modules/Sources/PocketCastsDataModelTesting/UpNextRepositoryMock.swift: 1
 Modules/Sources/PocketCastsDataModelTesting/UserEpisodeRepositoryMock.swift: 1
-Modules/Sources/PocketCastsFileSync/Generated/filesync.pb.swift: 1
-Modules/Sources/PocketCastsFileSync/Generated/sync_records.pb.swift: 2
 Modules/Sources/PocketCastsServer/Private/API Tasks/ApiBaseTask.swift: 1
 Modules/Sources/PocketCastsServer/Private/API Tasks/ChangeEmailTask.swift: 1
 Modules/Sources/PocketCastsServer/Private/API Tasks/ChangePasswordTask.swift: 1
@@ -61,7 +59,6 @@ Modules/Sources/PocketCastsUtils/General/UncheckedSendable.swift: 1
 Modules/Sources/PocketCastsUtils/General/UncheckedSendableBox.swift: 1
 Modules/Sources/PocketCastsUtils/Logging/FileLog.swift: 1
 Modules/Tests/PocketCastsDataModelTests/ValueObservationTests.swift: 1
-Modules/Tests/PocketCastsServerTests/FeedParserTestSupport.swift: 1
 Modules/Tests/PocketCastsServerTests/PodcastExistsHelperTests.swift: 1
 Modules/Tests/PocketCastsServerTests/SyncTaskPlaylistOrderingTests.swift: 1
 Modules/Tests/PocketCastsTranscriptionTests/Providers/MockURLProtocol.swift: 1

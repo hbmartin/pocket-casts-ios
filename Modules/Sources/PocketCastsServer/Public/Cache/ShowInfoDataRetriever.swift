@@ -3,10 +3,6 @@ import PocketCastsUtils
 
 /// Request information about an episode using the show notes endpoint
 public actor ShowInfoDataRetriever {
-    /// Instance the local-feed pipeline seeds through (see `storeLocalShowInfo`). All
-    /// instances share the same disk-backed store (`diskPath: "show_notes"`), so entries
-    /// seeded here are visible to the instances the display path creates.
-    public static let localFeedSeeder = ShowInfoDataRetriever()
     private static let sharedCache = URLCache(
         memoryCapacity: 1.megabytes,
         diskCapacity: 100.megabytes,
@@ -125,18 +121,6 @@ public actor ShowInfoDataRetriever {
 
     private func setDataRequestMapToNil(for podcastUuid: String) {
         dataRequestMap[podcastUuid] = nil
-    }
-
-    /// Seeds the show-notes cache with locally synthesized data. Local-feed podcasts have
-    /// no cache-server entry, so their show notes/chapters/transcripts are generated from
-    /// the parsed feed (see `LocalFeedShowInfo`) and stored under the exact request the
-    /// display path reads — callers then use `useCacheOnly` so no request ever leaves the
-    /// device for these podcasts.
-    public func storeLocalShowInfo(data: Data, for podcastUuid: String) {
-        let url = ServerHelper.asUrl(ServerConstants.Urls.cache() + "mobile/show_notes/full/\(podcastUuid)")
-        guard let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil) else { return }
-
-        cache.storeCachedResponse(CachedURLResponse(response: response, data: data), for: URLRequest(url: url))
     }
 
     private func loadEpisodeData(

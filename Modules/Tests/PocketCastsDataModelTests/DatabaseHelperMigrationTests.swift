@@ -250,6 +250,81 @@ final class DatabaseHelperMigrationTests: XCTestCase {
         XCTAssertEqual(search.indexedEpisodeCount(source: .provided), 0)
     }
 
+    /// Migration 90 (local-first reversal) purges podcasts owned by the removed
+    /// on-device refresh pipeline with all their dependents, drops the
+    /// refreshSource column, and drops the file-sync journal/cursor tables —
+    /// while leaving server-sourced rows untouched.
+    func testMigration90PurgesLocalFeedRowsAndDropsRefreshSource() throws {
+        let dbPool = try XCTUnwrap(DatabasePool.newTestDatabase(databaseName: "\(UUID().uuidString).sqlite3"))
+        let queue = GRDBQueue(dbPool: dbPool)
+
+        let priorMigrations = DatabaseHelper.migrations.filter { $0.toVersion <= 89 }
+        XCTAssertTrue(DatabaseHelper.setup(queue: queue, migrations: priorMigrations))
+
+        try dbPool.write { db in
+            try db.execute(sql: "INSERT INTO SJPodcast (uuid, addedDate, refreshSource) VALUES ('pod-server', 1000, 0)")
+            try db.execute(sql: "INSERT INTO SJPodcast (uuid, addedDate, refreshSource) VALUES ('pod-local', 1000, 1)")
+            try db.execute(sql: "INSERT INTO SJEpisode (uuid, podcastUuid, addedDate, episodeStatus, playingStatus, podcast_id) VALUES ('ep-server', 'pod-server', 1000, 1, 1, 1)")
+            try db.execute(sql: "INSERT INTO SJEpisode (uuid, podcastUuid, addedDate, episodeStatus, playingStatus, podcast_id) VALUES ('ep-local', 'pod-local', 1000, 1, 1, 2)")
+            try db.execute(sql: "INSERT INTO SJPlaylistEpisode (episodeUuid, playlist_id, podcastUuid) VALUES ('ep-server', 1, 'pod-server')")
+            try db.execute(sql: "INSERT INTO SJPlaylistEpisode (episodeUuid, playlist_id, podcastUuid) VALUES ('ep-local', 1, 'pod-local')")
+            try db.execute(sql: "INSERT INTO PlaylistEpisodeHistory (episodePosition, episodeUuid, playlist_id, podcastUuid, date) VALUES (0, 'ep-local', 1, 'pod-local', 1000)")
+            try db.execute(sql: "INSERT INTO UpNextChanges (type, uuid, utcTime) VALUES (1, 'ep-local', 1000)")
+            try db.execute(sql: "INSERT INTO AutoAddCandidates (episode_uuid, podcast_uuid) VALUES ('ep-local', 'pod-local')")
+            try db.execute(sql: "INSERT INTO Bookmark (uuid, title, episode_uuid, podcast_uuid, time, date_added) VALUES ('bm-local', 'b', 'ep-local', 'pod-local', 1, 1000)")
+            try db.execute(sql: "INSERT INTO Bookmark (uuid, title, episode_uuid, podcast_uuid, time, date_added) VALUES ('bm-server', 'b', 'ep-server', 'pod-server', 1, 1000)")
+            try db.execute(sql: "INSERT INTO BookmarkTag (bookmarkUuid, tag) VALUES ('bm-local', 'tag-1')")
+        }
+
+        XCTAssertTrue(DatabaseHelper.setup(queue: queue, migrations: DatabaseHelper.migrations))
+
+        try dbPool.read { db in
+            XCTAssertGreaterThanOrEqual(try Int.fetchOne(db, sql: "PRAGMA user_version") ?? -1, 90)
+
+            let podcasts = try String.fetchAll(db, sql: "SELECT uuid FROM SJPodcast")
+            XCTAssertEqual(podcasts, ["pod-server"])
+            let episodes = try String.fetchAll(db, sql: "SELECT uuid FROM SJEpisode")
+            XCTAssertEqual(episodes, ["ep-server"])
+            XCTAssertEqual(try String.fetchAll(db, sql: "SELECT episodeUuid FROM SJPlaylistEpisode"), ["ep-server"])
+            XCTAssertEqual(try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM PlaylistEpisodeHistory"), 0)
+            XCTAssertEqual(try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM UpNextChanges"), 0)
+            XCTAssertEqual(try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM AutoAddCandidates"), 0)
+            XCTAssertEqual(try String.fetchAll(db, sql: "SELECT uuid FROM Bookmark"), ["bm-server"])
+            XCTAssertEqual(try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM BookmarkTag"), 0)
+
+            let podcastColumns = try String.fetchAll(db, sql: "SELECT name FROM pragma_table_info('SJPodcast')")
+            XCTAssertFalse(podcastColumns.contains("refreshSource"))
+
+            let tables = try String.fetchAll(db, sql: "SELECT name FROM sqlite_master WHERE type = 'table'")
+            XCTAssertFalse(tables.contains("FileSyncJournal"))
+            XCTAssertFalse(tables.contains("FileSyncCursor"))
+        }
+    }
+
+    /// The overwhelmingly common upgrade: no local-feed rows exist. Migration 90
+    /// must delete nothing and still drop the column and file-sync tables.
+    func testMigration90IsCleanWhenNoLocalFeedRowsExist() throws {
+        let dbPool = try XCTUnwrap(DatabasePool.newTestDatabase(databaseName: "\(UUID().uuidString).sqlite3"))
+        let queue = GRDBQueue(dbPool: dbPool)
+
+        let priorMigrations = DatabaseHelper.migrations.filter { $0.toVersion <= 89 }
+        XCTAssertTrue(DatabaseHelper.setup(queue: queue, migrations: priorMigrations))
+
+        try dbPool.write { db in
+            try db.execute(sql: "INSERT INTO SJPodcast (uuid, addedDate) VALUES ('pod-server', 1000)")
+            try db.execute(sql: "INSERT INTO SJEpisode (uuid, podcastUuid, addedDate, episodeStatus, playingStatus, podcast_id) VALUES ('ep-server', 'pod-server', 1000, 1, 1, 1)")
+        }
+
+        XCTAssertTrue(DatabaseHelper.setup(queue: queue, migrations: DatabaseHelper.migrations))
+
+        try dbPool.read { db in
+            XCTAssertEqual(try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM SJPodcast"), 1)
+            XCTAssertEqual(try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM SJEpisode"), 1)
+            let podcastColumns = try String.fetchAll(db, sql: "SELECT name FROM pragma_table_info('SJPodcast')")
+            XCTAssertFalse(podcastColumns.contains("refreshSource"))
+        }
+    }
+
     /// Stable, comparable representation of every table and index in the database.
     private static func schemaObjects(in db: Database) throws -> [String] {
         try String.fetchAll(

@@ -40,11 +40,6 @@ final class ITunesDirectoryTests: XCTestCase {
         XCTAssertEqual(ITunesDirectory.normalizedCountry("Latn"), "us")
     }
 
-    func testLookupURL() {
-        let url = ITunesDirectory.lookupURL(id: "1200361736")
-        XCTAssertEqual(url.absoluteString, "https://itunes.apple.com/lookup?id=1200361736&entity=podcast")
-    }
-
     func testSearchURLEscapesTerm() throws {
         let url = ITunesDirectory.searchURL(term: "swift over coffee & tea", country: "GB", limit: 10)
 
@@ -101,7 +96,6 @@ final class ITunesDirectoryTests: XCTestCase {
         XCTAssertEqual(podcasts[0].title, "The Daily")
         XCTAssertEqual(podcasts[0].author, "The New York Times")
         XCTAssertEqual(podcasts[0].artworkURL, "https://example.com/image/thumb/mza_1.jpg/600x600bb.png")
-        XCTAssertNil(podcasts[0].feedURL, "chart entries carry no feed URL until looked up")
         XCTAssertEqual(podcasts[1].id, "1322200189")
     }
 
@@ -117,7 +111,6 @@ final class ITunesDirectoryTests: XCTestCase {
         XCTAssertEqual(podcasts[0].title, "All-In")
         XCTAssertEqual(podcasts[0].author, "All-In Podcast, LLC")
         XCTAssertEqual(podcasts[0].artworkURL, "https://example.com/image/thumb/mza_2.png/600x600bb.png", "largest listed image is taken then upscaled")
-        XCTAssertNil(podcasts[0].feedURL)
     }
 
     func testClassicFeedWithSingleEntryObjectDecodes() async throws {
@@ -132,7 +125,7 @@ final class ITunesDirectoryTests: XCTestCase {
 
     // MARK: - Search decoding
 
-    func testSearchDecodesResultsIncludingFeedURL() async throws {
+    func testSearchDecodesResults() async throws {
         StubURLProtocol.registry.stub(url: ITunesDirectory.searchURL(term: "swift", country: "us", limit: 50), data: Data(Self.searchFixture.utf8))
 
         let podcasts = try await stubbedDirectory().search(term: "swift", country: "us")
@@ -141,51 +134,16 @@ final class ITunesDirectoryTests: XCTestCase {
         XCTAssertEqual(podcasts[0].id, "1435076502")
         XCTAssertEqual(podcasts[0].title, "Swift over Coffee")
         XCTAssertEqual(podcasts[0].author, "Paul Hudson and Mikaela Caron")
-        XCTAssertEqual(podcasts[0].feedURL, "https://anchor.fm/s/572fc68/podcast/rss")
         XCTAssertEqual(podcasts[0].artworkURL, "https://example.com/image/thumb/mza_4.jpg/600x600bb.jpg", "artworkUrl600 is preferred when present")
-    }
-
-    // MARK: - Lookup decoding
-
-    func testLookupReturnsFeedURL() async throws {
-        StubURLProtocol.registry.stub(url: ITunesDirectory.lookupURL(id: "1200361736"), data: Data(Self.lookupFixture.utf8))
-
-        let feedURL = try await stubbedDirectory().lookupFeedURL(id: "1200361736")
-
-        XCTAssertEqual(feedURL, "https://feeds.simplecast.com/Sl5CSM3S")
-    }
-
-    func testLookupWithNoResultsReturnsNil() async throws {
-        StubURLProtocol.registry.stub(url: ITunesDirectory.lookupURL(id: "0"), data: Data(#"{"resultCount":0,"results":[]}"#.utf8))
-
-        let feedURL = try await stubbedDirectory().lookupFeedURL(id: "0")
-
-        XCTAssertNil(feedURL)
-    }
-
-    // MARK: - Chart entry → feed URL resolution flow
-
-    func testChartEntryResolvesToFeedURL() async throws {
-        StubURLProtocol.registry.stub(url: ITunesDirectory.topPodcastsURL(country: "us", genre: nil, limit: 50), data: Data(Self.marketingToolsFixture.utf8))
-        StubURLProtocol.registry.stub(url: ITunesDirectory.lookupURL(id: "1200361736"), data: Data(Self.lookupFixture.utf8))
-
-        let directory = stubbedDirectory()
-        let charts = try await directory.topPodcasts(country: "us", genre: nil)
-        let first = try XCTUnwrap(charts.first)
-        XCTAssertNil(first.feedURL)
-
-        let feedURL = try await directory.lookupFeedURL(id: first.id)
-
-        XCTAssertEqual(feedURL, "https://feeds.simplecast.com/Sl5CSM3S")
     }
 
     // MARK: - Error handling
 
     func testNon200ResponseThrows() async {
-        StubURLProtocol.registry.stub(url: ITunesDirectory.lookupURL(id: "42"), data: Data(), statusCode: 503)
+        StubURLProtocol.registry.stub(url: ITunesDirectory.searchURL(term: "down", country: "us", limit: 50), data: Data(), statusCode: 503)
 
         do {
-            _ = try await stubbedDirectory().lookupFeedURL(id: "42")
+            _ = try await stubbedDirectory().search(term: "down", country: "us")
             XCTFail("expected badResponse to be thrown")
         } catch {
             XCTAssertTrue(error is ITunesDirectory.DirectoryError)
@@ -246,16 +204,6 @@ final class ITunesDirectoryTests: XCTestCase {
        "feedUrl":"https://anchor.fm/s/572fc68/podcast/rss",
        "artworkUrl100":"https://example.com/image/thumb/mza_4.jpg/100x100bb.jpg",
        "artworkUrl600":"https://example.com/image/thumb/mza_4.jpg/600x600bb.jpg"}
-    ]}
-    """
-
-    /// Trimmed real response shape from `https://itunes.apple.com/lookup?id=1200361736&entity=podcast`
-    private static let lookupFixture = """
-    {"resultCount":1,"results":[
-      {"wrapperType":"track","kind":"podcast","collectionId":1200361736,"trackId":1200361736,
-       "artistName":"The New York Times","collectionName":"The Daily","trackName":"The Daily",
-       "feedUrl":"https://feeds.simplecast.com/Sl5CSM3S",
-       "artworkUrl600":"https://example.com/image/thumb/mza_1.jpg/600x600bb.jpg"}
     ]}
     """
 }

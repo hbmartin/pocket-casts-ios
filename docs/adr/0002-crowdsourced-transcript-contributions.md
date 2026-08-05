@@ -14,12 +14,12 @@ itself. The backend is **write-only in v1**: nothing is served back yet.
 
 ## Consequences
 
-- Privacy rests entirely on the eligibility rules: private local feeds are never
+- Privacy rests entirely on the eligibility rules: uploaded files are never
   contributed or sighted, transcript URLs carrying credentials/tokens are never
-  sighted, and no listening behavior is ever included. Episodes *outside* the
-  Pocket Casts catalog are deliberately eligible — deterministic feed-derived
-  UUIDs mean all subscribers of the same feed compute the same keys, so the feed
-  URL itself never leaves the device for a Contribution.
+  sighted, and no listening behavior is ever included. (The original
+  private-local-feed exclusion became moot with the 2026-08 local-first
+  reversal: private feeds can no longer exist in the library, so every podcast
+  episode is a public catalog episode by construction.)
 - A locally deleted transcription cancels a pending upload but cannot retract an
   already-uploaded copy (no user identity, no control surface).
 - Contributions are attributed server-side: to the account ID when the request is

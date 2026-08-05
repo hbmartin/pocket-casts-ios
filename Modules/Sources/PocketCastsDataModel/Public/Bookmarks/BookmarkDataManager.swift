@@ -75,11 +75,9 @@ struct BookmarkTagRow: Equatable, Sendable {
 public struct BookmarkDataManager: Sendable {
     static let tableName = "Bookmark"
     private let dbQueue: GRDBQueue
-    private let fileSyncJournalManager: FileSyncJournalDataManager?
 
-    init(dbQueue: GRDBQueue, fileSyncJournalManager: FileSyncJournalDataManager? = nil) {
+    init(dbQueue: GRDBQueue) {
         self.dbQueue = dbQueue
-        self.fileSyncJournalManager = fileSyncJournalManager
     }
 
     /// Looks for any existing bookmarks in an episode that have the same start time
@@ -116,7 +114,6 @@ public struct BookmarkDataManager: Sendable {
 
         let success = dbQueue.write { db in
             try rowToSave.insert(db)
-            try recordFileSyncChange(uuid: rowToSave.uuid, isDelete: false, syncStatus: syncStatus, db: db)
         }
         return success ? rowToSave.uuid : nil
     }
@@ -141,8 +138,7 @@ public struct BookmarkDataManager: Sendable {
             assignments.append(BookmarkRow.Columns.titleModifiedDate.set(to: modifiedInterval))
             assignments.append(BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
 
-            try BookmarkRow.filter(BookmarkRow.Columns.uuid == uuid).updateAll(db, assignments)
-            try recordFileSyncChange(uuid: uuid, isDelete: false, syncStatus: syncStatus, db: db)
+            _ = try BookmarkRow.filter(BookmarkRow.Columns.uuid == uuid).updateAll(db, assignments)
         }
         if !success { FileLog.shared.addMessage("BookmarkManager.update failed") }
         return success
@@ -156,8 +152,7 @@ public struct BookmarkDataManager: Sendable {
     /// untouched — the WHERE clause enforces ADR-0016's "user trim beats machine
     /// enrichment" at the write itself, closing the read-check-write race.
     /// Returns true only when a row was actually written — a trimmed (guarded)
-    /// or missing bookmark is a no-op, and callers must not report enrichment,
-    /// so the file-sync journal entry is skipped with it.
+    /// or missing bookmark is a no-op, and callers must not report enrichment.
     @discardableResult
     public func updateEnrichment(uuid: String, excerpt: String?, endTime: TimeInterval?, syncStatus: SyncStatus = .notSynced) async -> Bool {
         let syncStatusValue = syncStatus.rawValue
@@ -171,9 +166,6 @@ public struct BookmarkDataManager: Sendable {
                            BookmarkRow.Columns.excerpt.set(to: excerpt),
                            BookmarkRow.Columns.endTime.set(to: endTime),
                            BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
-            if updatedRows > 0 {
-                try recordFileSyncChange(uuid: uuid, isDelete: false, syncStatus: syncStatus, db: db)
-            }
         }
         if !success { FileLog.shared.addMessage("BookmarkDataManager.updateEnrichment failed") }
         return success && updatedRows > 0
@@ -203,9 +195,6 @@ public struct BookmarkDataManager: Sendable {
                            BookmarkRow.Columns.endTime.set(to: endTime),
                            BookmarkRow.Columns.trimModified.set(to: trimModifiedInterval),
                            BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
-            if updatedRows > 0 {
-                try recordFileSyncChange(uuid: uuid, isDelete: false, syncStatus: syncStatus, db: db)
-            }
         }
         if !success { FileLog.shared.addMessage("BookmarkDataManager.updateTrim failed") }
         return success && updatedRows > 0
@@ -244,12 +233,11 @@ public struct BookmarkDataManager: Sendable {
                 row.tag = tag
                 try row.insert(db)
             }
-            try BookmarkRow
+            _ = try BookmarkRow
                 .filter(BookmarkRow.Columns.uuid == uuid)
                 .updateAll(db,
                            BookmarkRow.Columns.tagsModified.set(to: modifiedInterval),
                            BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
-            try recordFileSyncChange(uuid: uuid, isDelete: false, syncStatus: syncStatus, db: db)
         }
         if !success { FileLog.shared.addMessage("BookmarkDataManager.setTags failed") }
         return success && applied
@@ -393,15 +381,12 @@ public struct BookmarkDataManager: Sendable {
         let syncStatusValue = syncStatus.rawValue
 
         let success = dbQueue.write { db in
-            try BookmarkRow
+            _ = try BookmarkRow
                 .filter(uuids.contains(BookmarkRow.Columns.uuid))
                 .updateAll(db,
                            BookmarkRow.Columns.deleted.set(to: true),
                            BookmarkRow.Columns.deletedModifiedDate.set(to: deletedModifiedInterval),
                            BookmarkRow.Columns.syncStatus.set(to: syncStatusValue))
-            for uuid in uuids {
-                try recordFileSyncChange(uuid: uuid, isDelete: true, syncStatus: syncStatus, db: db)
-            }
         }
         if !success { FileLog.shared.addMessage("BookmarkManager.remove failed") }
         return success
@@ -460,25 +445,6 @@ public struct BookmarkDataManager: Sendable {
 // MARK: - Private
 
 private extension BookmarkDataManager {
-    func recordFileSyncChange(uuid: String, isDelete: Bool, syncStatus: SyncStatus, db: Database) throws {
-        guard syncStatus == .notSynced,
-              !DataManager.isApplyingRemoteFileSyncOps,
-              let fileSyncJournalManager else { return }
-
-        let entry = FileSyncJournalEntry(
-            entityType: FileSyncJournalEntry.EntityType.bookmark.rawValue,
-            entityUuid: uuid,
-            opType: isDelete
-                ? FileSyncJournalEntry.OpType.delete.rawValue
-                : FileSyncJournalEntry.OpType.upsert.rawValue,
-            fields: isDelete ? nil : "[]")
-        if isDelete {
-            try fileSyncJournalManager.record(entry, db: db)
-        } else {
-            try fileSyncJournalManager.recordCoalescing(entry, db: db)
-        }
-    }
-
     /// GRDB query-interface twin of `selectBookmarks(where:values:limit:sorted:allowDeleted:)`
     func grdbSelectBookmarks(in dbQueue: GRDBQueue, filters: [any SQLSpecificExpressible] = [], sorted: SortOption = .newestToOldest, limit: Int = 0, allowDeleted: Bool = false) -> [Bookmark] {
         var request = BookmarkRow.all()

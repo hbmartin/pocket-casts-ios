@@ -135,14 +135,12 @@ extension SyncTask {
 
     private func createSyncUserPlaylist(from filter: EpisodeFilter) -> Api_SyncUserPlaylist {
         var playlistRecord = Api_SyncUserPlaylist()
-        // allPodcasts keys off the pre-scrub list: a filter selecting only local-feed
-        // podcasts must not degrade into "all podcasts" once their uuids are scrubbed.
         playlistRecord.allPodcasts.value = filter.podcastUuids.isEmpty
         playlistRecord.uuid = filter.uuid
         playlistRecord.originalUuid = filter.uuid // server side this field is important, because it will remain the same case DO NOT REMOVE
         playlistRecord.isDeleted.value = filter.wasDeleted
         playlistRecord.title.value = filter.playlistName
-        playlistRecord.podcastUuids.value = scrubbingLocalFeedUuids(fromPodcastUuidCsv: filter.podcastUuids)
+        playlistRecord.podcastUuids.value = filter.podcastUuids
         playlistRecord.audioVideo.value = filter.filterAudioVideoType
         playlistRecord.notDownloaded.value = filter.filterNotDownloaded
         playlistRecord.downloaded.value = filter.filterDownloaded
@@ -166,29 +164,12 @@ extension SyncTask {
 
         if filter.manual {
             let episodes = DataManager.sharedManager.playlistEpisodes(for: filter, sortType: .dragAndDrop)
-                .filter { !isLocalFeedPodcast(uuid: $0.podcastUuid) }
             playlistRecord.episodes = episodes.map { episode in
                 createSyncEpisode(from: episode)
             }
             playlistRecord.episodeOrder = episodes.map { $0.uuid }
         }
         return playlistRecord
-    }
-
-    /// Local-feed podcasts never account-sync — their deterministic hash UUIDs are
-    /// meaningless to the Pocket Casts servers, so they are scrubbed from every outbound
-    /// record (podcast/episode rows are excluded at the DataManager queries; playlists and
-    /// bookmarks are scrubbed here).
-    private func isLocalFeedPodcast(uuid: String?) -> Bool {
-        guard let uuid, !uuid.isEmpty else { return false }
-        return DataManager.sharedManager.findPodcast(uuid: uuid, includeUnsubscribed: true)?.isLocalFeedSourced ?? false
-    }
-
-    private func scrubbingLocalFeedUuids(fromPodcastUuidCsv csv: String) -> String {
-        guard !csv.isEmpty else { return csv }
-        return csv.components(separatedBy: ",")
-            .filter { !isLocalFeedPodcast(uuid: $0) }
-            .joined(separator: ",")
     }
 
     private func createSyncEpisode(from episode: Episode) -> Api_SyncPlaylistEpisode {
@@ -218,7 +199,6 @@ extension SyncTask {
     /// Retrieve any bookmarks that need to be sent to the server
     func changedBookmarks() -> [Api_Record]? {
         dataManager.bookmarks.bookmarksToSync()
-            .filter { !isLocalFeedPodcast(uuid: $0.podcastUuid) }
             .map { .init(bookmark: $0) }
             .nilIfEmpty()
     }

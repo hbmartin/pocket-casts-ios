@@ -220,24 +220,8 @@ extension AppDelegate {
             strongSelf.progressDialog = ShiftyLoadingAlert(title: L10n.podcastLoading)
             rootController.dismiss(animated: false, completion: nil)
             strongSelf.progressDialog?.showAlert(rootController, hasProgress: false, completion: {
-                // On-device ingest: parse the feed locally instead of resolving it
-                // through the Pocket Casts search/cache servers.
-                if Settings.localFeedIngestEnabled() {
-                    self?.ingestFeedLocally(searchTerm: searchTerm)
-                    return
-                }
-
                 MainServerHandler.shared.podcastSearch(searchTerm: searchTerm) { [weak self] response in
                     guard let uuid = response?.result?.podcast?.uuid else {
-                        // Signed out and the catalog can't resolve it: ingest the feed on
-                        // device so any valid feed URL still opens.
-                        if !SyncManager.isUserLoggedIn() {
-                            DispatchQueue.main.async {
-                                self?.ingestFeedLocally(searchTerm: searchTerm)
-                            }
-                            return
-                        }
-
                         DispatchQueue.main.async {
                             self?.hideProgressDialog()
 
@@ -528,30 +512,6 @@ extension AppDelegate {
                 }
             }
         })
-    }
-
-    private func ingestFeedLocally(searchTerm: String) {
-        let localUuid = LocalFeedIdentity.uuid(seed: searchTerm)
-        ServerPodcastManager.shared.addLocalFeed(feedURL: searchTerm, subscribe: false) { [weak self] success in
-            DispatchQueue.main.async {
-                self?.hideProgressDialog()
-
-                // Dedup can attach to an existing row, so resolve the real UUID.
-                let resolvedUuid = DataManager.sharedManager.findPodcast(feedURL: searchTerm)?.uuid ?? localUuid
-                if success {
-                    NavigationManager.sharedManager.navigateTo(
-                        NavigationManager.podcastPageKey,
-                        data: [NavigationManager.podcastKey: resolvedUuid]
-                    )
-                } else {
-                    SJUIUtils.showAlert(
-                        title: L10n.error,
-                        message: L10n.errorGeneralPodcastNotFound,
-                        from: SceneHelper.rootViewController()
-                    )
-                }
-            }
-        }
     }
 
     // MARK: - NSUserActivity (universal links / Handoff)

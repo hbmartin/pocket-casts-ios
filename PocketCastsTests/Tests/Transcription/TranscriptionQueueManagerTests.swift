@@ -313,11 +313,10 @@ final class TranscriptionQueueManagerTests: XCTestCase {
     // MARK: - Contribution hook
 
     /// Podcast + episode rows so the contribution eligibility gate can resolve them.
-    private func insertEligibilityFixture(episodeUuid: String, podcastUuid: String, refreshSource: PodcastRefreshSource = .server) {
+    private func insertEligibilityFixture(episodeUuid: String, podcastUuid: String) {
         var podcast = Podcast()
         podcast.uuid = podcastUuid
         podcast.addedDate = Date()
-        podcast.feedRefreshSource = refreshSource
         _ = dataManager.save(podcast: podcast)
         var episode = Episode()
         episode.uuid = episodeUuid
@@ -364,24 +363,6 @@ final class TranscriptionQueueManagerTests: XCTestCase {
         XCTAssertFalse(info.diarized)
         XCTAssertEqual(info.durationSeconds, 9, accuracy: 0.001,
                        "With no episode duration the transcript span is the sanity anchor")
-    }
-
-    func testCompleteDoesNotEnqueueContributionForPrivateLocalFeedPodcast() async throws {
-        let previousStore = KeychainHelper.store
-        defer { KeychainHelper.store = previousStore }
-        KeychainHelper.store = InMemoryKeychainStore()
-        LocalFeedCredentials.save(user: "user", password: "pass", podcastUuid: "podcast-private")
-        insertEligibilityFixture(episodeUuid: "episode-private", podcastUuid: "podcast-private", refreshSource: .localFeed)
-        let engine = MockSpeechEngine(segments: [ASRSegment(text: "private words", start: 0, end: 3)])
-        let manager = makeManagerWithContributionHook(engine: engine)
-
-        await manager.enqueue(episodeUuid: "episode-private", podcastUuid: "podcast-private")
-        await manager.drainUntilIdle()
-
-        let record = try XCTUnwrap(dataManager.transcriptions.find(episodeUuid: "episode-private"))
-        XCTAssertEqual(record.transcriptionStatus, .completed, "The transcription itself must still complete")
-        XCTAssertEqual(dataManager.pendingTranscriptUploads.count(), 0,
-                       "Nothing from a private local feed is ever uploaded")
     }
 
     func testDeleteTranscriptionCancelsPendingContributionAndCachedFingerprint() async throws {

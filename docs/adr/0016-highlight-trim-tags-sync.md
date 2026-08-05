@@ -1,5 +1,12 @@
 # Sync highlight trims and tags over account sync, with user edits beating machine enrichment
 
+> **2026-08-04 note: account-sync-only now.** The local-first reversal removed
+> the file-sync engine, and with it this ADR's file-sync merge implementation
+> (fork fields 1000–1004 in the file-sync proto). The account-sync half —
+> `api.proto` fields 1001–1005, the SyncTask changes, and the merge semantics
+> below — is unchanged and is now the only cross-device path for trims/tags
+> (gated on `FeatureFlag.highlightAccountSync` until backend B1 ships).
+
 A Highlight's excerpt window (`excerpt`, `endTime`) was designed as machine-derived
 presentation data: devices could legitimately compute different excerpts, so the
 file-sync merge used last-writer-wins by op stamp and account sync deliberately

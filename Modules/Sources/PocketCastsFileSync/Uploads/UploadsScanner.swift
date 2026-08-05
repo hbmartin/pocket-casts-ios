@@ -22,22 +22,18 @@ public actor UploadsScanner {
 
     public struct ScanResult: Sendable {
         public var created = 0
-        public var adopted = 0
         public var moved = 0
         public var reset = 0
         public var removed = 0
     }
 
     /// One full reconcile pass over the Uploads/ directory.
-    /// `manifest` is the merged cross-device upload identity list from
-    /// `MergeEngine.MergedState.uploads` (minus tombstoned entries).
     @discardableResult
-    public func scan(manifest: [Filesync_UploadIdentity]) async throws -> ScanResult {
+    public func scan() async throws -> ScanResult {
         let listing = try await folder.list(FileSyncFormat.uploadsDirectory)
         let supported = isSupportedFile
         let media = FolderScanner.mediaFiles(in: listing) { supported($0) }
-            // Planner works in paths relative to the uploads root, matching
-            // UploadIdentity.relative_path.
+            // Planner works in paths relative to the uploads root.
             .map { entry in
                 FolderEntry(
                     relativePath: stripUploadsPrefix(entry.relativePath),
@@ -58,7 +54,7 @@ public actor UploadsScanner {
                 isCanonical: episode.identity == .canonical)
         }
 
-        let actions = UploadScanPlanner.plan(mediaEntries: media, knownEpisodes: known, manifest: manifest)
+        let actions = UploadScanPlanner.plan(mediaEntries: media, knownEpisodes: known)
         var result = ScanResult()
 
         for action in actions {
@@ -77,35 +73,11 @@ public actor UploadsScanner {
                 dataManager.save(episode: episode)
                 result.created += 1
 
-            case let .adoptIdentity(entry, identity):
-                var episode = dataManager.findUserEpisode(uuid: identity.uuid) ?? {
-                    var new = UserEpisode()
-                    new.uuid = identity.uuid
-                    new.addedDate = Date()
-                    return new
-                }()
-                episode.title = identity.title.isEmpty
-                    ? (entry.fileName as NSString).deletingPathExtension
-                    : identity.title
-                episode.sizeInBytes = identity.sizeBytes
-                episode.duration = identity.durationSeconds
-                episode.fileType = identity.fileType.isEmpty ? nil : identity.fileType
-                episode.folderRelativePath = entry.relativePath
-                episode.groupName = identity.group
-                episode.contentHash = identity.sha256.isEmpty ? nil : identity.sha256
-                episode.identity = identity.sha256.isEmpty ? .provisional : .canonical
-                if episode.episodeStatus == 0 {
-                    episode.episodeStatus = DownloadStatus.notDownloaded.rawValue
-                }
-                dataManager.save(episode: episode)
-                result.adopted += 1
-
             case let .updatePath(episodeUuid, entry, group):
                 if var episode = dataManager.findUserEpisode(uuid: episodeUuid) {
                     episode.folderRelativePath = entry.relativePath
                     episode.groupName = group
                     dataManager.save(episode: episode)
-                    journalIdentityChange(episodeUuid: episodeUuid)
                     result.moved += 1
                 }
 
@@ -123,7 +95,6 @@ public actor UploadsScanner {
             case let .removeEpisode(episodeUuid):
                 if let episode = dataManager.findUserEpisode(uuid: episodeUuid) {
                     dataManager.delete(userEpisodeUuid: episode.uuid)
-                    dataManager.journalFileSyncDelete(entityType: .userEpisode, uuid: episode.uuid)
                     result.removed += 1
                 }
             }
@@ -134,15 +105,11 @@ public actor UploadsScanner {
     /// Promotes a provisional episode after its file was fully materialized:
     /// hashes it, then either publishes the identity or re-keys onto the
     /// existing canonical episode owning that content.
-    public func resolveIdentity(episodeUuid: String, materializedURL: URL,
-                                manifest: [Filesync_UploadIdentity]) throws {
+    public func resolveIdentity(episodeUuid: String, materializedURL: URL) throws {
         guard var episode = dataManager.findUserEpisode(uuid: episodeUuid) else { return }
         let sha256 = try UploadIdentityResolver.sha256Hex(of: materializedURL)
 
         var hashOwners: [String: String] = [:]
-        for identity in manifest where !identity.sha256.isEmpty {
-            hashOwners[identity.sha256] = identity.uuid
-        }
         for other in dataManager.allFolderBackedUserEpisodes() {
             if let hash = other.contentHash { hashOwners[hash] = other.uuid }
         }
@@ -156,7 +123,6 @@ public actor UploadsScanner {
             episode.contentHash = sha256
             episode.identity = .canonical
             dataManager.save(episode: episode)
-            journalIdentityChange(episodeUuid: episodeUuid)
         case let .rekey(provisionalUuid, canonicalUuid):
             guard var canonical = dataManager.findUserEpisode(uuid: canonicalUuid) else { return }
             // The folder file the provisional row pointed at IS the
@@ -174,13 +140,7 @@ public actor UploadsScanner {
             }
             dataManager.save(episode: canonical)
             dataManager.delete(userEpisodeUuid: provisionalUuid)
-            journalIdentityChange(episodeUuid: canonicalUuid)
         }
-    }
-
-    private func journalIdentityChange(episodeUuid: String) {
-        dataManager.journalFileSyncUpsert(
-            entityType: .userEpisode, uuid: episodeUuid, changedFields: ["uploadIdentity"])
     }
 
     private func stripUploadsPrefix(_ path: String) -> String {

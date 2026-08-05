@@ -168,34 +168,15 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
             }
             initialPodcastCount = parsedUrls.count
 
-            if Settings.localFeedIngestEnabled() {
-                // On-device ingest: fetch and parse each feed locally, no server, no polling.
-                importPodcastsLocally(urls: parsedUrls)
-            } else {
-                // send urls to server 100 at a time
-                importPodcasts(urls: parsedUrls)
+            // send urls to server 100 at a time
+            importPodcasts(urls: parsedUrls)
 
-                var amountOfTimesPolled = 0
-                while amountOfTimesPolled < 20, let pollUuidsToSend = importState.takePollUuids() {
-                    amountOfTimesPolled += 1
+            var amountOfTimesPolled = 0
+            while amountOfTimesPolled < 20, let pollUuidsToSend = importState.takePollUuids() {
+                amountOfTimesPolled += 1
 
-                    pollImportPodcasts(pollUuids: pollUuidsToSend)
-                    Thread.sleep(forTimeInterval: TimeInterval(amountOfTimesPolled))
-                }
-
-                // Signed out, feeds the catalog couldn't resolve still have to land, so
-                // they fall back to on-device ingest regardless of the local-ingest
-                // toggle. The chunk API doesn't attribute failures to URLs; "unresolved"
-                // is approximated as "no podcast row exists for the URL", which can
-                // rarely re-add a feed the server stored under a normalized URL — an
-                // acceptable, user-visible cost logged per feed.
-                if !SyncManager.isUserLoggedIn(), importState.failureCount > 0 {
-                    let unresolved = parsedUrls.filter { DataManager.sharedManager.findPodcast(feedURL: $0) == nil }
-                    if !unresolved.isEmpty {
-                        FileLog.shared.addMessage("OpmlImporter: signed-out fallback ingesting \(unresolved.count) unresolved feeds on device")
-                        importPodcastsLocally(urls: unresolved)
-                    }
-                }
+                pollImportPodcasts(pollUuids: pollUuidsToSend)
+                Thread.sleep(forTimeInterval: TimeInterval(amountOfTimesPolled))
             }
 
             DispatchQueue.main.async {
@@ -209,33 +190,6 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
                 Analytics.track(.opmlImportFinished, properties: ["count": self.initialPodcastCount, "number_parsed": self.initialPodcastCount])
             }
         }
-    }
-
-    /// The offline import path: every feed URL goes through the Phase-1 local subscribe
-    /// pipeline (`addLocalFeed`), which dedups by feed URL against existing rows of
-    /// either refresh regime.
-    private func importPodcastsLocally(urls: [String]) {
-        for url in urls {
-            importQueue.addOperation {
-                let addGroup = DispatchGroup()
-                addGroup.enter()
-                ServerPodcastManager.shared.addLocalFeed(feedURL: url, subscribe: true) { added in
-                    let imported = self.updateProgress(failed: !added)
-
-                    DispatchQueue.main.async {
-                        guard let progressWindow = self.progressWindow else { return }
-                        progressWindow.title = self.progress(imported: imported, total: self.initialPodcastCount)
-                    }
-
-                    addGroup.leave()
-                }
-
-                // wait for the add operation to return
-                _ = addGroup.wait(timeout: .now() + 30.seconds)
-            }
-        }
-
-        importQueue.waitUntilAllOperationsAreFinished()
     }
 
     private func importPodcasts(urls: [String]) {

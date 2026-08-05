@@ -8,19 +8,11 @@ nonisolated enum TranscriptContributionEligibility {
     /// Whether the episode's transcripts may be contributed or sighted.
     ///
     /// Eligible iff the episode is a podcast `Episode` (never a `UserEpisode` —
-    /// uploaded files are private by definition), its podcast row exists, and
-    /// the podcast is not a *private* feed. Locally-refreshed public feeds —
-    /// including out-of-catalog podcasts with deterministic feed-derived UUIDs —
-    /// are deliberately eligible; "private" means the feed needed credentials,
-    /// not that it refreshes on-device (`feedRefreshSource` alone can't tell a
-    /// public URL-subscribed feed from a Patreon-style one).
-    ///
-    /// - Parameter hasStoredFeedCredentials: whether Basic-auth credentials are
-    ///   stored for the podcast (`LocalFeedCredentials.credentials(podcastUuid:) != nil`)
-    ///   — passed in so this rule stays pure and keychain-free.
-    static func isEligible(episode: BaseEpisode?, podcast: Podcast?, hasStoredFeedCredentials: Bool) -> Bool {
-        guard let episode, episode is Episode, let podcast else { return false }
-        if podcast.feedRefreshSource == .localFeed, hasStoredFeedCredentials { return false }
+    /// uploaded files are private by definition) and its podcast row exists.
+    /// All podcasts come from the server catalog, so every podcast episode is
+    /// public by construction.
+    static func isEligible(episode: BaseEpisode?, podcast: Podcast?) -> Bool {
+        guard let episode, episode is Episode, podcast != nil else { return false }
         return true
     }
 

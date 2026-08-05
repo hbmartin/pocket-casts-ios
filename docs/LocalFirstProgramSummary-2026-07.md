@@ -1,5 +1,14 @@
 # Local-First & Product Modernization Program — July 2026 Summary
 
+> **2026-08-04 reversal note:** the local-first *feature* half of this program was
+> removed to simplify the code and rely on the backend service: on-device feed
+> refresh/ingest (Track A's local-feed work), the file-sync engine, podcast
+> mirrors, and the sync journal are gone (see migration 90). What survives: the
+> uploads-folder pipeline backing the Files tab, Backup & Restore, OPML
+> local export, and all of the program's modernization work (flag retirements,
+> typed notifications, module extractions, tooling). This document is a
+> historical record of what shipped in July 2026.
+
 The full program from `plans/Pocket Casts iOS — Local-First & Product Modernization Program.md`
 shipped on the `local-first-program` branch: every A–J track item landed, each slice
 gate-verified (build, app + module test suites, snapshot tests, static checks, ratchets,

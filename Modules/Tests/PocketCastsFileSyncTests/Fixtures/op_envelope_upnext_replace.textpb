@@ -1,9 +1,0 @@
-op_id: "aaaa1c2e-1111-2222-3333-444455556666"
-device_id: "device-b"
-seq: 7
-wall_clock_ms: 1767225700000
-up_next {
-  action: ACTION_REPLACE
-  entries { episode_uuid: "ep-1" podcast_uuid: "pod-1" }
-  entries { episode_uuid: "user-ep-2" podcast_uuid: "da7aba5e-f11e-f11e-f11e-da7aba5ef11e" }
-}

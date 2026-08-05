@@ -55,8 +55,6 @@ public enum SyncFolderError: Error, Sendable {
     case invalidPathComponent(String)
     /// The item never finished materializing within the timeout.
     case materializeTimeout(String)
-    /// The folder was written by a newer format version than this app reads.
-    case formatTooNew(found: Int32, supported: Int32)
 }
 
 /// Abstraction over the sync folder root, hiding the differences between

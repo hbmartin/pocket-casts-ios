@@ -127,43 +127,6 @@ final class PodcastManagerTests: DBTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: downloadManager.pathForEpisode(refreshedEpisode)))
     }
 
-    func testSignedInUnsubscribeKeepsLocalFeedCredentials() throws {
-        let podcast = makeLocalFeedPodcastWithCredentials()
-        let podcastManager = PodcastManager(dataManager: dataManager, downloadManager: downloadManager, isLoggedIn: { true })
-
-        podcastManager.unsubscribe(podcast: podcast)
-
-        // the signed-in branch retains the row (subscribed = 0), so a later resubscribe
-        // must still find the private-feed credential
-        let retained = try XCTUnwrap(dataManager.findPodcast(uuid: podcast.uuid, includeUnsubscribed: true))
-        XCTAssertFalse(retained.isSubscribed())
-        XCTAssertNotNil(LocalFeedCredentials.credentials(podcastUuid: podcast.uuid))
-    }
-
-    func testSignedOutUnsubscribeDeletesLocalFeedCredentials() {
-        let podcast = makeLocalFeedPodcastWithCredentials()
-        let podcastManager = PodcastManager(dataManager: dataManager, downloadManager: downloadManager, isLoggedIn: { false })
-
-        podcastManager.unsubscribe(podcast: podcast)
-
-        XCTAssertNil(dataManager.findPodcast(uuid: podcast.uuid, includeUnsubscribed: true))
-        XCTAssertNil(LocalFeedCredentials.credentials(podcastUuid: podcast.uuid))
-    }
-
-    private func makeLocalFeedPodcastWithCredentials() -> Podcast {
-        var podcast = Podcast()
-        podcast.uuid = UUID().uuidString
-        podcast.subscribed = 1
-        podcast.addedDate = Date()
-        podcast.syncStatus = SyncStatus.synced.rawValue
-        podcast.podcastUrl = "https://example.com/feed.xml"
-        podcast.feedRefreshSource = .localFeed
-        podcast = dataManager.save(podcast: podcast)
-        track(podcast: podcast)
-        LocalFeedCredentials.save(user: "user", password: "pass", podcastUuid: podcast.uuid)
-        return podcast
-    }
-
     private func makeDownloadedPodcastAndEpisode() -> (Podcast, Episode) {
         var podcast = Podcast()
         podcast.uuid = UUID().uuidString

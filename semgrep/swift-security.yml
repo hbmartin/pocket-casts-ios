@@ -4945,38 +4945,6 @@ rules:
       - pattern-regex: 'isolated deinit'
       - pattern-not-regex: '(?://[^\n]*isolated deinit[ \t]*:[ \t]*\S[^\n]*\n(?:[^\n]*//[^\n]*\n)*[^\n]*isolated deinit)|(?:isolated deinit[^\n]*//[^\n]*isolated deinit[ \t]*:[ \t]*\S)|(?://[^\n]*isolated deinit)|nonisolated deinit'
 
-  - id: pocketcasts.ingest-through-provider-seam
-    severity: ERROR
-    metadata:
-      category: architecture
-      confidence: HIGH
-      likelihood: MEDIUM
-      impact: MEDIUM
-      technology: [ios]
-    message: >-
-      Feed refresh and podcast subscribe/ingest must go through the strategy seams so
-      local-first ingest keeps working: refresh through FeedRefreshProviding (the
-      Composite/Server/Local providers), subscribe through ServerPodcastManager
-      (addFromUuid/addFromJson/addLocalFeed) or LocalPodcastSource. Calling
-      MainServerHandler.shared.refresh/sendOpmlChunk or
-      CacheServerHandler.shared.loadPodcastInfo directly silently re-adds a hard
-      Pocket Casts server dependency that the per-podcast refreshSource contract cannot
-      intercept. If you are extending one of the seams themselves, add the file to this
-      rule's exclude list.
-    languages: [generic]
-    paths:
-      include:
-        - "**/podcasts/**/*.swift"
-        - "**/Modules/Sources/**/*.swift"
-      exclude:
-        - "**/Modules/Sources/PocketCastsServer/Public/Refresh/MainServerHandler.swift"
-        - "**/Modules/Sources/PocketCastsServer/Public/Cache/CacheServerHandler.swift"
-        - "**/Modules/Sources/PocketCastsServer/Public/LocalFeed/*.swift"
-        - "**/Modules/Sources/PocketCastsServer/Public/ServerPodcastManager.swift"
-        - "**/podcasts/OpmlImporter.swift"
-    patterns:
-      - pattern-regex: '(MainServerHandler\.shared\.(refresh|sendOpmlChunk)\(|CacheServerHandler\.shared\.loadPodcastInfo\()'
-
   - id: pocketcasts.unsafe-pointer-update-overlapping-source
     severity: ERROR
     metadata:
@@ -5326,28 +5294,6 @@ rules:
       - pattern-not-inside: |
           struct $NAME: PreviewProvider { ... }
 
-  - id: pocketcasts.no-raw-feed-url-in-logs
-    severity: ERROR
-    metadata:
-      category: security
-      confidence: MEDIUM
-      likelihood: MEDIUM
-      impact: MEDIUM
-      technology: [ios]
-    message: >-
-      Feed URLs can carry auth secrets (userinfo or ?token= query params) and
-      FileLog output ships in shareable diagnostics. Interpolate
-      LocalFeedURL.redactedForLogging(...) instead of the raw URL (review
-      finding P2-2).
-    languages: [generic]
-    options:
-      generic_ellipsis_max_span: 2
-    paths:
-      include:
-        - "**/Modules/Sources/PocketCastsServer/Public/LocalFeed/*.swift"
-    patterns:
-      - pattern-regex: 'FileLog\.shared\.addMessage\([^\n]*\\\((feedURL|urlString|podcastUrl)\)'
-
   - id: pocketcasts.feedback-report-logs-must-be-redacted
     severity: ERROR
     metadata:
@@ -5407,28 +5353,6 @@ rules:
                 }
                 ...
               }
-
-  - id: pocketcasts.check-local-feed-credentials-save-result
-    severity: ERROR
-    metadata:
-      category: security
-      confidence: MEDIUM
-      likelihood: MEDIUM
-      impact: HIGH
-      technology: [ios]
-    message: >-
-      LocalFeedCredentials.save returns whether the keychain write succeeded.
-      Discarding a failure strands a credential-less podcast row that 401s on
-      every refresh (review finding P2-10). Check the result and fail or log
-      the surrounding operation.
-    languages: [generic]
-    paths:
-      include:
-        - "**/Modules/Sources/**/*.swift"
-        - "**/podcasts/**/*.swift"
-        - "**/WidgetExtension/**/*.swift"
-    patterns:
-      - pattern-regex: '^[ \t]*LocalFeedCredentials\.save\('
 
   - id: pocketcasts.app-attest-single-owner
     severity: ERROR
@@ -5602,7 +5526,6 @@ rules:
         - "**/Modules/Sources/PocketCastsServer/**"
       exclude:
         - "**/MetadataTask.swift"
-        - "**/LocalFeedFetcher.swift"
     patterns:
       - pattern-either:
           - pattern: URLSession.shared.dataTask(...)

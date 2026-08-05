@@ -14,49 +14,18 @@ final class UploadScanPlannerTests: XCTestCase {
                                        mtimeMs: mtime, contentHash: hash, isCanonical: hash != nil)
     }
 
-    private func identity(_ uuid: String, path: String, size: Int64 = 1000,
-                          sha256: String = "hash-1") -> Filesync_UploadIdentity {
-        var identity = Filesync_UploadIdentity()
-        identity.uuid = uuid
-        identity.relativePath = path
-        identity.sizeBytes = size
-        identity.sha256 = sha256
-        return identity
-    }
-
     // MARK: Discovery
 
     func testUnknownFileCreatesProvisionalEpisode() {
         let actions = UploadScanPlanner.plan(
-            mediaEntries: [entry("lecture.mp3")], knownEpisodes: [], manifest: [])
+            mediaEntries: [entry("lecture.mp3")], knownEpisodes: [])
         XCTAssertEqual(actions, [.createProvisional(entry: entry("lecture.mp3"), group: "")])
     }
 
     func testSubfolderBecomesGroup() {
         let actions = UploadScanPlanner.plan(
-            mediaEntries: [entry("Audiobooks/chapter01.mp3")], knownEpisodes: [], manifest: [])
+            mediaEntries: [entry("Audiobooks/chapter01.mp3")], knownEpisodes: [])
         XCTAssertEqual(actions, [.createProvisional(entry: entry("Audiobooks/chapter01.mp3"), group: "Audiobooks")])
-    }
-
-    func testManifestIdentityIsAdoptedWithoutDownloading() {
-        // Device A published this file's identity; device B sees a
-        // placeholder with matching path+size and adopts the shared uuid.
-        let published = identity("ue-shared", path: "book.m4b", size: 9999)
-        let actions = UploadScanPlanner.plan(
-            mediaEntries: [entry("book.m4b", size: 9999, placeholder: true)],
-            knownEpisodes: [], manifest: [published])
-        XCTAssertEqual(actions, [.adoptIdentity(entry: entry("book.m4b", size: 9999, placeholder: true),
-                                                identity: published)])
-    }
-
-    func testManifestPathWithDifferentSizeIsNotAdopted() {
-        // Same path but the bytes differ: the file was replaced. It must
-        // become a new provisional episode, not adopt the stale identity.
-        let published = identity("ue-old", path: "notes.mp3", size: 111)
-        let actions = UploadScanPlanner.plan(
-            mediaEntries: [entry("notes.mp3", size: 222)],
-            knownEpisodes: [], manifest: [published])
-        XCTAssertEqual(actions, [.createProvisional(entry: entry("notes.mp3", size: 222), group: "")])
     }
 
     // MARK: Steady state / changes
@@ -64,8 +33,7 @@ final class UploadScanPlannerTests: XCTestCase {
     func testKnownUnchangedFileIsNoop() {
         let actions = UploadScanPlanner.plan(
             mediaEntries: [entry("lecture.mp3")],
-            knownEpisodes: [known("ue-1", path: "lecture.mp3")],
-            manifest: [])
+            knownEpisodes: [known("ue-1", path: "lecture.mp3")])
         XCTAssertTrue(actions.isEmpty)
     }
 
@@ -73,16 +41,14 @@ final class UploadScanPlannerTests: XCTestCase {
         // Providers rewrite mtimes during propagation; size is the signal.
         let actions = UploadScanPlanner.plan(
             mediaEntries: [entry("lecture.mp3", mtime: 999_999)],
-            knownEpisodes: [known("ue-1", path: "lecture.mp3", mtime: 5000)],
-            manifest: [])
+            knownEpisodes: [known("ue-1", path: "lecture.mp3", mtime: 5000)])
         XCTAssertTrue(actions.isEmpty)
     }
 
     func testInPlaceContentChangeResetsIdentity() {
         let actions = UploadScanPlanner.plan(
             mediaEntries: [entry("lecture.mp3", size: 2222)],
-            knownEpisodes: [known("ue-1", path: "lecture.mp3", size: 1000, hash: "old-hash")],
-            manifest: [])
+            knownEpisodes: [known("ue-1", path: "lecture.mp3", size: 1000, hash: "old-hash")])
         XCTAssertEqual(actions, [.resetIdentity(episodeUuid: "ue-1", entry: entry("lecture.mp3", size: 2222))])
     }
 
@@ -92,16 +58,14 @@ final class UploadScanPlannerTests: XCTestCase {
         let moved = entry("Audiobooks/renamed.mp3", size: 1234, mtime: 777)
         let actions = UploadScanPlanner.plan(
             mediaEntries: [moved],
-            knownEpisodes: [known("ue-1", path: "old-name.mp3", size: 1234, mtime: 777)],
-            manifest: [])
+            knownEpisodes: [known("ue-1", path: "old-name.mp3", size: 1234, mtime: 777)])
         XCTAssertEqual(actions, [.updatePath(episodeUuid: "ue-1", entry: moved, group: "Audiobooks")])
     }
 
     func testDeletedFileRemovesEpisode() {
         let actions = UploadScanPlanner.plan(
             mediaEntries: [],
-            knownEpisodes: [known("ue-1", path: "gone.mp3")],
-            manifest: [])
+            knownEpisodes: [known("ue-1", path: "gone.mp3")])
         XCTAssertEqual(actions, [.removeEpisode(episodeUuid: "ue-1")])
     }
 
@@ -109,8 +73,7 @@ final class UploadScanPlannerTests: XCTestCase {
         let moved = entry("new.mp3", size: 1234, mtime: 777)
         let actions = UploadScanPlanner.plan(
             mediaEntries: [moved],
-            knownEpisodes: [known("ue-1", path: "old.mp3", size: 1234, mtime: 777)],
-            manifest: [])
+            knownEpisodes: [known("ue-1", path: "old.mp3", size: 1234, mtime: 777)])
         XCTAssertFalse(actions.contains(.removeEpisode(episodeUuid: "ue-1")),
                        "a rename-claimed episode must not be removed")
         XCTAssertEqual(actions.count, 1)

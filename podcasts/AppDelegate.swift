@@ -401,6 +401,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             PlaylistManager.createDefaultPlaylists()
             UserDefaults.standard.set(true, forKey: "CreatedDefPlaylistsV2")
         }
+        // Local-first reversal: private-feed Basic-auth credentials belonged to the
+        // removed on-device feed pipeline; migration 90 purged their podcast rows, so
+        // sweep the orphaned keychain items once. (Keychain items survive reinstalls
+        // while UserDefaults doesn't, so a reinstall harmlessly re-runs the sweep.)
+        if !UserDefaults.standard.bool(forKey: "SweptLocalFeedKeychainV1") {
+            KeychainHelper.removeAllItems(withKeyPrefix: "localFeedBasicAuth-")
+            UserDefaults.standard.set(true, forKey: "SweptLocalFeedKeychainV1")
+        }
         Task {
             await DownloadManager.shared.clearStuckDownloads()
         }

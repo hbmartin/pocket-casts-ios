@@ -2,15 +2,13 @@ import Foundation
 
 /// A podcast discovered through Apple's public podcast directory.
 nonisolated struct ExplorePodcast: Identifiable, Equatable, Sendable {
-    /// Apple catalog identifier, used for iTunes lookups.
+    /// Apple catalog identifier, used to resolve the podcast through the
+    /// Pocket Casts catalog when subscribing.
     let id: String
     let title: String
     let author: String
     /// Best available artwork URL, already upscaled where the URL shape allows it.
     let artworkURL: String?
-    /// Present when the source response includes it (search/lookup results).
-    /// Chart entries need a `lookupFeedURL(id:)` round trip to resolve this.
-    let feedURL: String?
 }
 
 /// The fixed set of Apple podcast genres offered by the Explore tab.
@@ -90,14 +88,7 @@ nonisolated struct ITunesDirectory: Sendable {
         return try JSONDecoder().decode(ClassicChart.self, from: data).feed.entries.map(\.explorePodcast)
     }
 
-    /// Resolves an Apple catalog ID (from a chart entry) to the podcast's RSS feed URL.
-    func lookupFeedURL(id: String) async throws -> String? {
-        let data = try await fetch(Self.lookupURL(id: id))
-
-        return try JSONDecoder().decode(SearchResponse.self, from: data).results.first?.feedUrl
-    }
-
-    /// Full-text podcast search. Results include the feed URL directly.
+    /// Full-text podcast search.
     func search(term: String, country: String, limit: Int = 50) async throws -> [ExplorePodcast] {
         let data = try await fetch(Self.searchURL(term: term, country: country, limit: limit))
 
@@ -137,16 +128,6 @@ nonisolated struct ITunesDirectory: Sendable {
         }
 
         return URL(string: "https://itunes.apple.com/\(country)/rss/toppodcasts/limit=\(limit)/genre=\(genre.rawValue)/json")!
-    }
-
-    static func lookupURL(id: String) -> URL {
-        var components = URLComponents(string: "https://itunes.apple.com/lookup")!
-        components.queryItems = [
-            URLQueryItem(name: "id", value: id),
-            URLQueryItem(name: "entity", value: "podcast")
-        ]
-
-        return components.url!
     }
 
     static func searchURL(term: String, country: String, limit: Int = 50) -> URL {
@@ -196,8 +177,7 @@ nonisolated private struct MarketingToolsChart: Decodable {
             ExplorePodcast(id: id,
                            title: name,
                            author: artistName ?? "",
-                           artworkURL: ITunesDirectory.upscaledArtworkURL(artworkUrl100),
-                           feedURL: nil)
+                           artworkURL: ITunesDirectory.upscaledArtworkURL(artworkUrl100))
         }
     }
 
@@ -261,16 +241,15 @@ nonisolated private struct ClassicChart: Decodable {
             ExplorePodcast(id: entryId.attributes.imId,
                            title: name.label,
                            author: artist?.label ?? "",
-                           artworkURL: ITunesDirectory.upscaledArtworkURL(images?.last?.label),
-                           feedURL: nil)
+                           artworkURL: ITunesDirectory.upscaledArtworkURL(images?.last?.label))
         }
     }
 
     let feed: Feed
 }
 
-/// `https://itunes.apple.com/search?media=podcast&…` and `https://itunes.apple.com/lookup?id=…`
-/// → `{"resultCount":n,"results":[{"collectionId":…,"collectionName":…,"artistName":…,"feedUrl":…,"artworkUrl600":…}]}`
+/// `https://itunes.apple.com/search?media=podcast&…`
+/// → `{"resultCount":n,"results":[{"collectionId":…,"collectionName":…,"artistName":…,"artworkUrl600":…}]}`
 nonisolated private struct SearchResponse: Decodable {
     struct Result: Decodable {
         let collectionId: Int?
@@ -278,7 +257,6 @@ nonisolated private struct SearchResponse: Decodable {
         let collectionName: String?
         let trackName: String?
         let artistName: String?
-        let feedUrl: String?
         let artworkUrl600: String?
         let artworkUrl100: String?
 
@@ -288,8 +266,7 @@ nonisolated private struct SearchResponse: Decodable {
             return ExplorePodcast(id: String(id),
                                   title: title,
                                   author: artistName ?? "",
-                                  artworkURL: artworkUrl600 ?? ITunesDirectory.upscaledArtworkURL(artworkUrl100),
-                                  feedURL: feedUrl)
+                                  artworkURL: artworkUrl600 ?? ITunesDirectory.upscaledArtworkURL(artworkUrl100))
         }
     }
 

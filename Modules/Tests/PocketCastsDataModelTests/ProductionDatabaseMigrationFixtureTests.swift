@@ -58,15 +58,11 @@ struct ProductionDatabaseMigrationFixtureTests {
 
         try sandbox.databasePool.read { database in
             let schemaVersion = try Int.fetchOne(database, sql: "PRAGMA user_version")
-            let journalCount = try Int.fetchOne(database, sql: "SELECT COUNT(*) FROM FileSyncJournal")
-            let cursorCount = try Int.fetchOne(database, sql: "SELECT COUNT(*) FROM FileSyncCursor")
 
             #expect(
                 schemaVersion
                     == Int(DatabaseHelper.currentSchemaVersion(for: DatabaseHelper.migrations))
             )
-            #expect(journalCount == 0)
-            #expect(cursorCount == 0)
         }
     }
 }

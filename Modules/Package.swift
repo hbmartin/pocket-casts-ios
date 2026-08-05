@@ -188,19 +188,17 @@ let package = Package(
             resources: [.copy("Fixtures")],
             swiftSettings: strictConcurrencySettings
         ),
-        // Local-first file sync: per-device protobuf op logs in a user-visible
-        // cloud folder (iCloud Drive or any picked Files.app location). Must
-        // NOT depend on PocketCastsServer — the local-first stack has to keep
-        // working if the server module is ever removed.
+        // Uploads folder backing the Files library: audio files in a
+        // user-visible cloud folder (iCloud Drive or any picked Files.app
+        // location) appear as user episodes on every device pointing at the
+        // same folder.
         .target(
             name: "PocketCastsFileSync",
             dependencies: [
-                .product(name: "SwiftProtobuf", package: "swift-protobuf"),
                 "PocketCastsDataModel",
                 "PocketCastsUtils",
             ],
             path: "Sources/PocketCastsFileSync",
-            exclude: ["Proto"],
             swiftSettings: strictConcurrencyTestableSettings
         ),
         .testTarget(
@@ -211,7 +209,6 @@ let package = Package(
                 "PocketCastsDataModelTesting",
             ],
             path: "Tests/PocketCastsFileSyncTests",
-            resources: [.copy("Fixtures")],
             swiftSettings: strictConcurrencySettings
         ),
         // Diarized transcription: domain types, speaker/ASR merge algorithm, VTT
