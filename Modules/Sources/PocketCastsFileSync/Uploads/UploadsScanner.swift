@@ -30,9 +30,9 @@ public actor UploadsScanner {
     /// One full reconcile pass over the Uploads/ directory.
     @discardableResult
     public func scan() async throws -> ScanResult {
-        let listing = try await folder.list(FileSyncFormat.uploadsDirectory)
+        let listing = try await folder.listing(FileSyncFormat.uploadsDirectory)
         let supported = isSupportedFile
-        let media = FolderScanner.mediaFiles(in: listing) { supported($0) }
+        let media = FolderScanner.mediaFiles(in: listing.entries) { supported($0) }
             // Planner works in paths relative to the uploads root.
             .map { entry in
                 FolderEntry(
@@ -54,7 +54,11 @@ public actor UploadsScanner {
                 isCanonical: episode.identity == .canonical)
         }
 
-        let actions = UploadScanPlanner.plan(mediaEntries: media, knownEpisodes: known)
+        let actions = UploadScanPlanner.plan(
+            mediaEntries: media,
+            knownEpisodes: known,
+            listingIsComplete: listing.isComplete
+        )
         var result = ScanResult()
 
         for action in actions {

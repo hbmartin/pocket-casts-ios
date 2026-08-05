@@ -270,10 +270,18 @@ final class DatabaseHelperMigrationTests: XCTestCase {
             try db.execute(sql: "INSERT INTO SJPlaylistEpisode (episodeUuid, playlist_id, podcastUuid) VALUES ('ep-local', 1, 'pod-local')")
             try db.execute(sql: "INSERT INTO PlaylistEpisodeHistory (episodePosition, episodeUuid, playlist_id, podcastUuid, date) VALUES (0, 'ep-local', 1, 'pod-local', 1000)")
             try db.execute(sql: "INSERT INTO UpNextChanges (type, uuid, utcTime) VALUES (1, 'ep-local', 1000)")
+            try db.execute(sql: "INSERT INTO UpNextChanges (type, uuid, utcTime) VALUES (1, 'ep-server', 1001)")
+            try db.execute(sql: "INSERT INTO UpNextChanges (type, uuids, utcTime) VALUES (5, 'ep-server,ep-local', 1002)")
+            try db.execute(sql: "INSERT INTO UpNextChanges (type, uuids, utcTime) VALUES (5, 'ep-server', 1003)")
             try db.execute(sql: "INSERT INTO AutoAddCandidates (episode_uuid, podcast_uuid) VALUES ('ep-local', 'pod-local')")
             try db.execute(sql: "INSERT INTO Bookmark (uuid, title, episode_uuid, podcast_uuid, time, date_added) VALUES ('bm-local', 'b', 'ep-local', 'pod-local', 1, 1000)")
             try db.execute(sql: "INSERT INTO Bookmark (uuid, title, episode_uuid, podcast_uuid, time, date_added) VALUES ('bm-server', 'b', 'ep-server', 'pod-server', 1, 1000)")
             try db.execute(sql: "INSERT INTO BookmarkTag (bookmarkUuid, tag) VALUES ('bm-local', 'tag-1')")
+            try db.execute(sql: "INSERT INTO PendingTranscriptUpload (episodeUuid, podcastUuid) VALUES ('ep-local', 'pod-local')")
+            try db.execute(sql: "INSERT INTO PendingTranscriptUpload (episodeUuid, podcastUuid) VALUES ('ep-server', 'pod-server')")
+            try db.execute(sql: "INSERT INTO SJFilteredPlaylist (id, playlistName, uuid, filterAllPodcasts, podcastUuids) VALUES (1, 'Mixed', 'filter-mixed', 0, 'pod-local,pod-server')")
+            try db.execute(sql: "INSERT INTO SJFilteredPlaylist (id, playlistName, uuid, filterAllPodcasts, podcastUuids) VALUES (2, 'Local', 'filter-local', 0, 'pod-local')")
+            try db.execute(sql: "INSERT INTO SJFilteredPlaylist (id, playlistName, uuid, filterAllPodcasts, podcastUuids) VALUES (3, 'Server', 'filter-server', 0, 'pod-server')")
         }
 
         XCTAssertTrue(DatabaseHelper.setup(queue: queue, migrations: DatabaseHelper.migrations))
@@ -287,10 +295,25 @@ final class DatabaseHelperMigrationTests: XCTestCase {
             XCTAssertEqual(episodes, ["ep-server"])
             XCTAssertEqual(try String.fetchAll(db, sql: "SELECT episodeUuid FROM SJPlaylistEpisode"), ["ep-server"])
             XCTAssertEqual(try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM PlaylistEpisodeHistory"), 0)
-            XCTAssertEqual(try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM UpNextChanges"), 0)
+            XCTAssertEqual(
+                try Row.fetchAll(db, sql: "SELECT uuid, uuids FROM UpNextChanges ORDER BY utcTime").map {
+                    [$0["uuid"] as String?, $0["uuids"] as String?]
+                },
+                [["ep-server", nil], [nil, "ep-server"]]
+            )
             XCTAssertEqual(try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM AutoAddCandidates"), 0)
             XCTAssertEqual(try String.fetchAll(db, sql: "SELECT uuid FROM Bookmark"), ["bm-server"])
             XCTAssertEqual(try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM BookmarkTag"), 0)
+            XCTAssertEqual(
+                try String.fetchAll(db, sql: "SELECT episodeUuid FROM PendingTranscriptUpload"),
+                ["ep-server"]
+            )
+            XCTAssertEqual(
+                try Row.fetchAll(db, sql: "SELECT uuid, podcastUuids FROM SJFilteredPlaylist ORDER BY id").map {
+                    [$0["uuid"] as String, $0["podcastUuids"] as String]
+                },
+                [["filter-mixed", "pod-server"], ["filter-server", "pod-server"]]
+            )
 
             let podcastColumns = try String.fetchAll(db, sql: "SELECT name FROM pragma_table_info('SJPodcast')")
             XCTAssertFalse(podcastColumns.contains("refreshSource"))

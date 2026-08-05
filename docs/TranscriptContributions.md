@@ -7,10 +7,9 @@ current client has no contribution-consent UI, so production enqueueing remains
 disabled until that choice and the deletion workflow ship together.
 
 Consent is separate from consent for a remote transcription provider. Before
-enqueueing, the client must also establish that the episode is a catalog
-podcast episode (uploaded files never qualify) and has no publisher or
-feed-level prohibition on corpus redistribution. Unknown eligibility is
-ineligible.
+enqueueing, the client must also establish that the episode belongs to the
+supplied catalog podcast. Uploaded files never qualify; missing or mismatched
+episode and podcast rows are ineligible.
 
 Revoking consent stops new contributions immediately and removes all unsent
 contribution, sighting, and metadata jobs. Deleting a local transcript removes

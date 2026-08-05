@@ -40,6 +40,12 @@ final class TranscriptContributionEligibilityTests: XCTestCase {
         XCTAssertFalse(TranscriptContributionEligibility.isEligible(episode: makeEpisode(), podcast: nil))
     }
 
+    func testEpisodeFromDifferentPodcastIsNotEligible() {
+        var podcast = makePodcast()
+        podcast.uuid = "podcast-2"
+        XCTAssertFalse(TranscriptContributionEligibility.isEligible(episode: makeEpisode(), podcast: podcast))
+    }
+
     // MARK: - Token-free URL rule
 
     func testPlainURLIsTokenFree() {

@@ -412,8 +412,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // sweep the orphaned keychain items once. (Keychain items survive reinstalls
         // while UserDefaults doesn't, so a reinstall harmlessly re-runs the sweep.)
         if !UserDefaults.standard.bool(forKey: "SweptLocalFeedKeychainV1") {
-            KeychainHelper.removeAllItems(withKeyPrefix: "localFeedBasicAuth-")
-            UserDefaults.standard.set(true, forKey: "SweptLocalFeedKeychainV1")
+            if KeychainHelper.removeAllItems(withKeyPrefix: "localFeedBasicAuth-") {
+                UserDefaults.standard.set(true, forKey: "SweptLocalFeedKeychainV1")
+            }
         }
         Task {
             await DownloadManager.shared.clearStuckDownloads()

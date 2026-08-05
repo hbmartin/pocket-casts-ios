@@ -2,10 +2,12 @@
 
 Date: 2026-07-19 (Slice 16 grill)
 
-> **2026-08-04 note: obsolete on iOS.** The local-first reversal removed the
-> on-device feed pipeline and its hash-uuid identity space — the iOS app no
-> longer mints device-derived episode uuids. Retained for the backend's alias
-> table, which still resolves uuids minted before the removal.
+> **2026-08-04 note: obsolete for feed identity on iOS.** The local-first
+> reversal removed the on-device feed pipeline, so the iOS app no longer mints
+> UUIDs for that hash-derived local-feed identity scheme. The separate uploads
+> pipeline still assigns per-device episode UUIDs to folder-backed files.
+> Retained for the backend's alias table, which still resolves feed UUIDs
+> minted before the removal.
 
 ## Context
 

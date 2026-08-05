@@ -70,6 +70,14 @@ struct OpmlRoundTripTests {
         let importedURLs = try OpmlDocument.feedURLs(from: Data(OpmlDocument.xmlString(feeds: feeds).utf8))
         #expect(importedURLs == ["https://example.test/with.xml"])
     }
+
+    @Test("Export sanitization strips credentials and fails closed")
+    func exportURLSanitization() {
+        #expect(ImportExportViewController.strippingCredentials(
+            from: "https://user:password@example.test/feed.xml"
+        ) == "https://example.test/feed.xml")
+        #expect(ImportExportViewController.strippingCredentials(from: "https://[::1/feed.xml") == nil)
+    }
 }
 
 extension Tag {

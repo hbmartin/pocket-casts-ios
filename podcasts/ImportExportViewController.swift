@@ -81,7 +81,8 @@ class ImportExportViewController: PCViewController, @preconcurrency UIDocumentIn
         let feeds = podcasts
             .compactMap { podcast -> OpmlFeed? in
                 guard let url = podcast.podcastUrl, !url.isEmpty else { return nil }
-                return OpmlFeed(title: podcast.title ?? "", url: Self.strippingCredentials(from: url))
+                guard let sanitizedURL = Self.strippingCredentials(from: url) else { return nil }
+                return OpmlFeed(title: podcast.title ?? "", url: sanitizedURL)
             }
 
         guard !feeds.isEmpty, feeds.count == podcasts.count else {
@@ -95,11 +96,11 @@ class ImportExportViewController: PCViewController, @preconcurrency UIDocumentIn
     }
 
     /// Exported OPML must never leak userinfo embedded in a stored feed URL.
-    private static func strippingCredentials(from url: String) -> String {
-        guard var components = URLComponents(string: url) else { return url }
+    nonisolated static func strippingCredentials(from url: String) -> String? {
+        guard var components = URLComponents(string: url) else { return nil }
         components.user = nil
         components.password = nil
-        return components.string ?? url
+        return components.string
     }
 
     private func shareOpmlDocument(_ text: String) {

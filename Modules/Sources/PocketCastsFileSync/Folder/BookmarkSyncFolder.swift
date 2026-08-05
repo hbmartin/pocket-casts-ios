@@ -67,6 +67,12 @@ public actor BookmarkSyncFolder: SyncFolder {
         }
     }
 
+    public func listing(_ relativeDir: String) async throws -> FolderListing {
+        try await withAccess { root in
+            try await CoordinatedFileIO.listing(root: root, relativeDir: relativeDir)
+        }
+    }
+
     public func coordinatedRead<T: Sendable>(_ relativePath: String, _ body: @Sendable @escaping (URL) throws -> T) async throws -> T {
         try await withAccess { root in
             try await CoordinatedFileIO.read(root.appendingPathComponent(relativePath), body)

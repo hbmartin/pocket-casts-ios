@@ -85,20 +85,24 @@ nonisolated final class OpmlImportState: Sendable {
         var pollUuids = [String]()
         var failedCount = 0
         var importedCount = 0
+        var terminalFailure = false
     }
 
     private let state = Mutex(State())
 
-    func recordResponse(pollUuids: [String], failedCount: Int) {
+    @discardableResult
+    func recordResponse(pollUuids: [String], failedCount: Int) -> Bool {
         state.withLock { state in
+            guard !state.terminalFailure else { return false }
             state.pollUuids += pollUuids
             state.failedCount += failedCount
+            return true
         }
     }
 
     func takePollUuids() -> [String]? {
         state.withLock { state in
-            guard !state.pollUuids.isEmpty else { return nil }
+            guard !state.terminalFailure, !state.pollUuids.isEmpty else { return nil }
             let uuids = state.pollUuids
             state.pollUuids.removeAll()
             return uuids
@@ -115,6 +119,21 @@ nonisolated final class OpmlImportState: Sendable {
 
     func recordChunkFailure(feedCount: Int = 1) {
         state.withLock { $0.failedCount += feedCount }
+    }
+
+    func markTerminalFailure() {
+        state.withLock { state in
+            state.terminalFailure = true
+            state.pollUuids.removeAll()
+        }
+    }
+
+    var shouldContinue: Bool {
+        state.withLock { !$0.terminalFailure }
+    }
+
+    var hasPendingPollUuids: Bool {
+        state.withLock { !$0.pollUuids.isEmpty }
     }
 
     var failureCount: Int {
@@ -151,32 +170,32 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
             guard let data = try? Data(contentsOf: opmlFileUrl),
                   let parsedUrls = try? OpmlDocument.feedURLs(from: data),
                   !parsedUrls.isEmpty else {
-                DispatchQueue.main.sync {
-                    if let progressWindow = self.progressWindow {
-                        progressWindow.hideAlert(false)
-                        let controller = SceneHelper.rootViewController()
-
-                        SJUIUtils.showAlert(title: L10n.opmlImportFailedTitle, message: L10n.opmlImportFailedMessage, from: controller)
-                    } else {
-                        NotificationCenter.postOnMainThread(OpmlImportFailed())
-                    }
-
-                    Analytics.track(.opmlImportFailed)
-                }
-
+                finishAsFailure()
                 return
             }
             initialPodcastCount = parsedUrls.count
 
             // send urls to server 100 at a time
-            importPodcasts(urls: parsedUrls)
+            guard importPodcasts(urls: parsedUrls) else {
+                finishAsFailure()
+                return
+            }
 
             var amountOfTimesPolled = 0
             while amountOfTimesPolled < 20, let pollUuidsToSend = importState.takePollUuids() {
                 amountOfTimesPolled += 1
 
-                pollImportPodcasts(pollUuids: pollUuidsToSend)
+                guard pollImportPodcasts(pollUuids: pollUuidsToSend) else {
+                    finishAsFailure()
+                    return
+                }
                 Thread.sleep(forTimeInterval: TimeInterval(amountOfTimesPolled))
+            }
+
+            guard !importState.hasPendingPollUuids, importState.shouldContinue else {
+                importState.markTerminalFailure()
+                finishAsFailure()
+                return
             }
 
             DispatchQueue.main.async {
@@ -192,26 +211,36 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
         }
     }
 
-    private func importPodcasts(urls: [String]) {
+    private func importPodcasts(urls: [String]) -> Bool {
         let serverCallDispatchGroup = DispatchGroup()
-        urls.chunked(into: 100).forEach { chunk in
+        for chunk in urls.chunked(into: 100) {
             serverCallDispatchGroup.enter()
 
             MainServerHandler.shared.sendOpmlChunk(feedUrls: chunk) { response in
                 self.processImportPodcastsResponse(response: response, feedCount: chunk.count, dispatchGroup: serverCallDispatchGroup)
             }
 
-            _ = serverCallDispatchGroup.wait(timeout: .now() + 2.minutes)
+            guard serverCallDispatchGroup.wait(timeout: .now() + 2.minutes) == .success,
+                  importState.shouldContinue else {
+                importState.markTerminalFailure()
+                return false
+            }
         }
+        return true
     }
 
-    private func pollImportPodcasts(pollUuids: [String]) {
+    private func pollImportPodcasts(pollUuids: [String]) -> Bool {
         let serverCallDispatchGroup = DispatchGroup()
         serverCallDispatchGroup.enter()
         MainServerHandler.shared.sendOpmlChunk(pollUuids: pollUuids) { response in
             self.processImportPodcastsResponse(response: response, feedCount: pollUuids.count, dispatchGroup: serverCallDispatchGroup)
         }
-        _ = serverCallDispatchGroup.wait(timeout: .now() + 2.minutes)
+        guard serverCallDispatchGroup.wait(timeout: .now() + 2.minutes) == .success,
+              importState.shouldContinue else {
+            importState.markTerminalFailure()
+            return false
+        }
+        return true
     }
 
     private func processImportPodcastsResponse(response: ImportOpmlResponse?, feedCount: Int, dispatchGroup: DispatchGroup) {
@@ -226,11 +255,11 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
 
         // since the code below is going to be making more network requests, get this call off the URLSession delegate queue
         DispatchQueue.global().async {
-            if let result = uploadResponse.result {
-                self.importState.recordResponse(
+            if let result = uploadResponse.result,
+               self.importState.recordResponse(
                     pollUuids: result.pollUuids ?? [],
                     failedCount: result.failedCount
-                )
+               ) {
                 self.addAllPendingPodcasts(podcastUuids: result.uuids ?? [])
             }
             dispatchGroup.leave()
@@ -242,10 +271,12 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
     private func addAllPendingPodcasts(podcastUuids: [String]) {
         for uuid in podcastUuids {
             importQueue.addOperation {
+                guard self.importState.shouldContinue else { return }
                 // check to see if we already have this podcast
                 let existingPodcast = DataManager.sharedManager.findPodcast(uuid: uuid, includeUnsubscribed: true)
                 if var podcast = existingPodcast {
                     if !podcast.isSubscribed() {
+                        guard self.importState.shouldContinue else { return }
                         podcast.subscribed = 1
                         podcast.syncStatus = SyncStatus.notSynced.rawValue
                         DataManager.sharedManager.save(podcast: podcast)
@@ -260,9 +291,14 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
                 }
 
                 // if we get here we don't have this podcast, so we need to add it
+                guard self.importState.shouldContinue else { return }
                 let addGroup = DispatchGroup()
                 addGroup.enter()
                 ServerPodcastManager.shared.addFromUuid(podcastUuid: uuid, subscribe: true) { _ in
+                    guard self.importState.shouldContinue else {
+                        addGroup.leave()
+                        return
+                    }
                     let imported = self.updateProgress()
 
                     DispatchQueue.main.async {
@@ -274,7 +310,9 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
                 }
 
                 // wait for the add operation to return
-                _ = addGroup.wait(timeout: .now() + 30.seconds)
+                if addGroup.wait(timeout: .now() + 30.seconds) == .timedOut {
+                    self.importState.markTerminalFailure()
+                }
             }
         }
 
@@ -287,5 +325,22 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
 
     private func updateProgress(failed: Bool = false) -> Int {
         importState.updateProgress(failed: failed)
+    }
+
+    private func finishAsFailure() {
+        DispatchQueue.main.sync {
+            if let progressWindow = self.progressWindow {
+                progressWindow.hideAlert(false)
+                let controller = SceneHelper.rootViewController()
+                SJUIUtils.showAlert(
+                    title: L10n.opmlImportFailedTitle,
+                    message: L10n.opmlImportFailedMessage,
+                    from: controller
+                )
+            } else {
+                NotificationCenter.postOnMainThread(OpmlImportFailed())
+            }
+            Analytics.track(.opmlImportFailed)
+        }
     }
 }

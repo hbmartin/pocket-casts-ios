@@ -464,6 +464,44 @@ class DatabaseHelper {
         // SalientSegment, MentionedEntity) are deliberately left to their own
         // eviction, as are show-notes URLCache entries (100 MB LRU).
         SchemaMigration(toVersion: 90) { db in
+            let localPodcastResult = try db.executeQuery(
+                "SELECT uuid FROM SJPodcast WHERE refreshSource = 1", values: nil)
+            var localPodcastUuids = Set<String>()
+            while localPodcastResult.next() {
+                if let uuid = localPodcastResult.string(forColumn: "uuid") {
+                    localPodcastUuids.insert(uuid)
+                }
+            }
+            localPodcastResult.close()
+
+            // A podcast-specific filter with an empty uuid list is interpreted
+            // as all podcasts. Remove local uuids from mixed filters and delete
+            // filters that selected only purged local feeds.
+            if !localPodcastUuids.isEmpty {
+                let filterResult = try db.executeQuery(
+                    "SELECT id, podcastUuids FROM SJFilteredPlaylist WHERE filterAllPodcasts = 0", values: nil)
+                var filters: [(id: Int64, podcastUuids: String)] = []
+                while filterResult.next() {
+                    if let podcastUuids = filterResult.string(forColumn: "podcastUuids") {
+                        filters.append((filterResult.longLongInt(forColumn: "id"), podcastUuids))
+                    }
+                }
+                filterResult.close()
+
+                for filter in filters {
+                    let originalUuids = filter.podcastUuids.split(separator: ",").map(String.init)
+                    let retainedUuids = originalUuids.filter { !localPodcastUuids.contains($0) }
+                    guard retainedUuids.count != originalUuids.count else { continue }
+                    if retainedUuids.isEmpty {
+                        try db.executeUpdate("DELETE FROM SJFilteredPlaylist WHERE id = ?", values: [filter.id])
+                    } else {
+                        try db.executeUpdate(
+                            "UPDATE SJFilteredPlaylist SET podcastUuids = ? WHERE id = ?",
+                            values: [retainedUuids.joined(separator: ","), filter.id])
+                    }
+                }
+            }
+
             try db.executeUpdate("""
             DELETE FROM SJPlaylistEpisode
             WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1)
@@ -479,7 +517,10 @@ class DatabaseHelper {
             try db.executeUpdate("""
             DELETE FROM UpNextChanges
             WHERE uuid IN (SELECT uuid FROM SJEpisode
-                           WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1));
+                           WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1))
+               OR EXISTS (SELECT 1 FROM SJEpisode localEpisode
+                          WHERE localEpisode.podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1)
+                            AND ',' || UpNextChanges.uuids || ',' LIKE '%,' || localEpisode.uuid || ',%');
             """, values: nil)
             try db.executeUpdate("""
             DELETE FROM AutoAddCandidates
@@ -493,6 +534,12 @@ class DatabaseHelper {
             try db.executeUpdate("""
             DELETE FROM Bookmark
             WHERE podcast_uuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1);
+            """, values: nil)
+            try db.executeUpdate("""
+            DELETE FROM PendingTranscriptUpload
+            WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1)
+               OR episodeUuid IN (SELECT uuid FROM SJEpisode
+                                  WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1));
             """, values: nil)
             try db.executeUpdate("""
             DELETE FROM SJEpisode

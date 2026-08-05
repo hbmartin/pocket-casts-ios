@@ -40,8 +40,8 @@ public enum UploadScanPlanner {
         /// by the executor). `group` is the first path component under the
         /// uploads root, "" for loose files.
         case createProvisional(entry: FolderEntry, group: String)
-        /// A known episode's file moved/renamed (matched by size+mtime
-        /// heuristic).
+        /// A known episode's file moved/renamed. The absent path and file size
+        /// must match; mtime also matches when the known value is nonzero.
         case updatePath(episodeUuid: String, entry: FolderEntry, group: String)
         /// The file changed in place (same path, different size/mtime):
         /// identity is void; re-hash on next materialization.
@@ -53,7 +53,8 @@ public enum UploadScanPlanner {
 
     public static func plan(
         mediaEntries: [FolderEntry],
-        knownEpisodes: [KnownEpisode]
+        knownEpisodes: [KnownEpisode],
+        listingIsComplete: Bool = true
     ) -> [Action] {
         var actions: [Action] = []
 
@@ -76,13 +77,15 @@ public enum UploadScanPlanner {
                 continue
             }
 
-            // Rename detection: an episode whose file vanished and whose
-            // size+mtime match this new path exactly.
+            // Rename detection: an episode whose path vanished and whose size
+            // matches in a complete listing. mtime is an additional signal
+            // only when it was persisted.
             if let moved = knownEpisodes.first(where: { known in
-                !claimedEpisodes.contains(known.uuid)
+                listingIsComplete
+                    && !claimedEpisodes.contains(known.uuid)
                     && !mediaEntries.contains(where: { $0.relativePath == known.relativePath })
                     && known.sizeBytes == entry.sizeBytes
-                    && known.mtimeMs == entry.mtimeMs
+                    && (known.mtimeMs == 0 || known.mtimeMs == entry.mtimeMs)
             }) {
                 claimedEpisodes.insert(moved.uuid)
                 actions.append(.updatePath(episodeUuid: moved.uuid, entry: entry, group: group(of: entry)))
@@ -93,8 +96,10 @@ public enum UploadScanPlanner {
         }
 
         // Pass 2: episodes whose files are gone and weren't rename-claimed.
-        for known in knownEpisodes where !seenPaths.contains(known.relativePath) && !claimedEpisodes.contains(known.uuid) {
-            actions.append(.removeEpisode(episodeUuid: known.uuid))
+        if listingIsComplete {
+            for known in knownEpisodes where !seenPaths.contains(known.relativePath) && !claimedEpisodes.contains(known.uuid) {
+                actions.append(.removeEpisode(episodeUuid: known.uuid))
+            }
         }
 
         return actions

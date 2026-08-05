@@ -118,8 +118,10 @@ public final class KeychainHelper: Sendable, KeychainStoring {
     /// (current scoped-service shape) or service suffix (legacy per-key-service
     /// shape) begins with the given key prefix. Bypasses the `store` seam on
     /// purpose — it enumerates the real keychain, which the seam cannot do.
-    public class func removeAllItems(withKeyPrefix prefix: String) {
+    @discardableResult
+    public class func removeAllItems(withKeyPrefix prefix: String) -> Bool {
         let helper = shared
+        var succeeded = true
 
         // Current shape: service = app service, account = key.
         var scopedQuery = helper.baseQuery()
@@ -140,10 +142,15 @@ public final class KeychainHelper: Sendable, KeychainStoring {
                 deleteQuery[kSecAttrAccount as String] = account
                 let deleteStatus = SecItemDelete(deleteQuery as CFDictionary)
                 if deleteStatus != errSecSuccess, deleteStatus != errSecItemNotFound {
+                    succeeded = false
                     FileLog.shared.addMessage("KeychainHelper: sweep failed to delete \(account) osstatus: \(deleteStatus)")
                 }
             }
+        } else if status == errSecSuccess {
+            succeeded = false
+            FileLog.shared.addMessage("KeychainHelper: sweep enumeration returned unexpected scoped attributes")
         } else if status != errSecItemNotFound, status != errSecSuccess {
+            succeeded = false
             FileLog.shared.addMessage("KeychainHelper: sweep enumeration failed osstatus: \(status)")
         }
 
@@ -156,17 +163,27 @@ public final class KeychainHelper: Sendable, KeychainStoring {
         status = withUnsafeMutablePointer(to: &legacyResult) {
             SecItemCopyMatching(legacyQuery as CFDictionary, $0)
         }
-        guard status == errSecSuccess, let items = legacyResult as? [[String: Any]] else { return }
-        for item in items {
-            guard let itemService = item[kSecAttrService as String] as? String,
-                  itemService.hasPrefix(helper.legacyServicePrefix + prefix) else { continue }
-            var deleteQuery = helper.baseQuery()
-            deleteQuery[kSecAttrService as String] = itemService
-            let deleteStatus = SecItemDelete(deleteQuery as CFDictionary)
-            if deleteStatus != errSecSuccess, deleteStatus != errSecItemNotFound {
-                FileLog.shared.addMessage("KeychainHelper: sweep failed to delete legacy \(itemService) osstatus: \(deleteStatus)")
+        if status == errSecSuccess, let items = legacyResult as? [[String: Any]] {
+            for item in items {
+                guard let itemService = item[kSecAttrService as String] as? String,
+                      itemService.hasPrefix(helper.legacyServicePrefix + prefix) else { continue }
+                var deleteQuery = helper.baseQuery()
+                deleteQuery[kSecAttrService as String] = itemService
+                let deleteStatus = SecItemDelete(deleteQuery as CFDictionary)
+                if deleteStatus != errSecSuccess, deleteStatus != errSecItemNotFound {
+                    succeeded = false
+                    FileLog.shared.addMessage("KeychainHelper: sweep failed to delete legacy \(itemService) osstatus: \(deleteStatus)")
+                }
             }
+        } else if status == errSecSuccess {
+            succeeded = false
+            FileLog.shared.addMessage("KeychainHelper: sweep enumeration returned unexpected legacy attributes")
+        } else if status != errSecItemNotFound {
+            succeeded = false
+            FileLog.shared.addMessage("KeychainHelper: legacy sweep enumeration failed osstatus: \(status)")
         }
+
+        return succeeded
     }
 
     private func createQuery(key: String) -> [String: Any] {
