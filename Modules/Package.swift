@@ -58,6 +58,10 @@ let package = Package(
             targets: ["PocketCastsTranscription"]
         ),
         .library(
+            name: "PocketCastsReadAloud",
+            targets: ["PocketCastsReadAloud"]
+        ),
+        .library(
             name: "Modules",
             targets: ["Modules"]
         )
@@ -231,6 +235,26 @@ let package = Package(
             path: "Tests/PocketCastsTranscriptionTests",
             swiftSettings: strictConcurrencySettings
         ),
+        // Read Aloud: turning a text document into a narrated episode. Holds the
+        // pure half — extraction, encoding sniffing, chunking, the synthesis
+        // engine protocol — plus the Apple `AVSpeechSynthesizer` engine
+        // (`#if os(iOS)`). Same rules as PocketCastsTranscription above: system
+        // frameworks only and NO package dependencies, so the chunker and
+        // extractors stay testable host-side. Everything stateful (queue,
+        // keychain, DB, UI) lives app-side in `podcasts/ReadAloud/`.
+        .target(
+            name: "PocketCastsReadAloud",
+            path: "Sources/PocketCastsReadAloud",
+            swiftSettings: strictConcurrencyTestableSettings
+        ),
+        .testTarget(
+            name: "PocketCastsReadAloudTests",
+            dependencies: [
+                "PocketCastsReadAloud",
+            ],
+            path: "Tests/PocketCastsReadAloudTests",
+            swiftSettings: strictConcurrencySettings
+        ),
         .target(
             name: "Modules",
             path: "Sources/Modules",
@@ -289,6 +313,7 @@ enum XcodeSupport {
                     "PocketCastsServer",
                     "PocketCastsFileSync",
                     "PocketCastsTranscription",
+                    "PocketCastsReadAloud",
                     "PocketCastsUtils",
                     .product(name: "Dependencies", package: "swift-dependencies"),
                     .product(name: "DifferenceKit", package: "DifferenceKit"),

@@ -1,0 +1,115 @@
+import Foundation
+
+/// A voice a synthesis engine can speak in.
+public struct SynthesisVoice: Sendable, Equatable, Identifiable {
+    /// Stable identifier persisted on the narration row. For the built-in engine
+    /// this is `AVSpeechSynthesisVoice.identifier`; for providers it's their
+    /// voice id.
+    public let id: String
+    public let name: String
+    /// BCP-47 identifier, used to group the picker and to match the document's
+    /// detected language.
+    public let language: String
+    /// Engine-supplied quality wording ("Enhanced", "Premium", …) shown as a
+    /// badge. Nil when the engine offers no such distinction.
+    public let qualityLabel: String?
+    /// A free sample the app may play without spending the user's quota. Nil
+    /// means previewing this voice would cost something, so the app must not
+    /// offer it.
+    public let previewURL: URL?
+
+    public init(id: String, name: String, language: String, qualityLabel: String? = nil, previewURL: URL? = nil) {
+        self.id = id
+        self.name = name
+        self.language = language
+        self.qualityLabel = qualityLabel
+        self.previewURL = previewURL
+    }
+}
+
+/// What the app needs to know about an engine before it can build a sensible
+/// UI or plan a run, without special-casing engines by identity.
+public struct EngineCapabilities: Sendable, Equatable {
+    /// Hard per-request character limit; the chunker targets a fraction of it.
+    public let maxCharactersPerChunk: Int
+    /// How many chunks may be in flight at once. Local engines stay at 1 —
+    /// they're CPU-bound, so concurrency buys nothing and costs battery.
+    public let maxConcurrentChunks: Int
+    public let requiresAPIKey: Bool
+    /// Whether a run costs the user money, and so must be confirmed first.
+    public let requiresConfirmation: Bool
+    /// Whether the engine can speak a sample at no cost.
+    public let supportsFreePreview: Bool
+
+    public init(
+        maxCharactersPerChunk: Int,
+        maxConcurrentChunks: Int,
+        requiresAPIKey: Bool,
+        requiresConfirmation: Bool,
+        supportsFreePreview: Bool
+    ) {
+        self.maxCharactersPerChunk = maxCharactersPerChunk
+        self.maxConcurrentChunks = maxConcurrentChunks
+        self.requiresAPIKey = requiresAPIKey
+        self.requiresConfirmation = requiresConfirmation
+        self.supportsFreePreview = supportsFreePreview
+    }
+}
+
+/// Per-run synthesis settings chosen by the user at import and then frozen onto
+/// the narration row. Immutability is what lets resume skip the fingerprinting
+/// the original design called for: settings cannot drift mid-run, because
+/// changing them means starting a different narration.
+public struct SynthesisSettings: Sendable, Equatable {
+    /// Speaking rate as a multiplier of the engine's normal pace (1.0 = normal).
+    /// Engines clamp it to their own range.
+    public let rate: Float
+
+    public init(rate: Float = 1) {
+        self.rate = rate
+    }
+}
+
+/// Text in, an audio file out. Implementations: `AppleSpeechSynthesisEngine`
+/// (this module) and the provider-backed engines.
+///
+/// Engines never touch the Keychain — an API key arrives as a parameter, so this
+/// module has no opinion about credential storage and stays dependency-free.
+public protocol SpeechSynthesisEngine: Sendable {
+    /// Stable identifier persisted with the narration (e.g. "apple.avspeech").
+    var id: String { get }
+    var capabilities: EngineCapabilities { get }
+
+    /// Voices this engine can currently speak in. May hit the network for
+    /// provider-backed engines, so callers should cache the result for the
+    /// lifetime of a picker.
+    func availableVoices(apiKey: String?) async throws -> [SynthesisVoice]
+
+    /// Renders one chunk to `outputURL`, overwriting anything already there.
+    ///
+    /// Implementations call `Task.checkCancellation()` at their coarsest safe
+    /// boundary so queue cancellation lands promptly. Throwing means the file at
+    /// `outputURL` is not to be trusted; the queue deletes it before retrying,
+    /// so a partial write can never be mistaken for a completed chunk.
+    func synthesize(
+        chunk: NarrationChunk,
+        voice: SynthesisVoice,
+        settings: SynthesisSettings,
+        apiKey: String?,
+        to outputURL: URL
+    ) async throws
+}
+
+public extension SpeechSynthesisEngine {
+    /// Rough narration length for a character count, used for the pre-run
+    /// estimate shown in the confirmation gate.
+    ///
+    /// Based on ~15 characters per second, which is about 150–160 words per
+    /// minute — ordinary audiobook pace. It is deliberately coarse: the estimate
+    /// exists so someone can tell four minutes from four hours before spending
+    /// money, not to be accurate to the second.
+    func estimatedDuration(characterCount: Int, settings: SynthesisSettings) -> TimeInterval {
+        let rate = settings.rate > 0 ? Double(settings.rate) : 1
+        return Double(characterCount) / (15 * rate)
+    }
+}
