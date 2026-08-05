@@ -113,6 +113,27 @@ nonisolated class Settings: NSObject {
         trackValueToggled(.settingsAutoDownloadUpNextToggled, enabled: download)
     }
 
+    // MARK: - Read Aloud
+
+    private static let readAloudDefaultVoiceIdKey = "SJReadAloudDefaultVoiceId"
+
+    /// Identifier of the voice new narrations start from, or nil when the user
+    /// has never chosen one (in which case the best installed voice for the
+    /// document's language is preselected). Device-local: voices are installed
+    /// per device, so syncing this would point at voices the other device may
+    /// not have.
+    class func readAloudDefaultVoiceId() -> String? {
+        UserDefaults.standard.string(forKey: Settings.readAloudDefaultVoiceIdKey)
+    }
+
+    class func setReadAloudDefaultVoiceId(_ voiceId: String?) {
+        if let voiceId, !voiceId.isEmpty {
+            UserDefaults.standard.set(voiceId, forKey: Settings.readAloudDefaultVoiceIdKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: Settings.readAloudDefaultVoiceIdKey)
+        }
+    }
+
     // MARK: - Diarized Transcription
 
     private static let transcriptionEngineModeKey = "SJTranscriptionEngineMode"

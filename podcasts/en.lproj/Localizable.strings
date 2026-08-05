@@ -7973,3 +7973,129 @@
 
 /* Error alert shown when deleting a comment fails. */
 "social_comment_delete_failed" = "Couldn't delete that comment. Try again.";
+
+/* Name of the Read Aloud feature: importing a text file and having it narrated. */
+"read_aloud_title" = "Read Aloud";
+
+/* Files screen menu action opening the Read Aloud library. */
+"read_aloud_menu_action" = "Read Aloud";
+
+/* Button that starts importing a text document to narrate. */
+"read_aloud_narrate_document" = "Narrate a Document…";
+
+/* Title of the sheet shown after picking a text file, before narration starts. */
+"read_aloud_import_title" = "Read Aloud";
+
+/* Label for the editable document title field on the import sheet. */
+"read_aloud_document_title" = "Title";
+
+/* Row label for the chosen voice. */
+"read_aloud_voice" = "Voice";
+
+/* Button that starts narrating the imported document. */
+"read_aloud_generate" = "Narrate";
+
+/* Shows the size of the document being narrated, e.g. "12,400 characters". */
+"read_aloud_character_count" = "%1$@ characters";
+
+/* Estimated length of the finished audio, e.g. "About 14 min of audio". */
+"read_aloud_estimated_duration" = "About %1$@ of audio";
+
+/* Footnote when the document's language has no installed voice; placeholder is the language name. */
+"read_aloud_no_voice_for_language" = "No voice is installed for %1$@, so a voice in your device's language was chosen. You can pick another below.";
+
+/* Header of the voice list section showing voices matching the document's language. */
+"read_aloud_voices_for_document" = "Voices for this document";
+
+/* Row that opens the full list of voices in every language. */
+"read_aloud_all_languages" = "All Languages";
+
+/* Title of the screen listing every installed voice by language. */
+"read_aloud_all_voices_title" = "All Voices";
+
+/* Badge on a higher-quality downloadable voice. */
+"read_aloud_voice_enhanced" = "Enhanced";
+
+/* Badge on the highest-quality downloadable voice. */
+"read_aloud_voice_premium" = "Premium";
+
+/* Explains that better-sounding voices can be downloaded, and where. */
+"read_aloud_voice_quality_explainer" = "iOS ships compact voices that sound robotic. For much better narration, download Enhanced or Premium voices in the Settings app under Accessibility › Spoken Content › Voices, then come back here.";
+
+/* Sample sentence spoken when previewing a voice. */
+"read_aloud_voice_preview_sample" = "This is how your document will sound when it is read aloud.";
+
+/* Title of the Read Aloud library screen listing imported documents. */
+"read_aloud_library_title" = "Read Aloud";
+
+/* Empty state title on the Read Aloud library screen. */
+"read_aloud_library_empty_title" = "No documents yet";
+
+/* Empty state message on the Read Aloud library screen. */
+"read_aloud_library_empty_message" = "Import a text or Markdown file and Pocket Casts will narrate it into an episode you can listen to.";
+
+/* Status for a narration waiting to start. */
+"read_aloud_status_queued" = "Waiting…";
+
+/* Status while a narration renders; placeholder is a percentage, e.g. "Narrating… 40%". */
+"read_aloud_status_rendering" = "Narrating… %1$@";
+
+/* Status for a narration that failed. */
+"read_aloud_status_failed" = "Couldn't narrate";
+
+/* Status for a narration the user cancelled. */
+"read_aloud_status_cancelled" = "Cancelled";
+
+/* Describes a finished narration; placeholders are the voice name and audio duration. */
+"read_aloud_narration_summary" = "%1$@ · %2$@";
+
+/* Action that narrates an existing document again, in another voice. */
+"read_aloud_narrate_again" = "Narrate Again…";
+
+/* Action that retries a failed narration. */
+"read_aloud_retry" = "Try Again";
+
+/* Action that cancels a narration in progress. */
+"read_aloud_cancel_narration" = "Cancel";
+
+/* Action that deletes a single narration and its episode, keeping the document. */
+"read_aloud_delete_narration" = "Delete Recording";
+
+/* Action that deletes a document, its recordings and its episodes. */
+"read_aloud_delete_document" = "Delete Document";
+
+/* Confirmation title when deleting a document. */
+"read_aloud_delete_document_confirm_title" = "Delete this document?";
+
+/* Confirmation message when deleting a document. */
+"read_aloud_delete_document_confirm_message" = "This removes the text and every recording made from it, including their episodes. This can't be undone.";
+
+/* Section header for Read Aloud defaults in settings. */
+"read_aloud_settings_defaults" = "Default Voice";
+
+/* Settings row showing how much space Read Aloud documents use. */
+"read_aloud_settings_storage" = "Documents on device";
+
+/* Settings row linking to the Read Aloud library. */
+"read_aloud_settings_library" = "Your Documents";
+
+/* Footer explaining what the default voice is used for. */
+"read_aloud_settings_defaults_footer" = "New documents start with this voice. You can change it for each one before narrating.";
+
+/* Notification title when a narration finishes while the app is in the background. */
+"read_aloud_notification_title" = "Ready to listen";
+
+/* Notification body naming the finished document. */
+"read_aloud_notification_body" = "%1$@ has finished narrating.";
+
+/* Error shown when a document can't be read as text. */
+"read_aloud_error_unreadable" = "That file couldn't be read as text.";
+
+/* Error shown when a document is too long to narrate. */
+"read_aloud_error_too_large" = "That document is too long to narrate.";
+
+/* Error shown when a document contains nothing to narrate. */
+"read_aloud_error_empty" = "That document has no text to narrate.";
+
+/* Generic error shown when narration fails. */
+"read_aloud_error_generic" = "Something went wrong while narrating. Try again.";

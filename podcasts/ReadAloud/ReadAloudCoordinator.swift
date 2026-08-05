@@ -15,13 +15,15 @@ import UIKit
 final class ReadAloudCoordinator {
     private var isSetup = false
     private var backgroundTask: ReadAloudBackgroundTask?
-    private var episodeDeletionObserver: (any NSObjectProtocol)?
+    private let tokenBox = ObservationTokenBox()
+    private let completionNotifier = NarrationCompletionNotifier()
 
     func setup() {
         guard !isSetup, FeatureFlag.readAloud.enabled else { return }
         isSetup = true
 
         observeEpisodeDeletion()
+        completionNotifier.start()
 
         Task {
             await NarrationQueue.shared.restorePending()
@@ -56,14 +58,8 @@ final class ReadAloudCoordinator {
     /// The user deleted a generated episode. Its narration goes with it; the
     /// document survives and the library offers to narrate it again (ADR-0019).
     private func observeEpisodeDeletion() {
-        episodeDeletionObserver = NotificationCenter.default.addObserver(
-            forName: UserEpisodeDeleted.name,
-            object: nil,
-            queue: .main
-        ) { notification in
-            // `UuidBridgedMessage` carries the uuid as the notification's
-            // object, not in userInfo.
-            guard let episodeUuid = notification.object as? String else { return }
+        tokenBox.token = NotificationCenter.default.addObserver(for: UserEpisodeDeleted.self) { message in
+            guard let episodeUuid = message.uuid else { return }
 
             Task.detached(priority: .utility) {
                 guard let narration = DataManager.sharedManager.readAloud.deleteNarration(episodeUuid: episodeUuid) else {

@@ -10,6 +10,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
         case advancedAudio, devices
         case customFiles, importSteps, opml, backupRestore
         case fileSync
+        case readAloud
         case transcription
         case highlights
         case about, privacy
@@ -20,6 +21,8 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
         /// Whether the section should be displayed or not
         var visible: Bool {
             switch self {
+            case .readAloud:
+                FeatureFlag.readAloud.enabled
             case .transcription:
                 FeatureFlag.diarizedTranscription.enabled
             case .highlights:
@@ -74,6 +77,8 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
                 return (L10n.settingsAdvancedAudio, UIImage(systemName: "slider.horizontal.3"))
             case .devices:
                 return (L10n.settingsDevices, UIImage(systemName: "airplayaudio"))
+            case .readAloud:
+                return (L10n.readAloudTitle, UIImage(systemName: "text.bubble"))
             case .transcription:
                 return (L10n.transcriptionSettingsTitle, UIImage(named: "transcript"))
             case .highlights:
@@ -94,7 +99,7 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             [.general, .notifications, .appearance],
             [.autoArchive, .autoDownload, .autoAddToUpNext],
             [.fileSync],
-            [.storageAndDataUse, .headphoneControls, .devices, .advancedAudio, .transcription, .highlights, .customFiles],
+            [.storageAndDataUse, .headphoneControls, .devices, .advancedAudio, .readAloud, .transcription, .highlights, .customFiles],
             [.importSteps, .opml, .backupRestore],
             [.upNextHistory, .foldersHistory],
             [.privacy, .about]
@@ -224,6 +229,8 @@ class SettingsViewController: PCViewController, UITableViewDataSource, UITableVi
             let hostingController = PCHostingController(rootView: devicesView)
             hostingController.title = L10n.settingsDevices
             navigationController?.pushViewController(hostingController, animated: true)
+        case .readAloud:
+            navigationController?.pushViewController(ReadAloudSettingsViewController(), animated: true)
         case .transcription:
             let transcriptionView = TranscriptionSettingsView().environmentObject(Theme.sharedTheme)
             let hostingController = PCHostingController(rootView: transcriptionView)

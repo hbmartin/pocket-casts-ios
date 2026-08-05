@@ -1,5 +1,21 @@
 import Foundation
 
+/// How good a voice sounds, ranked.
+///
+/// This matters more than it looks: iOS ships only `standard` (compact) voices
+/// by default, and they are audibly robotic. The better ones are on-demand
+/// downloads the user has to fetch by hand, so the UI has to be able to rank
+/// voices, prefer the best available, and tell when nothing good is installed.
+public enum VoiceQuality: Int, Sendable, Comparable, CaseIterable {
+    case standard = 0
+    case enhanced = 1
+    case premium = 2
+
+    public static func < (lhs: VoiceQuality, rhs: VoiceQuality) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
+}
+
 /// A voice a synthesis engine can speak in.
 public struct SynthesisVoice: Sendable, Equatable, Identifiable {
     /// Stable identifier persisted on the narration row. For the built-in engine
@@ -10,19 +26,19 @@ public struct SynthesisVoice: Sendable, Equatable, Identifiable {
     /// BCP-47 identifier, used to group the picker and to match the document's
     /// detected language.
     public let language: String
-    /// Engine-supplied quality wording ("Enhanced", "Premium", …) shown as a
-    /// badge. Nil when the engine offers no such distinction.
-    public let qualityLabel: String?
+    /// How good this voice sounds. Providers that make no such distinction
+    /// report `.standard`.
+    public let quality: VoiceQuality
     /// A free sample the app may play without spending the user's quota. Nil
     /// means previewing this voice would cost something, so the app must not
     /// offer it.
     public let previewURL: URL?
 
-    public init(id: String, name: String, language: String, qualityLabel: String? = nil, previewURL: URL? = nil) {
+    public init(id: String, name: String, language: String, quality: VoiceQuality = .standard, previewURL: URL? = nil) {
         self.id = id
         self.name = name
         self.language = language
-        self.qualityLabel = qualityLabel
+        self.quality = quality
         self.previewURL = previewURL
     }
 }

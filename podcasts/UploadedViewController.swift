@@ -242,6 +242,17 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         }
         optionsPicker.addAction(action: settingsAction)
 
+        // Opens the library rather than starting an import: the widened "Add
+        // file" picker already covers importing, so what the menu is missing is
+        // a way back to the documents you already have.
+        if FeatureFlag.readAloud.enabled {
+            let readAloudAction = OptionAction(label: L10n.readAloudMenuAction, icon: "transcript") { [weak self] in
+                Analytics.track(.uploadedFilesOptionsModalOptionTapped, properties: ["option": "read_aloud"])
+                self?.navigationController?.pushViewController(ReadAloudLibraryViewController(), animated: true)
+            }
+            optionsPicker.addAction(action: readAloudAction)
+        }
+
         optionsPicker.present(from: self)
     }
 
@@ -346,7 +357,16 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     func addFile() {
         Analytics.track(.uploadedFilesAddButtonTapped)
 
-        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: FileTypeUtil.supportedUserFileTypes, asCopy: true)
+        // Text documents ride the same picker rather than getting their own
+        // entry point: "add a file" is what people already reach for, and the
+        // app can tell from the file which flow it belongs in. Only the picker's
+        // allowed types widen — FileTypeUtil is untouched, because its
+        // `isSupportedUserFileType` predicate is what the uploads folder scanner
+        // uses to decide what counts as a media file.
+        let pickerTypes = FeatureFlag.readAloud.enabled
+            ? FileTypeUtil.supportedUserFileTypes + ReadAloudFileTypes.pickerTypes
+            : FileTypeUtil.supportedUserFileTypes
+        let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: pickerTypes, asCopy: true)
         documentPicker.delegate = self
         documentPicker.modalPresentationStyle = .overFullScreen
         documentPicker.allowsMultipleSelection = false
@@ -460,6 +480,10 @@ private extension UploadedViewController {
 extension UploadedViewController: UIDocumentPickerDelegate {
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         guard let url = urls.first else {
+            return
+        }
+        if ReadAloudFileTypes.isReadAloudDocument(url: url) {
+            ReadAloudNavigation.presentImport(for: url, sourceKind: .picked, from: self)
             return
         }
         let addCustomVC = AddCustomViewController(fileUrl: url)

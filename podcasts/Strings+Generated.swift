@@ -3601,6 +3601,102 @@ nonisolated internal enum L10n {
   internal static var ratingWhatsNewMessage: String { return L10n.tr("Localizable", "rating_whats_new_message", fallback: "Rate your top podcasts and let creators know how much you appreciate their work. Plus, your ratings help others find new favorite shows!") }
   /// What's New sheet title
   internal static var ratingWhatsNewTitle: String { return L10n.tr("Localizable", "rating_whats_new_title", fallback: "Now Available: Podcast Ratings 🎉") }
+  /// Row that opens the full list of voices in every language.
+  internal static var readAloudAllLanguages: String { return L10n.tr("Localizable", "read_aloud_all_languages", fallback: "All Languages") }
+  /// Title of the screen listing every installed voice by language.
+  internal static var readAloudAllVoicesTitle: String { return L10n.tr("Localizable", "read_aloud_all_voices_title", fallback: "All Voices") }
+  /// Action that cancels a narration in progress.
+  internal static var readAloudCancelNarration: String { return L10n.tr("Localizable", "read_aloud_cancel_narration", fallback: "Cancel") }
+  /// Shows the size of the document being narrated, e.g. "12,400 characters".
+  internal static func readAloudCharacterCount(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "read_aloud_character_count", String(describing: p1), fallback: "%1$@ characters")
+  }
+  /// Action that deletes a document, its recordings and its episodes.
+  internal static var readAloudDeleteDocument: String { return L10n.tr("Localizable", "read_aloud_delete_document", fallback: "Delete Document") }
+  /// Confirmation message when deleting a document.
+  internal static var readAloudDeleteDocumentConfirmMessage: String { return L10n.tr("Localizable", "read_aloud_delete_document_confirm_message", fallback: "This removes the text and every recording made from it, including their episodes. This can't be undone.") }
+  /// Confirmation title when deleting a document.
+  internal static var readAloudDeleteDocumentConfirmTitle: String { return L10n.tr("Localizable", "read_aloud_delete_document_confirm_title", fallback: "Delete this document?") }
+  /// Action that deletes a single narration and its episode, keeping the document.
+  internal static var readAloudDeleteNarration: String { return L10n.tr("Localizable", "read_aloud_delete_narration", fallback: "Delete Recording") }
+  /// Label for the editable document title field on the import sheet.
+  internal static var readAloudDocumentTitle: String { return L10n.tr("Localizable", "read_aloud_document_title", fallback: "Title") }
+  /// Error shown when a document contains nothing to narrate.
+  internal static var readAloudErrorEmpty: String { return L10n.tr("Localizable", "read_aloud_error_empty", fallback: "That document has no text to narrate.") }
+  /// Generic error shown when narration fails.
+  internal static var readAloudErrorGeneric: String { return L10n.tr("Localizable", "read_aloud_error_generic", fallback: "Something went wrong while narrating. Try again.") }
+  /// Error shown when a document is too long to narrate.
+  internal static var readAloudErrorTooLarge: String { return L10n.tr("Localizable", "read_aloud_error_too_large", fallback: "That document is too long to narrate.") }
+  /// Error shown when a document can't be read as text.
+  internal static var readAloudErrorUnreadable: String { return L10n.tr("Localizable", "read_aloud_error_unreadable", fallback: "That file couldn't be read as text.") }
+  /// Estimated length of the finished audio, e.g. "About 14 min of audio".
+  internal static func readAloudEstimatedDuration(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "read_aloud_estimated_duration", String(describing: p1), fallback: "About %1$@ of audio")
+  }
+  /// Button that starts narrating the imported document.
+  internal static var readAloudGenerate: String { return L10n.tr("Localizable", "read_aloud_generate", fallback: "Narrate") }
+  /// Title of the sheet shown after picking a text file, before narration starts.
+  internal static var readAloudImportTitle: String { return L10n.tr("Localizable", "read_aloud_import_title", fallback: "Read Aloud") }
+  /// Empty state message on the Read Aloud library screen.
+  internal static var readAloudLibraryEmptyMessage: String { return L10n.tr("Localizable", "read_aloud_library_empty_message", fallback: "Import a text or Markdown file and Pocket Casts will narrate it into an episode you can listen to.") }
+  /// Empty state title on the Read Aloud library screen.
+  internal static var readAloudLibraryEmptyTitle: String { return L10n.tr("Localizable", "read_aloud_library_empty_title", fallback: "No documents yet") }
+  /// Title of the Read Aloud library screen listing imported documents.
+  internal static var readAloudLibraryTitle: String { return L10n.tr("Localizable", "read_aloud_library_title", fallback: "Read Aloud") }
+  /// Files screen menu action opening the Read Aloud library.
+  internal static var readAloudMenuAction: String { return L10n.tr("Localizable", "read_aloud_menu_action", fallback: "Read Aloud") }
+  /// Action that narrates an existing document again, in another voice.
+  internal static var readAloudNarrateAgain: String { return L10n.tr("Localizable", "read_aloud_narrate_again", fallback: "Narrate Again…") }
+  /// Button that starts importing a text document to narrate.
+  internal static var readAloudNarrateDocument: String { return L10n.tr("Localizable", "read_aloud_narrate_document", fallback: "Narrate a Document…") }
+  /// Describes a finished narration; placeholders are the voice name and audio duration.
+  internal static func readAloudNarrationSummary(_ p1: Any, _ p2: Any) -> String {
+    return L10n.tr("Localizable", "read_aloud_narration_summary", String(describing: p1), String(describing: p2), fallback: "%1$@ · %2$@")
+  }
+  /// Footnote when the document's language has no installed voice; placeholder is the language name.
+  internal static func readAloudNoVoiceForLanguage(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "read_aloud_no_voice_for_language", String(describing: p1), fallback: "No voice is installed for %1$@, so a voice in your device's language was chosen. You can pick another below.")
+  }
+  /// Notification body naming the finished document.
+  internal static func readAloudNotificationBody(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "read_aloud_notification_body", String(describing: p1), fallback: "%1$@ has finished narrating.")
+  }
+  /// Notification title when a narration finishes while the app is in the background.
+  internal static var readAloudNotificationTitle: String { return L10n.tr("Localizable", "read_aloud_notification_title", fallback: "Ready to listen") }
+  /// Action that retries a failed narration.
+  internal static var readAloudRetry: String { return L10n.tr("Localizable", "read_aloud_retry", fallback: "Try Again") }
+  /// Section header for Read Aloud defaults in settings.
+  internal static var readAloudSettingsDefaults: String { return L10n.tr("Localizable", "read_aloud_settings_defaults", fallback: "Default Voice") }
+  /// Footer explaining what the default voice is used for.
+  internal static var readAloudSettingsDefaultsFooter: String { return L10n.tr("Localizable", "read_aloud_settings_defaults_footer", fallback: "New documents start with this voice. You can change it for each one before narrating.") }
+  /// Settings row linking to the Read Aloud library.
+  internal static var readAloudSettingsLibrary: String { return L10n.tr("Localizable", "read_aloud_settings_library", fallback: "Your Documents") }
+  /// Settings row showing how much space Read Aloud documents use.
+  internal static var readAloudSettingsStorage: String { return L10n.tr("Localizable", "read_aloud_settings_storage", fallback: "Documents on device") }
+  /// Status for a narration the user cancelled.
+  internal static var readAloudStatusCancelled: String { return L10n.tr("Localizable", "read_aloud_status_cancelled", fallback: "Cancelled") }
+  /// Status for a narration that failed.
+  internal static var readAloudStatusFailed: String { return L10n.tr("Localizable", "read_aloud_status_failed", fallback: "Couldn't narrate") }
+  /// Status for a narration waiting to start.
+  internal static var readAloudStatusQueued: String { return L10n.tr("Localizable", "read_aloud_status_queued", fallback: "Waiting…") }
+  /// Status while a narration renders; placeholder is a percentage, e.g. "Narrating… 40%".
+  internal static func readAloudStatusRendering(_ p1: Any) -> String {
+    return L10n.tr("Localizable", "read_aloud_status_rendering", String(describing: p1), fallback: "Narrating… %1$@")
+  }
+  /// Name of the Read Aloud feature: importing a text file and having it narrated.
+  internal static var readAloudTitle: String { return L10n.tr("Localizable", "read_aloud_title", fallback: "Read Aloud") }
+  /// Row label for the chosen voice.
+  internal static var readAloudVoice: String { return L10n.tr("Localizable", "read_aloud_voice", fallback: "Voice") }
+  /// Badge on a higher-quality downloadable voice.
+  internal static var readAloudVoiceEnhanced: String { return L10n.tr("Localizable", "read_aloud_voice_enhanced", fallback: "Enhanced") }
+  /// Badge on the highest-quality downloadable voice.
+  internal static var readAloudVoicePremium: String { return L10n.tr("Localizable", "read_aloud_voice_premium", fallback: "Premium") }
+  /// Sample sentence spoken when previewing a voice.
+  internal static var readAloudVoicePreviewSample: String { return L10n.tr("Localizable", "read_aloud_voice_preview_sample", fallback: "This is how your document will sound when it is read aloud.") }
+  /// Explains that better-sounding voices can be downloaded, and where.
+  internal static var readAloudVoiceQualityExplainer: String { return L10n.tr("Localizable", "read_aloud_voice_quality_explainer", fallback: "iOS ships compact voices that sound robotic. For much better narration, download Enhanced or Premium voices in the Settings app under Accessibility › Spoken Content › Voices, then come back here.") }
+  /// Header of the voice list section showing voices matching the document's language.
+  internal static var readAloudVoicesForDocument: String { return L10n.tr("Localizable", "read_aloud_voices_for_document", fallback: "Voices for this document") }
   /// Hint text in the pull to refresh custom control. Provides a notice that new Podcast episodes are being fetched.
   internal static var refreshControlFetchingEpisodes: String { return L10n.tr("Localizable", "refresh_control_fetching_episodes", fallback: "FINDING NEW PODCAST EPISODES") }
   /// Hint text in the pull to refresh custom control.

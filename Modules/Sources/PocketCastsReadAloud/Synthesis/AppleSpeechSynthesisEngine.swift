@@ -48,17 +48,17 @@ public struct AppleSpeechSynthesisEngine: SpeechSynthesisEngine {
                     id: voice.identifier,
                     name: voice.name,
                     language: voice.language,
-                    qualityLabel: Self.qualityLabel(for: voice.quality)
+                    quality: Self.quality(for: voice.quality)
                 )
             }
             .sorted { ($0.language, $0.name) < ($1.language, $1.name) }
     }
 
-    private static func qualityLabel(for quality: AVSpeechSynthesisVoiceQuality) -> String? {
+    private static func quality(for quality: AVSpeechSynthesisVoiceQuality) -> VoiceQuality {
         switch quality {
-        case .enhanced: "Enhanced"
-        case .premium: "Premium"
-        default: nil
+        case .enhanced: .enhanced
+        case .premium: .premium
+        default: .standard
         }
     }
 
