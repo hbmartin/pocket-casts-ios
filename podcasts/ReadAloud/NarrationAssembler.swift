@@ -3,19 +3,8 @@ import Foundation
 import PocketCastsReadAloud
 import PocketCastsUtils
 
-/// Joins a narration's rendered chunk files into the single `.m4a` that becomes
-/// the episode.
-///
-/// An `AVMutableComposition` does the joining rather than concatenating PCM by
-/// hand: chunks need not share a sample rate or channel layout, the paragraph
-/// pauses are `insertEmptyTimeRange` calls rather than synthesized silence, and
-/// the encode itself is the same reader/writer loop that already ships for
-/// upload transcoding.
-///
-/// Lives app-side rather than in `PocketCastsReadAloud` because that reuse is
-/// the point — `AudioTranscodeHelper` is app-side, and duplicating its encode
-/// loop into the module to keep the module "pure" would trade real shared code
-/// for a tidier dependency diagram.
+/// The assembled episode audio: where it landed and what the episode row
+/// records about it.
 nonisolated struct AssembledNarration: Sendable {
     let url: URL
     let duration: TimeInterval
@@ -29,6 +18,20 @@ nonisolated protocol NarrationAssembling: Sendable {
     func assemble(chunkURLs: [URL], pauseBefore: Set<Int>, outputURL: URL) async throws -> AssembledNarration
 }
 
+/// Joins a narration's rendered chunk files into the single `.m4a` that becomes
+/// the episode.
+///
+/// An `AVMutableComposition` does the joining rather than concatenating PCM by
+/// hand: chunks need not share a sample rate or channel layout, the paragraph
+/// pauses fall out of an explicit cursor — each chunk is inserted after the
+/// pause, leaving an implicit silent gap — rather than being synthesized, and
+/// the encode itself is the same reader/writer loop that already ships for
+/// upload transcoding.
+///
+/// Lives app-side rather than in `PocketCastsReadAloud` because that reuse is
+/// the point — `AudioTranscodeHelper` is app-side, and duplicating its encode
+/// loop into the module to keep the module "pure" would trade real shared code
+/// for a tidier dependency diagram.
 nonisolated struct NarrationAssembler: NarrationAssembling {
     /// Silence inserted before each chunk that opens a paragraph or heading.
     /// Long enough to read as a deliberate beat, short enough not to feel like a

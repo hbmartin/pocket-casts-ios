@@ -152,17 +152,27 @@ public struct ReadAloudDataManager: Sendable {
         updateNarration(uuid: uuid, [NarrationRecord.Columns.completedChunkCount.set(to: completedChunkCount)])
     }
 
+    /// Only a narration still in `rendering` can complete: a cancellation that
+    /// raced the final assembly must win, so a completion arriving late updates
+    /// nothing and returns false — the caller then owns the orphaned episode.
     @discardableResult
     public func markCompleted(uuid: String, episodeUuid: String, duration: TimeInterval, sizeInBytes: Int64) -> Bool {
-        updateNarration(uuid: uuid, [
-            NarrationRecord.Columns.state.set(to: NarrationState.completed.rawValue),
-            NarrationRecord.Columns.episodeUuid.set(to: episodeUuid),
-            NarrationRecord.Columns.outputDuration.set(to: duration),
-            NarrationRecord.Columns.outputSizeInBytes.set(to: sizeInBytes),
-            NarrationRecord.Columns.completedDate.set(to: Date().timeIntervalSince1970),
-            NarrationRecord.Columns.errorCode.set(to: nil),
-            NarrationRecord.Columns.errorDetails.set(to: nil),
-        ])
+        var updatedRows = 0
+        let success = dbQueue.write { db in
+            updatedRows = try NarrationRecord
+                .filter(NarrationRecord.Columns.uuid == uuid)
+                .filter(NarrationRecord.Columns.state == NarrationState.rendering.rawValue)
+                .updateAll(db, [
+                    NarrationRecord.Columns.state.set(to: NarrationState.completed.rawValue),
+                    NarrationRecord.Columns.episodeUuid.set(to: episodeUuid),
+                    NarrationRecord.Columns.outputDuration.set(to: duration),
+                    NarrationRecord.Columns.outputSizeInBytes.set(to: sizeInBytes),
+                    NarrationRecord.Columns.completedDate.set(to: Date().timeIntervalSince1970),
+                    NarrationRecord.Columns.errorCode.set(to: nil),
+                    NarrationRecord.Columns.errorDetails.set(to: nil),
+                ])
+        }
+        return success && updatedRows > 0
     }
 
     /// - Parameter errorDetails: developer-authored only. Provider-generated
@@ -211,11 +221,15 @@ public struct ReadAloudDataManager: Sendable {
         return deleted ?? nil
     }
 
+    /// Returns true only when a row was actually removed, matching the
+    /// updated-row contract of the narration mutations above.
     @discardableResult
     public func deleteNarration(uuid: String) -> Bool {
-        dbQueue.write { db in
-            _ = try NarrationRecord.filter(NarrationRecord.Columns.uuid == uuid).deleteAll(db)
+        var deletedRows = 0
+        let success = dbQueue.write { db in
+            deletedRows = try NarrationRecord.filter(NarrationRecord.Columns.uuid == uuid).deleteAll(db)
         }
+        return success && deletedRows > 0
     }
 
     /// Removes a document and every narration against it, in one transaction.

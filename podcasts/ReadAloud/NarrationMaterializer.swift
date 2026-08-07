@@ -38,7 +38,14 @@ nonisolated struct NarrationMaterializer: NarrationMaterializing {
         duration: TimeInterval,
         sizeInBytes: Int64
     ) async throws -> String {
-        let episodeUuid = UUID().uuidString.lowercased()
+        // One episode per narration, by construction: reusing the narration's
+        // uuid means a re-render whose completion never landed (a kill between
+        // episode creation and markCompleted) replaces its stale episode
+        // instead of minting a duplicate on every attempt.
+        let episodeUuid = narration.uuid
+        if let stale = DataManager.sharedManager.findUserEpisode(uuid: episodeUuid) {
+            UserEpisodeManager.deleteFromDevice(userEpisode: stale)
+        }
 
         // `addUserEpisode` expects the audio to already sit in the download
         // cache under `<uuid>.<ext>`; `addLocalFile` is what puts it there.

@@ -102,6 +102,8 @@ public enum ReadAloudError: Error, Sendable, Equatable {
     /// The retained source file is missing or unreadable, so the narration can
     /// neither run nor resume.
     case sourceUnreadable
+    /// The document or narration rows could not be written.
+    case persistenceFailure
     /// Engine failed for a reason with no more specific case.
     case engineFailure
     case cancelled
@@ -127,6 +129,7 @@ public extension ReadAloudError {
         case .synthesisProducedNoAudio: "synthesis_produced_no_audio"
         case .assemblyFailed: "assembly_failed"
         case .sourceUnreadable: "source_unreadable"
+        case .persistenceFailure: "persistence_failure"
         case .engineFailure: "engine_failure"
         case .cancelled: "cancelled"
         }
@@ -147,8 +150,13 @@ public extension ReadAloudError {
     /// queue's backoff; everything else fails the narration immediately.
     var isTransient: Bool {
         switch self {
-        case .rateLimited, .networkUnavailable, .providerResponseFailure:
+        case .rateLimited, .networkUnavailable:
             true
+        case .providerResponseFailure(let status, _):
+            // 5xx may clear on a retry; client errors (400, 422, …) will just
+            // repeat. No status means the response never parsed, which smells
+            // like network trouble and is worth one more attempt.
+            status.map { $0 >= 500 } ?? true
         default:
             false
         }

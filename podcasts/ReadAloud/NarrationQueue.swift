@@ -55,8 +55,12 @@ actor NarrationQueue {
 
     func enqueue(uuid: String) {
         suspended = false
-        guard runningUuid != uuid, !pending.contains(uuid) else { return }
-        pending.append(uuid)
+        if runningUuid != uuid, !pending.contains(uuid) {
+            pending.append(uuid)
+        }
+        // Always drain, even for a duplicate: re-enqueueing an already-pending
+        // narration (what restorePending does on foreground) may be the only
+        // thing that clears a suspension, and clearing it must restart work.
         drain()
     }
 
@@ -219,6 +223,10 @@ actor NarrationQueue {
             outputURL: FileManager.default.temporaryDirectory
                 .appendingPathComponent("narration-\(narration.uuid).m4a")
         )
+        // The assembled file is scratch: materialization moves it into the
+        // download cache on success, but its copy fallback and every throwing
+        // path leave it behind in tmp.
+        defer { try? FileManager.default.removeItem(at: output.url) }
 
         let episodeUuid = try await materializer.materialize(
             document: document,
@@ -228,12 +236,21 @@ actor NarrationQueue {
             sizeInBytes: output.sizeInBytes
         )
 
-        dataManager.readAloud.markCompleted(
+        guard dataManager.readAloud.markCompleted(
             uuid: narration.uuid,
             episodeUuid: episodeUuid,
             duration: output.duration,
             sizeInBytes: output.sizeInBytes
-        )
+        ) else {
+            // The narration was cancelled or deleted while the episode was
+            // being assembled. Its cancelled state wins; the episode that just
+            // landed has no owner, so take it back out.
+            if let orphan = dataManager.findUserEpisode(uuid: episodeUuid) {
+                UserEpisodeManager.deleteFromDevice(userEpisode: orphan)
+            }
+            storage.deleteWorkspace(narrationUuid: narration.uuid)
+            return
+        }
         storage.deleteWorkspace(narrationUuid: narration.uuid)
     }
 

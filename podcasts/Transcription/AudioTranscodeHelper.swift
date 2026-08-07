@@ -108,31 +108,53 @@ nonisolated struct AudioTranscodeHelper: Sendable {
         // The ready-callback can fire again around markAsFinished; the flag keeps
         // the continuation resume single-shot.
         let finished = Mutex(false)
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            session.value.input.requestMediaDataWhenReady(on: queue) {
-                let (reader, output, input) = session.value
-                guard finished.withLock({ !$0 }) else { return }
-                while input.isReadyForMoreMediaData {
-                    guard let sampleBuffer = output.copyNextSampleBuffer() else {
-                        finished.withLock { $0 = true }
-                        input.markAsFinished()
-                        continuation.resume()
-                        return
-                    }
-                    if !input.append(sampleBuffer) {
-                        finished.withLock { $0 = true }
-                        reader.cancelReading()
-                        input.markAsFinished()
-                        continuation.resume()
-                        return
+        // Set by the task-cancellation handler; the ready-callback polls it so a
+        // cancelled task stops encoding instead of running the file to the end.
+        let cancelled = Mutex(false)
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                session.value.input.requestMediaDataWhenReady(on: queue) {
+                    let (reader, output, input) = session.value
+                    guard finished.withLock({ !$0 }) else { return }
+                    while input.isReadyForMoreMediaData {
+                        if cancelled.withLock({ $0 }) {
+                            finished.withLock { $0 = true }
+                            reader.cancelReading()
+                            input.markAsFinished()
+                            continuation.resume()
+                            return
+                        }
+                        guard let sampleBuffer = output.copyNextSampleBuffer() else {
+                            finished.withLock { $0 = true }
+                            input.markAsFinished()
+                            continuation.resume()
+                            return
+                        }
+                        if !input.append(sampleBuffer) {
+                            finished.withLock { $0 = true }
+                            reader.cancelReading()
+                            input.markAsFinished()
+                            continuation.resume()
+                            return
+                        }
                     }
                 }
             }
+        } onCancel: {
+            cancelled.withLock { $0 = true }
+        }
+
+        if cancelled.withLock({ $0 }) {
+            writer.cancelWriting()
+            try? FileManager.default.removeItem(at: outputURL)
+            throw AudioEncodeError.failed
         }
 
         await writer.finishWriting()
 
-        guard reader.status != .failed, writer.status == .completed else {
+        // Both sides must have finished cleanly — a reader that stopped early
+        // (failed OR cancelled) with a completed writer is a truncated file.
+        guard reader.status == .completed, writer.status == .completed else {
             try? FileManager.default.removeItem(at: outputURL)
             throw AudioEncodeError.failed
         }

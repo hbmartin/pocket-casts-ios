@@ -17,6 +17,15 @@ final class NarrationQueueTests: DBTestCase {
 
     override func setUp() async throws {
         try await super.setUp()
+        // The DataManager is process-wide: rows leaked by an earlier crashed
+        // test would be picked up by restorePending() and pollute the
+        // whole-queue assertions below, so start from a clean slate.
+        for document in dataManager.readAloud.allDocuments() {
+            dataManager.readAloud.deleteDocument(uuid: document.uuid)
+        }
+        for narration in dataManager.readAloud.narrationsPendingResume() {
+            dataManager.readAloud.deleteNarration(uuid: narration.uuid)
+        }
         root = FileManager.default.temporaryDirectory
             .appendingPathComponent("ReadAloudTests-\(UUID().uuidString)", isDirectory: true)
         storage = ReadAloudStorage(rootURL: root)
@@ -82,7 +91,7 @@ final class NarrationQueueTests: DBTestCase {
     }
 
     private func makeQueue(
-        engine: FakeSynthesisEngine,
+        engine: any SpeechSynthesisEngine,
         assembler: any NarrationAssembling = FakeAssembler(),
         materializer: FakeMaterializer = FakeMaterializer()
     ) -> NarrationQueue {
@@ -236,7 +245,8 @@ final class NarrationQueueTests: DBTestCase {
 
     func testCompletedNarrationsAreNotResumed() async throws {
         let narration = try makeNarration()
-        dataManager.readAloud.markCompleted(uuid: narration.uuid, episodeUuid: "ep-1", duration: 10, sizeInBytes: 10)
+        dataManager.readAloud.markRendering(uuid: narration.uuid, chunkCount: 3)
+        XCTAssertTrue(dataManager.readAloud.markCompleted(uuid: narration.uuid, episodeUuid: "ep-1", duration: 10, sizeInBytes: 10))
 
         let engine = FakeSynthesisEngine()
         let queue = makeQueue(engine: engine)
@@ -271,6 +281,10 @@ final class NarrationQueueTests: DBTestCase {
 
     func testCancellationClearsTheWorkspace() async throws {
         let narration = try makeNarration()
+        // The workspace must exist first, or the assertion below would pass
+        // vacuously without proving cancel(uuid:) removes anything.
+        try storage.prepareWorkspace(narrationUuid: narration.uuid)
+        try Data("chunk-0".utf8).write(to: storage.chunkURL(narrationUuid: narration.uuid, index: 0))
         let queue = makeQueue(engine: FakeSynthesisEngine())
 
         await queue.cancel(uuid: narration.uuid)
@@ -292,6 +306,33 @@ final class NarrationQueueTests: DBTestCase {
             dataManager.readAloud.narration(uuid: narration.uuid)?.errorCode,
             ReadAloudError.sourceUnreadable.code
         )
+    }
+
+    /// Regression: a suspension that strands another narration in `pending`
+    /// must be recoverable. Re-enqueueing the same uuid (what restorePending
+    /// does on the next foreground) has to clear the flag AND drain — the old
+    /// duplicate guard returned before draining, leaving the queue stuck.
+    func testReEnqueueOfAPendingNarrationResumesAfterSuspension() async throws {
+        let first = try makeNarration()
+        let second = try makeNarration()
+        let engine = GatedSynthesisEngine()
+        let queue = makeQueue(engine: engine)
+
+        await queue.enqueue(uuid: first.uuid)
+        await queue.enqueue(uuid: second.uuid)
+        // The first narration is parked inside its first chunk, so the
+        // suspension deterministically lands before it can finish — and the
+        // second never starts, because drain() refuses while suspended.
+        await queue.suspendAfterCurrentChunk()
+        await engine.open()
+        await queue.drainUntilIdle()
+
+        XCTAssertNotEqual(dataManager.readAloud.narration(uuid: second.uuid)?.narrationState, .completed)
+
+        await queue.enqueue(uuid: second.uuid)
+        await queue.drainUntilIdle()
+
+        XCTAssertEqual(dataManager.readAloud.narration(uuid: second.uuid)?.narrationState, .completed)
     }
 
     // MARK: - Serialization
@@ -369,8 +410,50 @@ private actor FakeSynthesisEngine: SpeechSynthesisEngine {
     }
 }
 
+/// Holds every synthesize call at a gate until `open()` — the deterministic way
+/// to keep a narration "in flight" while the test changes queue state.
+private actor GatedSynthesisEngine: SpeechSynthesisEngine {
+    nonisolated let id = "test.gated"
+    nonisolated var capabilities: EngineCapabilities {
+        EngineCapabilities(
+            maxCharactersPerChunk: 300,
+            maxConcurrentChunks: 1,
+            requiresAPIKey: false,
+            requiresConfirmation: false,
+            supportsFreePreview: true
+        )
+    }
+
+    private var isOpen = false
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    /// Releases every waiting synthesize call; later calls pass straight through.
+    func open() {
+        isOpen = true
+        waiters.forEach { $0.resume() }
+        waiters.removeAll()
+    }
+
+    nonisolated func availableVoices(apiKey: String?) async throws -> [SynthesisVoice] {
+        [SynthesisVoice(id: "test.voice", name: "Test Voice", language: "en-US")]
+    }
+
+    func synthesize(
+        chunk: NarrationChunk,
+        voice: SynthesisVoice,
+        settings: SynthesisSettings,
+        apiKey: String?,
+        to outputURL: URL
+    ) async throws {
+        if !isOpen {
+            await withCheckedContinuation { waiters.append($0) }
+        }
+        try Data("chunk-\(chunk.index)".utf8).write(to: outputURL)
+    }
+}
+
 private struct FakeEngineFactory: NarrationEngineProviding {
-    let engine: FakeSynthesisEngine
+    let engine: any SpeechSynthesisEngine
 
     func makeEngine(for kind: NarrationEngineKind, providerId: String?) throws -> any SpeechSynthesisEngine {
         engine

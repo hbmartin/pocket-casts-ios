@@ -255,12 +255,16 @@ nonisolated class OpmlImporter: Operation, @unchecked Sendable {
 
         // since the code below is going to be making more network requests, get this call off the URLSession delegate queue
         DispatchQueue.global().async {
-            if let result = uploadResponse.result,
-               self.importState.recordResponse(
+            if let result = uploadResponse.result {
+                if self.importState.recordResponse(
                     pollUuids: result.pollUuids ?? [],
                     failedCount: result.failedCount
-               ) {
-                self.addAllPendingPodcasts(podcastUuids: result.uuids ?? [])
+                ) {
+                    self.addAllPendingPodcasts(podcastUuids: result.uuids ?? [])
+                }
+            } else {
+                // A "successful" envelope with no result payload imported nothing.
+                self.importState.recordChunkFailure(feedCount: feedCount)
             }
             dispatchGroup.leave()
         }

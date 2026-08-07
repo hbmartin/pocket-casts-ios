@@ -54,7 +54,7 @@ public struct MarkdownExtractor: TextExtractor {
                 if trimmed.count >= 3, trimmed.allSatisfy({ $0 == marker }) { fenceMarker = nil }
                 continue
             }
-            if let marker = trimmed.first, marker == "`" || marker == "~", trimmed.prefix(3).allSatisfy({ $0 == marker }) {
+            if trimmed.count >= 3, let marker = trimmed.first, marker == "`" || marker == "~", trimmed.prefix(3).allSatisfy({ $0 == marker }) {
                 flushParagraph()
                 fenceMarker = marker
                 continue
@@ -135,9 +135,10 @@ public struct MarkdownExtractor: TextExtractor {
         let rest = line.dropFirst(hashes.count)
         // "#hashtag" is not a heading — ATX requires a space after the hashes.
         guard rest.first?.isWhitespace == true || rest.isEmpty else { return nil }
-        // Closing hashes ("## Title ##") are decoration.
+        // Closing hashes ("## Title ##") are decoration, but only when a space
+        // precedes them — the hash in "## Learning C#" is content.
         let body = rest.trimmingCharacters(in: .whitespaces)
-        let withoutClosing = body.replacingOccurrences(of: "#+$", with: "", options: .regularExpression)
+        let withoutClosing = body.replacingOccurrences(of: "\\s+#+$", with: "", options: .regularExpression)
         return (hashes.count, withoutClosing.trimmingCharacters(in: .whitespaces))
     }
 
@@ -193,8 +194,9 @@ public struct MarkdownExtractor: TextExtractor {
     // MARK: - Inline pass
 
     /// Ordered rewrites; order is load-bearing. Images go before links (an image
-    /// is a link with a `!`), links before autolinks, and code spans before
-    /// emphasis so a `*` inside backticks isn't mistaken for markup.
+    /// is a link with a `!`) and links before autolinks. Code spans only drop
+    /// their backticks — the content stays in place, so emphasis rules that run
+    /// later may still rewrite markup characters inside what was a span.
     private static let inlineRules: [(regex: NSRegularExpression, template: String)] = {
         let specs: [(String, String)] = [
             ("!\\[[^\\]]*\\]\\([^)]*\\)", ""),                          // images: drop entirely
@@ -213,7 +215,12 @@ public struct MarkdownExtractor: TextExtractor {
             ("\\\\([\\\\`*_{}\\[\\]()#+\\-.!>])", "$1"),                // unescape
         ]
         return specs.compactMap { pattern, template in
-            guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
+            guard let regex = try? NSRegularExpression(pattern: pattern) else {
+                // Every pattern is a literal; failing to compile is a
+                // programming error, not a runtime condition to tolerate.
+                assertionFailure("invalid inline rule pattern: \(pattern)")
+                return nil
+            }
             return (regex, template)
         }
     }()

@@ -167,7 +167,7 @@ final class ReadAloudDataManagerTests: DataManagerTestCase {
     func testCompletionLinksTheEpisode() throws {
         try runWithBothImplementations { dataManager, _ in
             dataManager.readAloud.add(document(uuid: "d1"))
-            dataManager.readAloud.add(narration(uuid: "n1", documentUuid: "d1"))
+            dataManager.readAloud.add(narration(uuid: "n1", documentUuid: "d1", state: .rendering))
 
             XCTAssertTrue(dataManager.readAloud.markCompleted(
                 uuid: "n1", episodeUuid: "ep-1", duration: 123.5, sizeInBytes: 4096
@@ -179,6 +179,21 @@ final class ReadAloudDataManagerTests: DataManagerTestCase {
             XCTAssertEqual(loaded.outputDuration, 123.5)
             XCTAssertEqual(loaded.outputSizeInBytes, 4096)
             XCTAssertNotNil(loaded.completedDate)
+        }
+    }
+
+    /// A cancellation that raced the final assembly must win: completion
+    /// updates nothing once the row has left `rendering`.
+    func testCompletionLosesToACancellationThatRacedIt() throws {
+        try runWithBothImplementations { dataManager, _ in
+            dataManager.readAloud.add(document(uuid: "d1"))
+            dataManager.readAloud.add(narration(uuid: "n1", documentUuid: "d1", state: .rendering))
+            dataManager.readAloud.markCancelled(uuid: "n1")
+
+            XCTAssertFalse(dataManager.readAloud.markCompleted(uuid: "n1", episodeUuid: "ep-1", duration: 1, sizeInBytes: 1))
+
+            XCTAssertEqual(dataManager.readAloud.narration(uuid: "n1")?.narrationState, .cancelled)
+            XCTAssertNil(dataManager.readAloud.narration(uuid: "n1")?.episodeUuid)
         }
     }
 
@@ -223,7 +238,7 @@ final class ReadAloudDataManagerTests: DataManagerTestCase {
     func testDeletingAnEpisodeRemovesItsNarrationAndKeepsTheDocument() throws {
         try runWithBothImplementations { dataManager, _ in
             dataManager.readAloud.add(document(uuid: "d1"))
-            dataManager.readAloud.add(narration(uuid: "n1", documentUuid: "d1"))
+            dataManager.readAloud.add(narration(uuid: "n1", documentUuid: "d1", state: .rendering))
             dataManager.readAloud.markCompleted(uuid: "n1", episodeUuid: "ep-1", duration: 60, sizeInBytes: 1024)
 
             let removed = try XCTUnwrap(dataManager.readAloud.deleteNarration(episodeUuid: "ep-1"))
@@ -240,11 +255,21 @@ final class ReadAloudDataManagerTests: DataManagerTestCase {
     func testDeletingAnUnrelatedEpisodeReportsNoNarration() throws {
         try runWithBothImplementations { dataManager, _ in
             dataManager.readAloud.add(document(uuid: "d1"))
-            dataManager.readAloud.add(narration(uuid: "n1", documentUuid: "d1"))
+            dataManager.readAloud.add(narration(uuid: "n1", documentUuid: "d1", state: .rendering))
             dataManager.readAloud.markCompleted(uuid: "n1", episodeUuid: "ep-1", duration: 60, sizeInBytes: 1024)
 
             XCTAssertNil(dataManager.readAloud.deleteNarration(episodeUuid: "some-other-upload"))
             XCTAssertNotNil(dataManager.readAloud.narration(uuid: "n1"))
+        }
+    }
+
+    func testDeleteNarrationByUuidReportsWhetherARowWasRemoved() throws {
+        try runWithBothImplementations { dataManager, _ in
+            dataManager.readAloud.add(document(uuid: "d1"))
+            dataManager.readAloud.add(narration(uuid: "n1", documentUuid: "d1"))
+
+            XCTAssertTrue(dataManager.readAloud.deleteNarration(uuid: "n1"))
+            XCTAssertFalse(dataManager.readAloud.deleteNarration(uuid: "n1"), "nothing left to delete")
         }
     }
 
@@ -268,7 +293,7 @@ final class ReadAloudDataManagerTests: DataManagerTestCase {
     func testLookupByEpisodeUuid() throws {
         try runWithBothImplementations { dataManager, _ in
             dataManager.readAloud.add(document(uuid: "d1"))
-            dataManager.readAloud.add(narration(uuid: "n1", documentUuid: "d1"))
+            dataManager.readAloud.add(narration(uuid: "n1", documentUuid: "d1", state: .rendering))
             dataManager.readAloud.markCompleted(uuid: "n1", episodeUuid: "ep-1", duration: 60, sizeInBytes: 1024)
 
             XCTAssertEqual(dataManager.readAloud.narration(episodeUuid: "ep-1")?.uuid, "n1")
