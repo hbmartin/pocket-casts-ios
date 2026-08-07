@@ -1,9 +1,11 @@
 # Sync highlight trims and tags over account sync, with user edits beating machine enrichment
 
 > **2026-08-04 note: account-sync-only now.** The local-first reversal removed
-> the file-sync engine and its historical implementation of this contract.
-> `api.proto` fields 1001–1005, the SyncTask changes, and the account-sync merge
-> semantics below are now the only cross-device path for trims/tags (gated on
+> the library file-sync engine, and with it this contract's historical
+> file-sync path for trims/tags. (The repository's uploads-folder file-sync
+> components remain active but never carried these fields.) `api.proto` fields
+> 1001–1005, the SyncTask changes, and the account-sync merge semantics below
+> are now the only cross-device path for trims/tags (gated on
 > `FeatureFlag.highlightAccountSync` until backend B1 ships).
 
 A Highlight's excerpt window (`excerpt`, `endTime`) was originally designed as

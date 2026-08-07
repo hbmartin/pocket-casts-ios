@@ -119,7 +119,7 @@ nonisolated struct NarrationImporter: Sendable {
 
         guard dataManager.readAloud.add(document: document, narration: narration) else {
             storage.deleteSource(relativePath: sourcePath)
-            throw ReadAloudError.engineFailure
+            throw ReadAloudError.persistenceFailure
         }
         return (document, narration)
     }
@@ -140,7 +140,7 @@ nonisolated struct NarrationImporter: Sendable {
             voice: voice
         )
         guard dataManager.readAloud.add(narration) else {
-            throw ReadAloudError.engineFailure
+            throw ReadAloudError.persistenceFailure
         }
         return narration
     }
@@ -182,17 +182,18 @@ nonisolated struct NarrationImporter: Sendable {
     /// the user's own content and a swipe on the Files screen must not destroy
     /// it.
     func delete(document: ReadAloudDocumentRecord) {
+        // Source file first: a crash in between leaves a document row that can
+        // simply be deleted again, never a file nothing references.
+        storage.deleteSource(relativePath: document.sourcePath)
         for narration in dataManager.readAloud.deleteDocument(uuid: document.uuid) {
             deleteEpisode(of: narration)
             storage.deleteWorkspace(narrationUuid: narration.uuid)
         }
-        storage.deleteSource(relativePath: document.sourcePath)
     }
 
     private func deleteEpisode(of narration: NarrationRecord) {
         guard let episodeUuid = narration.episodeUuid,
               let episode = dataManager.findUserEpisode(uuid: episodeUuid) else { return }
         UserEpisodeManager.deleteFromDevice(userEpisode: episode)
-        dataManager.delete(userEpisodeUuid: episodeUuid)
     }
 }

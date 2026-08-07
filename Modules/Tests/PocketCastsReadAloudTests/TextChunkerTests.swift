@@ -82,6 +82,17 @@ struct TextChunkerTests {
         }
     }
 
+    /// The minimum-target floor exists to avoid single-word chunks, but the
+    /// stated limit is a hard cap the floor must never push a chunk past.
+    @Test("A limit below the minimum target still caps every chunk")
+    func tinyLimitNeverExceeded() {
+        let sentences = (1...10).map { "Sentence number \($0) sits here." }
+        let chunks = chunker.chunks(for: paragraphs(sentences.joined(separator: " ")), maxCharacters: 100)
+
+        #expect(!chunks.isEmpty)
+        #expect(chunks.allSatisfy { $0.text.count <= 100 })
+    }
+
     @Test("Chunks respect the fill target, not just the hard limit")
     func chunksStayUnderTarget() {
         let long = Array(repeating: "A modest sentence.", count: 100).joined(separator: " ")

@@ -85,7 +85,10 @@ public struct AppleSpeechSynthesisEngine: SpeechSynthesisEngine {
         // completed chunk by the resume path.
         try? FileManager.default.removeItem(at: outputURL)
 
-        let synthesizer = AVSpeechSynthesizer()
+        // nonisolated(unsafe): the cancellation handler may run on another
+        // thread, but `stopSpeaking` is the one call it makes and
+        // AVSpeechSynthesizer tolerates it from off-thread.
+        nonisolated(unsafe) let synthesizer = AVSpeechSynthesizer()
         let session = WriteSession(outputURL: outputURL)
 
         let watchdog = Task {
@@ -94,11 +97,18 @@ public struct AppleSpeechSynthesisEngine: SpeechSynthesisEngine {
         }
         defer { watchdog.cancel() }
 
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
-            session.attach(continuation)
-            synthesizer.write(utterance) { buffer in
-                session.consume(buffer)
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
+                session.attach(continuation)
+                synthesizer.write(utterance) { buffer in
+                    session.consume(buffer)
+                }
             }
+        } onCancel: {
+            // Without this a cancelled task would hang suspended until the
+            // watchdog fires: the synthesizer has no reason to end the stream.
+            synthesizer.stopSpeaking(at: .immediate)
+            session.settle(with: .failure(CancellationError()))
         }
         // `synthesizer` is only referenced from inside the closure above, which
         // ARC cannot see as keeping it alive across the suspension.
@@ -174,6 +184,10 @@ private final class WriteSession: Sendable {
 
         do {
             try state.withLock { state in
+                // Checked under the same lock that owns the file: a buffer
+                // arriving after the watchdog or a cancellation settled the
+                // session must not create or write the file again.
+                guard !state.settled else { return }
                 if state.file == nil {
                     // The output format is whatever the voice rendered; the
                     // assembler re-encodes later, so nothing here needs to match
@@ -194,6 +208,9 @@ private final class WriteSession: Sendable {
             guard !state.settled else { return nil }
             state.settled = true
             state.outcome = outcome
+            // Release the write handle here: on the failure paths the caller
+            // never reaches `finalize`, and this is the only other closer.
+            state.file = nil
             defer { state.continuation = nil }
             return state.continuation
         }

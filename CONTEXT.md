@@ -114,10 +114,11 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
   Device-local, never syncs. Deliberately *not* called a "generation" — that word
   belongs to Salient Segments and Generated transcripts.
 - **Chunk** — the unit of synthesis: whole sentences packed to fit the engine's
-  per-request limit, never split mid-sentence, never spanning a paragraph.
-  Chunking is pure and deterministic, which is what makes an interrupted
-  Narration resumable: chunk N always means the same text. Deliberately not a
-  "segment" — that word belongs to the Transcript Corpus.
+  per-request limit, never spanning a paragraph. Sentence boundaries are
+  preserved except when a single sentence alone exceeds the limit, which forces
+  a split. Chunking is pure and deterministic, which is what makes an
+  interrupted Narration resumable: chunk N always means the same text.
+  Deliberately not a "segment" — that word belongs to the Transcript Corpus.
 
 ## Feedback
 

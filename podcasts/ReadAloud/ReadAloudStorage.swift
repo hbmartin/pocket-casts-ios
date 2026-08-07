@@ -38,6 +38,11 @@ nonisolated struct ReadAloudStorage: Sendable {
         let relativePath = Self.sourceFilename(documentUuid: documentUuid, pathExtension: url.pathExtension)
         let destination = try preparedSourcesDirectory().appendingPathComponent(relativePath, isDirectory: false)
 
+        // Shared files arrive security-scoped (picker copies don't, and return
+        // false here); the scope must span the copy and survive a throw.
+        let accessing = url.startAccessingSecurityScopedResource()
+        defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+
         try? FileManager.default.removeItem(at: destination)
         try FileManager.default.copyItem(at: url, to: destination)
         return relativePath
@@ -116,12 +121,18 @@ nonisolated struct ReadAloudStorage: Sendable {
     }
 
     private func createDirectoryIfNeeded(at url: URL) throws {
-        guard !FileManager.default.fileExists(atPath: url.path) else { return }
-        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        if !FileManager.default.fileExists(atPath: url.path) {
+            try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        }
 
+        // Re-checked on every call, not only at creation, and failures
+        // propagate: the backup exclusion documented above is a guarantee, and
+        // a restore or an earlier failed attempt may have dropped it.
         var resourceURL = url
-        var values = URLResourceValues()
-        values.isExcludedFromBackup = true
-        try? resourceURL.setResourceValues(values)
+        if try resourceURL.resourceValues(forKeys: [.isExcludedFromBackupKey]).isExcludedFromBackup != true {
+            var values = URLResourceValues()
+            values.isExcludedFromBackup = true
+            try resourceURL.setResourceValues(values)
+        }
     }
 }

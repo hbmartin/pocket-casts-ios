@@ -45,13 +45,19 @@ final class ReadAloudCoordinator {
     func handleEnterBackground() {
         guard isSetup else { return }
 
-        Task { [weak self] in
-            guard await !NarrationQueue.shared.isIdle else { return }
-            guard let self else { return }
+        // Begin synchronously: once this method returns the app can suspend at
+        // any moment, and a task started from an async hop may come too late.
+        backgroundTask?.end()
+        let task = ReadAloudBackgroundTask.begin {
+            Task { await NarrationQueue.shared.suspendAfterCurrentChunk() }
+        }
+        backgroundTask = task
 
-            self.backgroundTask = ReadAloudBackgroundTask.begin {
-                Task { await NarrationQueue.shared.suspendAfterCurrentChunk() }
-            }
+        Task { [weak self] in
+            guard await NarrationQueue.shared.isIdle else { return }
+            guard let self, self.backgroundTask === task else { return }
+            task.end()
+            self.backgroundTask = nil
         }
     }
 

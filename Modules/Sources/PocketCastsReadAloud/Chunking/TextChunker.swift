@@ -25,14 +25,18 @@ public struct TextChunker: Sendable {
     static let fillRatio = 0.8
 
     /// Floor for the effective target, so a pathologically small stated limit
-    /// can't produce single-word chunks.
+    /// can't produce single-word chunks. Never allowed to push the target past
+    /// the stated limit itself — the limit is a hard cap.
     static let minimumTarget = 200
 
     public init() {}
 
     /// - Parameter maxCharacters: the engine's hard per-request limit.
     public func chunks(for document: ExtractedDocument, maxCharacters: Int) -> [NarrationChunk] {
-        let target = max(Int(Double(maxCharacters) * Self.fillRatio), Self.minimumTarget)
+        let target = min(
+            max(Int(Double(maxCharacters) * Self.fillRatio), Self.minimumTarget),
+            max(maxCharacters, 1)
+        )
         var chunks: [NarrationChunk] = []
         var pending = ""
         var pendingStartsBlock = true

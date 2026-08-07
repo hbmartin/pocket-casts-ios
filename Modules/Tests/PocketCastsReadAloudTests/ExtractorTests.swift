@@ -104,6 +104,15 @@ struct MarkdownExtractorTests {
         #expect(document.blocks[0].text == "Title")
     }
 
+    /// The hash in "C#" is content: only a whitespace-preceded run of hashes is
+    /// a closing decoration.
+    @Test("A trailing hash that is part of a word survives")
+    func trailingHashInsideWordSurvives() throws {
+        let document = try extractMarkdown("## Learning C#\n\nBody.")
+
+        #expect(document.blocks[0].text == "Learning C#")
+    }
+
     /// "#hashtag" has no space after the hashes, so it is prose.
     @Test("A hash without a space is not a heading")
     func hashWithoutSpaceIsProse() throws {
@@ -144,6 +153,15 @@ struct MarkdownExtractorTests {
         let document = try extractMarkdown("Before.\n\n~~~\nraw stuff\n~~~\n\nAfter.")
 
         #expect(document.blocks.map(\.text) == ["Before.", "After."])
+    }
+
+    /// A fence needs three markers; a shorter run must not swallow the rest of
+    /// the document as an unterminated code block.
+    @Test("Fewer than three backticks do not open a fence")
+    func shortBacktickRunIsNotAFence() throws {
+        let document = try extractMarkdown("`\n\nStill prose.")
+
+        #expect(document.blocks.map(\.text).contains("Still prose."))
     }
 
     @Test("Links keep their text and lose their target")
@@ -246,9 +264,7 @@ struct TextExtractorRegistryTests {
         let document = try registry.extract(data: Data("# Heading\n\nBody.".utf8), filename: "notes.md", type: .plainText)
 
         #expect(document.blocks[0].text == "Heading")
-        if case .heading = document.blocks[0].kind {} else {
-            Issue.record("expected the leading block to be a heading")
-        }
+        #expect(document.blocks[0].headingLevel == 1)
     }
 
     @Test("Text files route to the plain-text extractor")
