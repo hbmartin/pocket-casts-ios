@@ -151,6 +151,10 @@ enum CoordinatedFileIO {
     /// exact behaviour varies by provider, which the Phase 0 device spike
     /// pins down; unknown states default to "materialized".
     static func list(root: URL, relativeDir: String) async throws -> [FolderEntry] {
+        try await listing(root: root, relativeDir: relativeDir).entries
+    }
+
+    static func listing(root: URL, relativeDir: String) async throws -> FolderListing {
         try await withCheckedThrowingContinuation { continuation in
             queue.async {
                 let dir = relativeDir.isEmpty
@@ -161,15 +165,26 @@ enum CoordinatedFileIO {
                     .isDirectoryKey, .fileSizeKey, .contentModificationDateKey,
                     .ubiquitousItemDownloadingStatusKey,
                 ]
+                var isComplete = true
                 guard let enumerator = FileManager.default.enumerator(
                     at: dir, includingPropertiesForKeys: keys,
-                    options: [.skipsPackageDescendants]) else {
-                    continuation.resume(returning: [])
+                    options: [.skipsPackageDescendants],
+                    errorHandler: { _, _ in
+                        isComplete = false
+                        return true
+                    }) else {
+                    continuation.resume(returning: FolderListing(entries: [], isComplete: false))
                     return
                 }
                 let rootPath = dir.standardizedFileURL.path
                 for case let itemURL as URL in enumerator {
-                    guard let values = try? itemURL.resourceValues(forKeys: Set(keys)) else { continue }
+                    let values: URLResourceValues
+                    do {
+                        values = try itemURL.resourceValues(forKeys: Set(keys))
+                    } catch {
+                        isComplete = false
+                        continue
+                    }
                     let standardized = itemURL.standardizedFileURL.path
                     guard standardized.hasPrefix(rootPath) else { continue }
                     var relative = String(standardized.dropFirst(rootPath.count))
@@ -199,7 +214,7 @@ enum CoordinatedFileIO {
                         isDirectory: isDirectory,
                         isPlaceholder: isPlaceholder))
                 }
-                continuation.resume(returning: entries)
+                continuation.resume(returning: FolderListing(entries: entries, isComplete: isComplete))
             }
         }
     }

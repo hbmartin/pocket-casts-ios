@@ -1,25 +1,22 @@
 # Sync highlight trims and tags over account sync, with user edits beating machine enrichment
 
 > **2026-08-04 note: account-sync-only now.** The local-first reversal removed
-> the file-sync engine, and with it this ADR's file-sync merge implementation
-> (fork fields 1000–1004 in the file-sync proto). The account-sync half —
-> `api.proto` fields 1001–1005, the SyncTask changes, and the merge semantics
-> below — is unchanged and is now the only cross-device path for trims/tags
-> (gated on `FeatureFlag.highlightAccountSync` until backend B1 ships).
+> the file-sync engine and its historical implementation of this contract.
+> `api.proto` fields 1001–1005, the SyncTask changes, and the account-sync merge
+> semantics below are now the only cross-device path for trims/tags (gated on
+> `FeatureFlag.highlightAccountSync` until backend B1 ships).
 
-A Highlight's excerpt window (`excerpt`, `endTime`) was designed as machine-derived
-presentation data: devices could legitimately compute different excerpts, so the
-file-sync merge used last-writer-wins by op stamp and account sync deliberately
-never carried the fields (they exist in `api.proto` as fork fields 1001/1002 but
-were never wired). Trim-on-save changes the fields' nature — a trimmed window is
+A Highlight's excerpt window (`excerpt`, `endTime`) was originally designed as
+machine-derived presentation data, and account sync deliberately did not carry
+the fields (they existed in `api.proto` as fork fields 1001/1002 but were not
+wired). Trim-on-save changes the fields' nature — a trimmed window is
 **user-authored content** — and free-form tags are user content from birth. Both
-now sync over both sync systems, with two new kinds of state on `SyncUserBookmark`:
+now sync over account sync, with two new kinds of state on `SyncUserBookmark`:
 `trim_modified` (1003), `repeated string tags` (1004), and `tags_modified` (1005)
-in `api.proto` (mirrored at 1002/1003/1004 in the file-sync proto, whose fork
-space starts at 1000). The fork backend persists all five fields and returns them
-from `user/bookmark/list` (`Api_BookmarkResponse` previously had no fork fields).
+in `api.proto`. The fork backend persists all five fields and returns them from
+`user/bookmark/list` (`Api_BookmarkResponse` previously had no fork fields).
 
-Merge semantics, identical in both sync systems:
+Account-sync merge semantics:
 
 - **A record whose `trim_modified` is set beats machine-derived enrichment
   regardless of arrival order.** Re-enrichment and auto-suggestion never write to
@@ -29,10 +26,8 @@ Merge semantics, identical in both sync systems:
   CRDT merging was rejected: tag sets are small, edited in one sitting on one
   device, and whole-set semantics are what the editor UI actually saves. The
   cost — a concurrent tag edit on a second device loses wholesale — is accepted.
-- Alternatives rejected: file-sync-only (account-sync users would get
-  silently device-local trims/tags while titles sync — a half-sync users read
-  as data loss) and device-local trims with re-enrichment per device (a trim
-  made on one device visibly vanishing on the next).
+- An account-sync implementation is required because device-local trims with
+  re-enrichment per device would make a trim visibly vanish on another device.
 
 ## Consequences
 

@@ -2377,6 +2377,13 @@
 			path = Transcription;
 			sourceTree = "<group>";
 		};
+		A3806E40E8281FDA2CF2E291 /* ReadAloud */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			path = ReadAloud;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -3929,6 +3936,7 @@
 				5E802961B383DBE10EE97D92 /* MetricKit */,
 				4F5CCE47D9393F707C7EAA35 /* LiveActivity */,
 				A3806E40E8281FDA2CF2E290 /* Transcription */,
+				A3806E40E8281FDA2CF2E291 /* ReadAloud */,
 			);
 			name = "Pocket Casts";
 			path = podcasts;
@@ -4919,6 +4927,7 @@
 				3F747A542F5598A2004C7FF6 /* Playback */,
 				3F747A5A2F559925004C7FF6 /* Notifications */,
 				A3806E40E8281FDA2CF2E290 /* Transcription */,
+				A3806E40E8281FDA2CF2E291 /* ReadAloud */,
 			);
 			name = podcasts;
 			packageProductDependencies = (

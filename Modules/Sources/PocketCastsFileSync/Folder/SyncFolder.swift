@@ -34,6 +34,19 @@ public struct FolderEntry: Equatable, Hashable, Sendable {
     }
 }
 
+/// The entries returned by one provider enumeration and whether every item
+/// could be inspected. Missing rows are authoritative only for complete
+/// listings; File Provider extensions can otherwise expose partial results.
+public struct FolderListing: Equatable, Sendable {
+    public let entries: [FolderEntry]
+    public let isComplete: Bool
+
+    public init(entries: [FolderEntry], isComplete: Bool) {
+        self.entries = entries
+        self.isComplete = isComplete
+    }
+}
+
 /// A coarse "something changed" signal; consumers rescan rather than trust
 /// per-item detail, because providers differ wildly in what they report.
 public struct FolderChangeHint: Sendable {
@@ -73,6 +86,10 @@ public protocol SyncFolder: Sendable {
     /// placeholders. Directories are listed as entries too.
     func list(_ relativeDir: String) async throws -> [FolderEntry]
 
+    /// Lists entries and reports whether the provider enumeration was
+    /// complete. Callers that remove state based on absence must use this.
+    func listing(_ relativeDir: String) async throws -> FolderListing
+
     /// Coordinated read; `body` receives a URL whose bytes are local for
     /// the duration of the call (the coordinator materializes placeholders
     /// on provider-backed folders).
@@ -100,4 +117,10 @@ public protocol SyncFolder: Sendable {
     func startChangeMonitoring(_ handler: @escaping @Sendable (FolderChangeHint) -> Void) async
 
     func stopChangeMonitoring() async
+}
+
+public extension SyncFolder {
+    func listing(_ relativeDir: String) async throws -> FolderListing {
+        FolderListing(entries: try await list(relativeDir), isComplete: true)
+    }
 }

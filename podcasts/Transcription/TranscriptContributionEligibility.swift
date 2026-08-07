@@ -12,8 +12,8 @@ nonisolated enum TranscriptContributionEligibility {
     /// All podcasts come from the server catalog, so every podcast episode is
     /// public by construction.
     static func isEligible(episode: BaseEpisode?, podcast: Podcast?) -> Bool {
-        guard let episode, episode is Episode, podcast != nil else { return false }
-        return true
+        guard let episode = episode as? Episode, let podcast else { return false }
+        return episode.podcastUuid == podcast.uuid
     }
 
     /// Query-item names that smell like credentials or signed-URL parameters.

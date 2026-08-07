@@ -32,4 +32,14 @@ final class OpmlImportStateTests: XCTestCase {
         XCTAssertEqual(state.updateProgress(), updateCount + 1)
         XCTAssertEqual(state.failureCount, updateCount * 2)
     }
+
+    func testTerminalFailureRejectsDelayedResponsesAndPolling() {
+        let state = OpmlImportState()
+        state.markTerminalFailure()
+
+        XCTAssertFalse(state.recordResponse(pollUuids: ["late-poll"], failedCount: 0))
+        XCTAssertFalse(state.shouldContinue)
+        XCTAssertFalse(state.hasPendingPollUuids)
+        XCTAssertNil(state.takePollUuids())
+    }
 }

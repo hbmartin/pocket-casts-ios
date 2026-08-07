@@ -97,6 +97,28 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
   user's persisted tuning. "Music profile" suspends trim and boost during
   music-dominant segments.
 
+## Read Aloud
+
+- **Read Aloud** — turning a text document the user supplies into a narrated
+  episode. The result is an ordinary uploaded file: a `UserEpisode` that plays,
+  scrubs and archives like any other, distinguished only by the Narration record
+  behind it.
+- **Document** — a text file the user imported to be read aloud, together with
+  the retained copy of it on disk. The durable half: it outlives every Narration
+  made from it, and having none is an ordinary resting state. Deleting the
+  generated episode leaves the document untouched; only deleting the document
+  destroys the text.
+- **Narration** — one attempt to render a Document in one voice, and the episode
+  it produced. Several may exist for a Document over time (a better voice, a
+  retry after a failure); they all read the Document's single retained file.
+  Device-local, never syncs. Deliberately *not* called a "generation" — that word
+  belongs to Salient Segments and Generated transcripts.
+- **Chunk** — the unit of synthesis: whole sentences packed to fit the engine's
+  per-request limit, never split mid-sentence, never spanning a paragraph.
+  Chunking is pure and deterministic, which is what makes an interrupted
+  Narration resumable: chunk N always means the same text. Deliberately not a
+  "segment" — that word belongs to the Transcript Corpus.
+
 ## Feedback
 
 - **Feedback Report** — a user-initiated report from a TestFlight/debug build

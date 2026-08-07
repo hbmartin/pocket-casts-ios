@@ -950,6 +950,22 @@ enum AnalyticsEvent: String {
     case librarySearchTranscriptsShown
     case librarySearchTranscriptResultTapped
 
+    // MARK: - Read Aloud (text document narrated into an episode)
+
+    case readAloudImportShown
+    case readAloudNarrationQueued
+    case readAloudNarrationCompleted
+    case readAloudNarrationFailed
+    case readAloudNarrationCancelled
+    case readAloudNarrationRetried
+    case readAloudNarratedAgain
+    case readAloudLibraryShown
+    case readAloudSettingsShown
+    case readAloudVoicePreviewPlayed
+    case readAloudVoiceChanged
+    case readAloudDocumentDeleted
+    case readAloudNarrationDeleted
+
     // MARK: - Diarized Transcription (locally generated transcripts)
 
     case transcriptionGenerateTapped

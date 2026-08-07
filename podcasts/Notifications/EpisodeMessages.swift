@@ -162,6 +162,23 @@ nonisolated struct FileSyncUploadsChanged: NotificationCenter.MainActorMessage {
     }
 }
 
+/// A Read Aloud narration changed state or advanced its progress. Carries no
+/// payload — listeners should re-query, since a single render posts this once
+/// per chunk and the interesting state lives on the row.
+nonisolated struct NarrationsChanged: NotificationCenter.MainActorMessage {
+    typealias Subject = AnyObject
+
+    static var name: Notification.Name { Notification.Name("PCNarrationsChanged") }
+
+    static func makeMessage(_ notification: Notification) -> Self? {
+        Self()
+    }
+
+    static func makeNotification(_ message: Self) -> Notification {
+        Notification(name: Self.name)
+    }
+}
+
 /// Transcript availability for an episode was determined after a show-notes
 /// metadata probe. The bridged representation is frozen during the migration:
 /// the values ride in `userInfo` under the `episodeUuid` / `isAvailable` /

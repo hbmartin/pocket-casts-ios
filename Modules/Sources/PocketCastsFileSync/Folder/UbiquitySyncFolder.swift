@@ -46,6 +46,11 @@ public actor UbiquitySyncFolder: SyncFolder {
         return try await CoordinatedFileIO.list(root: root, relativeDir: relativeDir)
     }
 
+    public func listing(_ relativeDir: String) async throws -> FolderListing {
+        let root = try await rootURL()
+        return try await CoordinatedFileIO.listing(root: root, relativeDir: relativeDir)
+    }
+
     public func coordinatedRead<T: Sendable>(_ relativePath: String, _ body: @Sendable @escaping (URL) throws -> T) async throws -> T {
         let root = try await rootURL()
         let url = root.appendingPathComponent(relativePath)

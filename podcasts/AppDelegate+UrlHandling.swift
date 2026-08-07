@@ -379,6 +379,11 @@ extension AppDelegate {
             return true
         }
 
+        JLRoutes.global().addRoute("/files") { _ -> Bool in
+            NavigationManager.sharedManager.navigateTo(NavigationManager.filesPageKey, data: nil)
+            return true
+        }
+
         JLRoutes.global().addRoute("/filters") {[weak self] _ -> Bool in
             guard self != nil else { return false }
             NavigationManager.sharedManager.navigateTo(NavigationManager.filterPageKey)

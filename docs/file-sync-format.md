@@ -45,8 +45,11 @@ in the migration-75 columns on `SJUserEpisode` (`folderRelativePath`,
   **canonical** or **re-keys** it onto an existing canonical episode that
   already owns that content (rename/copy detection, merging playback state).
 - A file replaced in place (same path, different size) resets its episode to
-  provisional; a file that vanishes (and no rename target matches) removes its
-  episode row — cloud trash is the undo.
+  provisional. A file that vanishes (and no rename target matches) removes its
+  episode row only after the provider confirms a complete listing; incomplete
+  File Provider enumerations retain unmatched rows for a later scan. A thrown
+  provider error still aborts the entire scan without applying changes. After
+  confirmed removal, cloud trash is the undo.
 - `identityState = 0` (`legacyLocal`) marks pre-folder app-local files; they
   have no `folderRelativePath` and never touch the folder.
 

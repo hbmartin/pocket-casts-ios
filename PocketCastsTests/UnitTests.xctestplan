@@ -84,6 +84,13 @@
         "identifier": "PocketCastsTranscriptionTests",
         "name": "PocketCastsTranscriptionTests"
       }
+    },
+    {
+      "target": {
+        "containerPath": "container:Modules",
+        "identifier": "PocketCastsReadAloudTests",
+        "name": "PocketCastsReadAloudTests"
+      }
     }
   ],
   "version": 1

@@ -464,6 +464,44 @@ class DatabaseHelper {
         // SalientSegment, MentionedEntity) are deliberately left to their own
         // eviction, as are show-notes URLCache entries (100 MB LRU).
         SchemaMigration(toVersion: 90) { db in
+            let localPodcastResult = try db.executeQuery(
+                "SELECT uuid FROM SJPodcast WHERE refreshSource = 1", values: nil)
+            var localPodcastUuids = Set<String>()
+            while localPodcastResult.next() {
+                if let uuid = localPodcastResult.string(forColumn: "uuid") {
+                    localPodcastUuids.insert(uuid)
+                }
+            }
+            localPodcastResult.close()
+
+            // A podcast-specific filter with an empty uuid list is interpreted
+            // as all podcasts. Remove local uuids from mixed filters and delete
+            // filters that selected only purged local feeds.
+            if !localPodcastUuids.isEmpty {
+                let filterResult = try db.executeQuery(
+                    "SELECT id, podcastUuids FROM SJFilteredPlaylist WHERE filterAllPodcasts = 0", values: nil)
+                var filters: [(id: Int64, podcastUuids: String)] = []
+                while filterResult.next() {
+                    if let podcastUuids = filterResult.string(forColumn: "podcastUuids") {
+                        filters.append((filterResult.longLongInt(forColumn: "id"), podcastUuids))
+                    }
+                }
+                filterResult.close()
+
+                for filter in filters {
+                    let originalUuids = filter.podcastUuids.split(separator: ",").map(String.init)
+                    let retainedUuids = originalUuids.filter { !localPodcastUuids.contains($0) }
+                    guard retainedUuids.count != originalUuids.count else { continue }
+                    if retainedUuids.isEmpty {
+                        try db.executeUpdate("DELETE FROM SJFilteredPlaylist WHERE id = ?", values: [filter.id])
+                    } else {
+                        try db.executeUpdate(
+                            "UPDATE SJFilteredPlaylist SET podcastUuids = ? WHERE id = ?",
+                            values: [retainedUuids.joined(separator: ","), filter.id])
+                    }
+                }
+            }
+
             try db.executeUpdate("""
             DELETE FROM SJPlaylistEpisode
             WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1)
@@ -479,7 +517,10 @@ class DatabaseHelper {
             try db.executeUpdate("""
             DELETE FROM UpNextChanges
             WHERE uuid IN (SELECT uuid FROM SJEpisode
-                           WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1));
+                           WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1))
+               OR EXISTS (SELECT 1 FROM SJEpisode localEpisode
+                          WHERE localEpisode.podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1)
+                            AND ',' || UpNextChanges.uuids || ',' LIKE '%,' || localEpisode.uuid || ',%');
             """, values: nil)
             try db.executeUpdate("""
             DELETE FROM AutoAddCandidates
@@ -495,6 +536,12 @@ class DatabaseHelper {
             WHERE podcast_uuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1);
             """, values: nil)
             try db.executeUpdate("""
+            DELETE FROM PendingTranscriptUpload
+            WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1)
+               OR episodeUuid IN (SELECT uuid FROM SJEpisode
+                                  WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1));
+            """, values: nil)
+            try db.executeUpdate("""
             DELETE FROM SJEpisode
             WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1);
             """, values: nil)
@@ -504,6 +551,84 @@ class DatabaseHelper {
 
             try db.executeUpdate("DROP TABLE IF EXISTS FileSyncJournal;", values: nil)
             try db.executeUpdate("DROP TABLE IF EXISTS FileSyncCursor;", values: nil)
+        },
+
+        // Read Aloud (ADR-0019, ADR-0020). Both tables are device-local and
+        // never synced: the source document lives on this device only, and the
+        // generated audio is deliberately NOT folder-backed, so nothing here has
+        // a counterpart on another device to reconcile with.
+        //
+        // Two tables because the durable thing is the *document*, not the audio.
+        // A ReadAloudDocument owns the retained .txt/.md under
+        // Documents/read_aloud/sources/<uuid> and everything derived from
+        // reading it (title, character count, detected language); a Narration is
+        // one attempt to render that document in one voice, and several may
+        // exist over time. A document with no narrations is an ordinary resting
+        // state — it is what deleting the generated episode leaves behind — so
+        // there is no "detached" narration state.
+        //
+        // Synthesis settings (engineKind, providerId, voiceId, rate) are frozen
+        // on the narration at enqueue and never mutated. That immutability is
+        // what lets resume work off `completedChunkCount` alone: settings cannot
+        // drift mid-run, so a checkpoint can never disagree with what is being
+        // rendered. Re-narrating in another voice is a new Narration row against
+        // the same document, sharing its one source file.
+        SchemaMigration(toVersion: 91) { db in
+            try db.executeUpdate("""
+            CREATE TABLE IF NOT EXISTS ReadAloudDocument (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                uuid TEXT NOT NULL UNIQUE,
+                title TEXT NOT NULL,
+                originalFilename TEXT,
+                sourceKind INTEGER NOT NULL DEFAULT 0,
+                utType TEXT,
+                sourcePath TEXT NOT NULL,
+                characterCount INTEGER NOT NULL DEFAULT 0,
+                language TEXT,
+                addedDate REAL NOT NULL DEFAULT 0
+            );
+            """, values: nil)
+            try db.executeUpdate("""
+            CREATE TABLE IF NOT EXISTS Narration (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                uuid TEXT NOT NULL UNIQUE,
+                documentUuid TEXT NOT NULL,
+                engineKind INTEGER NOT NULL DEFAULT 0,
+                providerId TEXT,
+                voiceId TEXT NOT NULL,
+                voiceName TEXT NOT NULL,
+                rate REAL NOT NULL DEFAULT 1,
+                state INTEGER NOT NULL DEFAULT 0,
+                chunkCount INTEGER NOT NULL DEFAULT 0,
+                completedChunkCount INTEGER NOT NULL DEFAULT 0,
+                episodeUuid TEXT,
+                errorCode TEXT,
+                errorDetails TEXT,
+                createdDate REAL NOT NULL DEFAULT 0,
+                completedDate REAL,
+                outputDuration REAL,
+                outputSizeInBytes INTEGER
+            );
+            """, values: nil)
+            // The library screen lists a document's narrations newest-first.
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS narration_document
+            ON Narration (documentUuid, createdDate);
+            """, values: nil)
+            // Episode deletion looks a narration up by its episode.
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS narration_episode
+            ON Narration (episodeUuid);
+            """, values: nil)
+            // Resume-on-launch scans for unfinished work.
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS narration_state
+            ON Narration (state, createdDate);
+            """, values: nil)
+            try db.executeUpdate("""
+            CREATE INDEX IF NOT EXISTS read_aloud_document_added
+            ON ReadAloudDocument (addedDate);
+            """, values: nil)
         }
     ]
 

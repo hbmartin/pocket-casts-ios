@@ -29,6 +29,7 @@ public actor FileSyncManager {
     private var onUploadsChanged: (@Sendable () -> Void)?
 
     private var syncPassRunning = false
+    private var rescanRequested = false
 
     private(set) var lastScanDate: Date?
     private(set) var lastError: String?
@@ -158,21 +159,27 @@ public actor FileSyncManager {
 
     public func syncNow() async {
         guard isEnabled, let uploadsScanner else { return }
-        guard !syncPassRunning else { return }
+        guard !syncPassRunning else {
+            rescanRequested = true
+            return
+        }
         syncPassRunning = true
         defer { syncPassRunning = false }
 
-        do {
-            let scanResult = try await uploadsScanner.scan()
-            if scanResult.created + scanResult.moved + scanResult.reset + scanResult.removed > 0 {
-                onUploadsChanged?()
+        repeat {
+            rescanRequested = false
+            do {
+                let scanResult = try await uploadsScanner.scan()
+                if scanResult.created + scanResult.moved + scanResult.reset + scanResult.removed > 0 {
+                    onUploadsChanged?()
+                }
+                lastScanDate = Date()
+                lastError = nil
+            } catch {
+                lastError = "\(error)"
+                FileLog.shared.addMessage("FileSync: uploads scan failed: \(error)")
             }
-            lastScanDate = Date()
-            lastError = nil
-        } catch {
-            lastError = "\(error)"
-            FileLog.shared.addMessage("FileSync: uploads scan failed: \(error)")
-        }
+        } while rescanRequested
     }
 
     // MARK: Inspector

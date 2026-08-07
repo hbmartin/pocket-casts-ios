@@ -5326,15 +5326,16 @@ rules:
       impact: HIGH
       technology: [ios]
     message: >-
-      A URL redaction helper must not return its raw candidate when parsing or
-      serialization fails. Logs are exported in support reports, so malformed
-      URLs can otherwise retain userinfo or signed query tokens. Return a stable
-      safe placeholder instead (PR #302 review finding).
+      A URL credential-redaction helper must not return its raw candidate when
+      parsing or serialization fails. Malformed URLs can otherwise retain
+      userinfo or signed query tokens. Return a stable safe placeholder or fail
+      the operation instead (PR #302 and export review findings).
     languages: [swift]
     paths:
       include:
         - "**/Logging/*Redaction*.swift"
         - "**/Logging/*Redactor*.swift"
+        - "**/*ImportExport*.swift"
     patterns:
       - pattern-either:
           - pattern: |

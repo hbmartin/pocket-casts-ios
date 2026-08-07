@@ -208,6 +208,12 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
     /// purgeable caches.
     case mentionedEntityIndex
 
+    /// Read Aloud: import a .txt/.md file (or paste text) and have it
+    /// synthesized into a narrated episode that plays like any other uploaded
+    /// file. Built-in system voices only at this flag; the generated audio stays
+    /// device-local (ADR-0019).
+    case readAloud
+
     public var enabled: Bool {
         if let overriddenValue = FeatureFlagOverrideStore().overriddenValue(for: self) {
             return overriddenValue
@@ -312,6 +318,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
         case .highlightsTour:
             BuildEnvironment.current != .appStore
         case .mentionedEntityIndex:
+            BuildEnvironment.current != .appStore
+        case .readAloud:
             BuildEnvironment.current != .appStore
         case .personFollows:
             // Ships dark (release gate): person endpoints 404 until backend B2
@@ -418,6 +426,8 @@ public enum FeatureFlag: String, CaseIterable, Sendable {
             "Highlights Tour on the player shelf: a guided, optionally narrated jump through an episode's best moments at your chosen length. Needs a transcript. Medium risk."
         case .mentionedEntityIndex:
             "Builds a local index of people and books from episode credits, renamed speakers and transcript mentions, powering library-wide directories. Low risk."
+        case .readAloud:
+            "Read Aloud: turn a text file or pasted text into a narrated episode using the built-in system voices. Output stays on this device and never enters the uploads folder. Medium risk."
         case .personFollows:
             "Follow people (hosts, guests) and get notified when they appear on any show the server ingests. Ships dark - requires backend milestone B2 in production; enabling early will fail. Medium risk."
         case .clipCaptions:

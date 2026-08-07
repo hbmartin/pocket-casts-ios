@@ -62,11 +62,36 @@ final class UploadScanPlannerTests: XCTestCase {
         XCTAssertEqual(actions, [.updatePath(episodeUuid: "ue-1", entry: moved, group: "Audiobooks")])
     }
 
+    func testRenameUsesSizeWhenKnownMtimeIsUnavailable() {
+        let moved = entry("renamed.mp3", size: 1234, mtime: 777)
+        let actions = UploadScanPlanner.plan(
+            mediaEntries: [moved],
+            knownEpisodes: [known("ue-1", path: "old-name.mp3", size: 1234, mtime: 0)])
+        XCTAssertEqual(actions, [.updatePath(episodeUuid: "ue-1", entry: moved, group: "")])
+    }
+
     func testDeletedFileRemovesEpisode() {
         let actions = UploadScanPlanner.plan(
             mediaEntries: [],
             knownEpisodes: [known("ue-1", path: "gone.mp3")])
         XCTAssertEqual(actions, [.removeEpisode(episodeUuid: "ue-1")])
+    }
+
+    func testIncompleteListingRetainsMissingEpisode() {
+        let actions = UploadScanPlanner.plan(
+            mediaEntries: [],
+            knownEpisodes: [known("ue-1", path: "temporarily-missing.mp3")],
+            listingIsComplete: false)
+        XCTAssertTrue(actions.isEmpty)
+    }
+
+    func testIncompleteListingDoesNotInferRenameFromAbsence() {
+        let listed = entry("new.mp3", size: 1000)
+        let actions = UploadScanPlanner.plan(
+            mediaEntries: [listed],
+            knownEpisodes: [known("ue-1", path: "temporarily-missing.mp3", size: 1000, mtime: 0)],
+            listingIsComplete: false)
+        XCTAssertEqual(actions, [.createProvisional(entry: listed, group: "")])
     }
 
     func testRenameIsNotAlsoARemoval() {
