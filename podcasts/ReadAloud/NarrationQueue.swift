@@ -172,7 +172,11 @@ actor NarrationQueue {
             throw ReadAloudError.apiKeyMissing
         }
 
-        let chunks = TextChunker().chunks(for: extracted, maxCharacters: engine.capabilities.maxCharactersPerChunk)
+        let chunks = TextChunker().chunks(
+            for: extracted,
+            maxCharacters: engine.capabilities.maxCharactersPerChunk,
+            boundary: engine.capabilities.chunkBoundary
+        )
         guard !chunks.isEmpty else { throw ReadAloudError.emptyDocument }
 
         dataManager.readAloud.markRendering(uuid: narration.uuid, chunkCount: chunks.count)
@@ -189,31 +193,16 @@ actor NarrationQueue {
         var rendered = storage.renderedChunkIndices(narrationUuid: narration.uuid, chunkCount: chunks.count)
         dataManager.readAloud.updateProgress(uuid: narration.uuid, completedChunkCount: rendered.count)
 
-        for chunk in chunks {
-            try Task.checkCancellation()
-            if suspended { throw ReadAloudError.cancelled }
-            guard !rendered.contains(chunk.index) else { continue }
-
-            let chunkURL = storage.chunkURL(narrationUuid: narration.uuid, index: chunk.index)
-            do {
-                try await engine.synthesize(
-                    chunk: chunk,
-                    voice: voice,
-                    settings: settings,
-                    apiKey: apiKey,
-                    to: chunkURL
-                )
-            } catch {
-                // Never leave a partial file behind: the resume path treats any
-                // non-empty chunk file as finished work.
-                try? FileManager.default.removeItem(at: chunkURL)
-                throw error
-            }
-
-            rendered.insert(chunk.index)
-            dataManager.readAloud.updateProgress(uuid: narration.uuid, completedChunkCount: rendered.count)
-            Self.postChanged()
-        }
+        let outstanding = chunks.filter { !rendered.contains($0.index) }
+        try await renderChunks(
+            outstanding,
+            narrationUuid: narration.uuid,
+            engine: engine,
+            voice: voice,
+            settings: settings,
+            apiKey: apiKey,
+            rendered: &rendered
+        )
 
         try Task.checkCancellation()
 
@@ -252,6 +241,75 @@ actor NarrationQueue {
             return
         }
         storage.deleteWorkspace(narrationUuid: narration.uuid)
+    }
+
+    /// Renders the outstanding chunks, up to `maxConcurrentChunks` at a time.
+    ///
+    /// The bookkeeping deliberately stays on the actor: only `synthesize` runs in
+    /// a child task, and every mutation of `rendered` happens where `group.next()`
+    /// resumes. Chunks may therefore finish out of order, which costs nothing —
+    /// the assembler reads files back by index and progress is only a count.
+    ///
+    /// At `maxConcurrentChunks == 1` (every local engine) this is exactly the
+    /// sequential loop it replaced: one task in flight, awaited before the next
+    /// is added.
+    private func renderChunks(
+        _ chunks: [NarrationChunk],
+        narrationUuid: String,
+        engine: any SpeechSynthesisEngine,
+        voice: SynthesisVoice,
+        settings: SynthesisSettings,
+        apiKey: String?,
+        rendered: inout Set<Int>
+    ) async throws {
+        guard !chunks.isEmpty else { return }
+        let limit = max(engine.capabilities.maxConcurrentChunks, 1)
+        let storage = storage
+
+        // `inout` can't cross the group's closure boundary; copy in, copy back.
+        var completed = rendered
+        defer { rendered = completed }
+
+        try await withThrowingTaskGroup(of: Int.self) { group in
+            var next = chunks.makeIterator()
+
+            /// Adds one chunk unless the run is stopping. Returns false when
+            /// there was nothing left to add.
+            func addNext() throws -> Bool {
+                try Task.checkCancellation()
+                if suspended { throw ReadAloudError.cancelled }
+                guard let chunk = next.next() else { return false }
+
+                let chunkURL = storage.chunkURL(narrationUuid: narrationUuid, index: chunk.index)
+                group.addTask {
+                    do {
+                        try await engine.synthesize(
+                            chunk: chunk,
+                            voice: voice,
+                            settings: settings,
+                            apiKey: apiKey,
+                            to: chunkURL
+                        )
+                    } catch {
+                        // Never leave a partial file behind: the resume path
+                        // treats any non-empty chunk file as finished work.
+                        try? FileManager.default.removeItem(at: chunkURL)
+                        throw error
+                    }
+                    return chunk.index
+                }
+                return true
+            }
+
+            for _ in 0..<limit where try !addNext() { break }
+
+            while let index = try await group.next() {
+                completed.insert(index)
+                dataManager.readAloud.updateProgress(uuid: narrationUuid, completedChunkCount: completed.count)
+                Self.postChanged()
+                _ = try addNext()
+            }
+        }
     }
 
     /// Re-reads and re-extracts the document's retained file. Done afresh on

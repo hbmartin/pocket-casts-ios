@@ -213,3 +213,128 @@ struct TextChunkerTests {
         #expect(chunker.chunks(for: doc, maxCharacters: 400) != chunker.chunks(for: doc, maxCharacters: 800))
     }
 }
+
+@Suite("Chunk boundary policy")
+struct ChunkBoundaryTests {
+    private let chunker = TextChunker()
+
+    private func sectioned(sections: Int, paragraphsEach: Int) -> ExtractedDocument {
+        var blocks: [DocumentBlock] = []
+        for section in 1...sections {
+            blocks.append(DocumentBlock(kind: .heading(level: 2), text: "Section \(section)"))
+            for paragraph in 1...paragraphsEach {
+                blocks.append(DocumentBlock(
+                    kind: .paragraph,
+                    text: "Paragraph \(paragraph) of section \(section). It is short enough to pack with its neighbours."
+                ))
+            }
+        }
+        return ExtractedDocument(
+            suggestedTitle: "Doc",
+            blocks: blocks,
+            characterCount: blocks.reduce(0) { $0 + $1.text.count },
+            detectedLanguage: nil
+        )
+    }
+
+    /// The default is unchanged, so the built-in engine keeps every pause.
+    @Test("everyBlock gives one chunk per block")
+    func everyBlockIsUnchanged() {
+        let document = sectioned(sections: 4, paragraphsEach: 3)
+
+        let chunks = chunker.chunks(for: document, maxCharacters: 2500, boundary: .everyBlock)
+
+        #expect(chunks.count == document.blocks.count)
+        #expect(chunks.allSatisfy { $0.startsBlock })
+    }
+
+    @Test("everyBlock is the default")
+    func everyBlockIsDefault() {
+        let document = sectioned(sections: 3, paragraphsEach: 2)
+
+        let defaulted = chunker.chunks(for: document, maxCharacters: 2500)
+        let explicit = chunker.chunks(for: document, maxCharacters: 2500, boundary: .everyBlock)
+
+        #expect(defaulted == explicit)
+    }
+
+    /// The point of the policy: paragraphs pack, so a document of short
+    /// paragraphs stops costing one request each.
+    @Test("headingsOnly packs consecutive paragraphs together")
+    func headingsOnlyPacks() {
+        let document = sectioned(sections: 6, paragraphsEach: 5)
+
+        let everyBlock = chunker.chunks(for: document, maxCharacters: 2500, boundary: .everyBlock)
+        let headingsOnly = chunker.chunks(for: document, maxCharacters: 2500, boundary: .headingsOnly)
+
+        #expect(everyBlock.count == 36)
+        #expect(headingsOnly.count == 12, "6 headings + 6 packed paragraph runs")
+    }
+
+    /// A heading running into its own body text is the pause whose absence
+    /// sounds broken rather than merely flat, so it survives on both sides.
+    @Test("headingsOnly keeps a heading isolated in its own chunk")
+    func headingsStayIsolated() {
+        let document = sectioned(sections: 3, paragraphsEach: 4)
+
+        let chunks = chunker.chunks(for: document, maxCharacters: 2500, boundary: .headingsOnly)
+
+        let headingChunks = chunks.filter { $0.text.hasPrefix("Section ") }
+        #expect(headingChunks.count == 3)
+        #expect(headingChunks.allSatisfy { $0.text.contains("Paragraph") == false })
+        // Every chunk opens a block: headings break before, and the body that
+        // follows a heading breaks after it.
+        #expect(chunks.allSatisfy { $0.startsBlock })
+    }
+
+    @Test("headingsOnly still never exceeds the target")
+    func headingsOnlyRespectsTheTarget() {
+        let document = sectioned(sections: 3, paragraphsEach: 40)
+        let target = Int(2500 * TextChunker.fillRatio)
+
+        let chunks = chunker.chunks(for: document, maxCharacters: 2500, boundary: .headingsOnly)
+
+        #expect(chunks.allSatisfy { $0.text.count <= target })
+        // Packing that overflows mid-run continues the block rather than opening
+        // a new one, so those chunks carry no pause.
+        #expect(chunks.contains { !$0.startsBlock })
+    }
+
+    @Test("headingsOnly loses no text")
+    func headingsOnlyPreservesText() {
+        let document = sectioned(sections: 3, paragraphsEach: 3)
+
+        let everyBlock = chunker.chunks(for: document, maxCharacters: 2500, boundary: .everyBlock)
+        let headingsOnly = chunker.chunks(for: document, maxCharacters: 2500, boundary: .headingsOnly)
+
+        #expect(headingsOnly.map(\.text).joined(separator: " ") == everyBlock.map(\.text).joined(separator: " "))
+    }
+
+    /// Resume depends on it: same document, same limit, same policy → same chunks.
+    @Test("headingsOnly is deterministic")
+    func headingsOnlyIsDeterministic() {
+        let document = sectioned(sections: 5, paragraphsEach: 4)
+
+        let first = chunker.chunks(for: document, maxCharacters: 2500, boundary: .headingsOnly)
+        let second = TextChunker().chunks(for: document, maxCharacters: 2500, boundary: .headingsOnly)
+
+        #expect(first == second)
+    }
+
+    @Test("a document with no headings packs into as few chunks as fit")
+    func headinglessDocumentPacks() {
+        let blocks = (1...30).map {
+            DocumentBlock(kind: .paragraph, text: "Paragraph number \($0) with a little text in it.")
+        }
+        let document = ExtractedDocument(
+            suggestedTitle: "Doc",
+            blocks: blocks,
+            characterCount: blocks.reduce(0) { $0 + $1.text.count },
+            detectedLanguage: nil
+        )
+
+        let chunks = chunker.chunks(for: document, maxCharacters: 2500, boundary: .headingsOnly)
+
+        #expect(chunks.count == 1)
+    }
+}

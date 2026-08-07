@@ -20,6 +20,11 @@ public struct DocumentBlock: Sendable, Equatable {
         self.kind = kind
         self.text = text
     }
+
+    public var isHeading: Bool {
+        if case .heading = kind { return true }
+        return false
+    }
 }
 
 /// The output of extraction: a document reduced to narratable blocks plus the
