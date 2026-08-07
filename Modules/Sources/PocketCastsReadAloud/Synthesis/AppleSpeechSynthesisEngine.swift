@@ -34,15 +34,29 @@ public struct AppleSpeechSynthesisEngine: SpeechSynthesisEngine {
 
     // MARK: - Voices
 
-    /// Installed system voices, minus Personal Voice.
+    /// Legacy macOS-era novelty voices, which `speechVoices()` still returns.
+    ///
+    /// These are the joke voices — Bells, Boing, Bubbles, Zarvox, Bad News — and
+    /// they are sound effects, not narrators: "Bells" sings each word to a
+    /// chime. They share one identifier namespace, which is the only reliable
+    /// way to spot them (they carry no distinguishing trait and report
+    /// `.default` quality like any compact voice).
+    ///
+    /// Left in, they sort alphabetically among the real voices and dominate the
+    /// English list — a picker where most entries are gags reads as broken.
+    private static let noveltyVoicePrefix = "com.apple.speech.synthesis.voice."
+
+    /// Installed system voices worth narrating a document with.
     ///
     /// Personal Voice is excluded deliberately: it is a recording of the user's
     /// own voice, gated behind a per-use authorization prompt, and rendering
     /// documents into someone's synthesized likeness is not a thing this feature
-    /// should do without a conversation the app hasn't had.
+    /// should do without a conversation the app hasn't had. Novelty voices are
+    /// excluded for the reason above.
     public func availableVoices(apiKey: String?) async throws -> [SynthesisVoice] {
         AVSpeechSynthesisVoice.speechVoices()
             .filter { !$0.voiceTraits.contains(.isPersonalVoice) }
+            .filter { !$0.identifier.hasPrefix(Self.noveltyVoicePrefix) }
             .map { voice in
                 SynthesisVoice(
                     id: voice.identifier,
