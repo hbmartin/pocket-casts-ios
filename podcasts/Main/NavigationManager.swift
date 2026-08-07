@@ -31,6 +31,9 @@ class NavigationManager {
 
     static let filesPageKey = "filesPage"
 
+    static let readAloudImportPageKey = "readAloudImportPage"
+    static let readAloudFileKey = "readAloudFile"
+
     static let showPrivacyPolicyPageKey = "showPrivacyPage"
     static let showTermsOfUsePageKey = "showTermsOfUsePage"
 
@@ -147,6 +150,10 @@ class NavigationManager {
         } else if place == NavigationManager.uploadedPageKey {
             if let data, let fileURL = data[NavigationManager.uploadFileKey] as? URL {
                 mainController?.navigateToAddCustom(fileURL)
+            }
+        } else if place == NavigationManager.readAloudImportPageKey {
+            if let data, let fileURL = data[NavigationManager.readAloudFileKey] as? URL {
+                mainController?.navigateToReadAloudImport(fileURL)
             }
         } else if place == NavigationManager.filesPageKey {
             mainController?.navigateToFiles()

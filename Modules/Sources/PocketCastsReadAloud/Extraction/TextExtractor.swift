@@ -74,10 +74,8 @@ public struct TextExtractorRegistry: Sendable {
 /// language, choose a title. Kept here so two extractors can't disagree about
 /// what `characterCount` counts.
 enum ExtractedDocumentBuilder {
-    /// Documents above this are refused. ~500k characters is roughly ten hours
-    /// of narration — past the point where eager whole-document synthesis is a
-    /// sensible thing to start.
-    static let characterLimit = 500_000
+    /// Documents above this are refused; see `ExtractedDocument.maximumCharacterCount`.
+    static let characterLimit = ExtractedDocument.maximumCharacterCount
 
     static func build(blocks: [DocumentBlock], filename: String?) throws -> ExtractedDocument {
         let usable = blocks.filter { !$0.text.isEmpty }

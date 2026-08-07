@@ -27,6 +27,7 @@ protocol NavigationProtocol: AnyObject {
 
     func navigateToFiles()
     func navigateToAddCustom(_ fileURL: URL)
+    func navigateToReadAloudImport(_ fileURL: URL)
 
     func showSettings(row: SettingsViewController.TableRow?)
     func showSettingsAppearance(showThemeSelection: Bool)

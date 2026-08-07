@@ -44,6 +44,7 @@ private class MockMainController: NavigationProtocol {
     var didNavigateToPodcastList = false
     var didNavigateToExplore = false
     var navigateToExploreAnimated: Bool?
+    var readAloudImportURLs: [URL] = []
 
     func navigateToPodcastList(_ animated: Bool) {
         didNavigateToPodcastList = true
@@ -68,6 +69,7 @@ private class MockMainController: NavigationProtocol {
     func navigateToUpNext(_ animated: Bool) {}
     func navigateToFiles() {}
     func navigateToAddCustom(_ fileURL: URL) {}
+    func navigateToReadAloudImport(_ fileURL: URL) { readAloudImportURLs.append(fileURL) }
     func showSettings(row: SettingsViewController.TableRow?) {}
     func showSettingsAppearance(showThemeSelection: Bool) {}
     func showProfilePage() {}

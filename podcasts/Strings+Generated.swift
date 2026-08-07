@@ -3611,6 +3611,12 @@ nonisolated internal enum L10n {
   internal static func readAloudCharacterCount(_ p1: Any) -> String {
     return L10n.tr("Localizable", "read_aloud_character_count", String(describing: p1), fallback: "%1$@ characters")
   }
+  /// Button on the Read Aloud library that opens the compose screen.
+  internal static var readAloudComposeAction: String { return L10n.tr("Localizable", "read_aloud_compose_action", fallback: "Paste Text…") }
+  /// Placeholder in the compose screen's text editor.
+  internal static var readAloudComposePlaceholder: String { return L10n.tr("Localizable", "read_aloud_compose_placeholder", fallback: "Paste or type the text you want read aloud.") }
+  /// Title of the screen for typing or pasting text to be narrated.
+  internal static var readAloudComposeTitle: String { return L10n.tr("Localizable", "read_aloud_compose_title", fallback: "Paste Text") }
   /// Action that deletes a document, its recordings and its episodes.
   internal static var readAloudDeleteDocument: String { return L10n.tr("Localizable", "read_aloud_delete_document", fallback: "Delete Document") }
   /// Confirmation message when deleting a document.

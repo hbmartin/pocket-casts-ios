@@ -41,6 +41,12 @@ public struct ExtractedDocument: Sendable, Equatable {
     /// inconclusive (very short documents, symbol soup).
     public let detectedLanguage: String?
 
+    /// Longest document that may be narrated. ~500k characters is roughly ten
+    /// hours of audio — past the point where synthesizing a whole document
+    /// eagerly is a sensible thing to start. Public so the compose screen can
+    /// warn while typing rather than only failing at extraction.
+    public static let maximumCharacterCount = 500_000
+
     public init(suggestedTitle: String, blocks: [DocumentBlock], characterCount: Int, detectedLanguage: String?) {
         self.suggestedTitle = suggestedTitle
         self.blocks = blocks
