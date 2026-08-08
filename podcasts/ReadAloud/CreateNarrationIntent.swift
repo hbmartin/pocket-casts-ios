@@ -39,8 +39,25 @@ struct CreateNarrationIntent: AppIntent {
             throw ReadAloudIntentError.unreadableText
         }
 
-        let engine = AppleSpeechSynthesisEngine()
-        let catalog = VoiceCatalog(voices: (try? await engine.availableVoices(apiKey: nil)) ?? [])
+        // Honours whatever engine the user configured, so a Shortcut produces
+        // the same audio as importing by hand.
+        let engineKind = NarrationEngineKind(rawValue: Settings.readAloudEngineKind()) ?? .appleBuiltIn
+        let providerId = engineKind == .remoteProvider ? ElevenLabsTTSEngine.providerId : nil
+        let modelId = engineKind == .remoteProvider
+            ? (Settings.readAloudProviderModelId() ?? ElevenLabsModel.default.id)
+            : nil
+        let apiKey = providerId.flatMap { ProviderKeyStore.apiKey(providerId: $0) }
+
+        guard let engine = try? NarrationEngineFactory().makeEngine(
+            for: engineKind, providerId: providerId, modelId: modelId
+        ) else {
+            throw ReadAloudIntentError.unavailable
+        }
+        if engine.capabilities.requiresAPIKey, apiKey?.isEmpty != false {
+            throw ReadAloudIntentError.missingKey
+        }
+
+        let catalog = VoiceCatalog(voices: (try? await engine.availableVoices(apiKey: apiKey)) ?? [])
         guard let voice = catalog.voice(id: Settings.readAloudDefaultVoiceId())
             ?? catalog.preferredVoice(for: preview.document.detectedLanguage) else {
             throw ReadAloudIntentError.noVoiceAvailable
@@ -58,8 +75,9 @@ struct CreateNarrationIntent: AppIntent {
             narration = try importer.commit(
                 preview: preview,
                 title: self.title ?? preview.document.suggestedTitle,
-                engine: .appleBuiltIn,
-                providerId: nil,
+                engine: engineKind,
+                providerId: providerId,
+                modelId: modelId,
                 voice: voice
             ).narration
         } catch {
@@ -79,6 +97,7 @@ struct CreateNarrationIntent: AppIntent {
 /// on "no voice installed", not on a chunking error.
 enum ReadAloudIntentError: Error, CustomLocalizedStringResourceConvertible {
     case unavailable
+    case missingKey
     case unreadableText
     case noVoiceAvailable
     case couldNotSave
@@ -86,6 +105,7 @@ enum ReadAloudIntentError: Error, CustomLocalizedStringResourceConvertible {
     var localizedStringResource: LocalizedStringResource {
         switch self {
         case .unavailable: "Read Aloud isn't available."
+        case .missingKey: "Add your provider API key in Pocket Casts settings first."
         case .unreadableText: "That text couldn't be read."
         case .noVoiceAvailable: "No narration voice is installed on this device."
         case .couldNotSave: "The document couldn't be saved."

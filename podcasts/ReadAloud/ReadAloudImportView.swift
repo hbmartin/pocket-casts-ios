@@ -19,6 +19,9 @@ struct ReadAloudImportView: View {
                 } else {
                     documentSection
                     voiceSection
+                    if model.requiresCostConfirmation {
+                        costConfirmationSection
+                    }
                     VoiceQualityExplainerSection()
                 }
             }
@@ -76,6 +79,30 @@ struct ReadAloudImportView: View {
             }
             .font(style: .footnote)
             .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+        }
+        .listRowBackground(AppTheme.color(for: .primaryUi01, theme: theme))
+    }
+
+    /// Deliberately characters and duration, never money.
+    ///
+    /// We cannot know the user's plan, their remaining quota, or their per
+    /// character rate, and a dollar figure we cannot stand behind is worse than
+    /// none. What someone can act on is the size of what they are about to
+    /// spend, which is exactly what this shows.
+    private var costConfirmationSection: some View {
+        Section {
+            Toggle(isOn: $model.hasConfirmedCost) {
+                Text(L10n.readAloudConfirmToggle(
+                    model.characterCount.formatted(),
+                    Self.durationText(model.estimatedDuration)
+                ))
+                .font(style: .footnote)
+                .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
+            }
+        } header: {
+            Text(L10n.readAloudConfirmHeader)
+                .font(style: .footnote, weight: .semibold)
+                .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
         }
         .listRowBackground(AppTheme.color(for: .primaryUi01, theme: theme))
     }

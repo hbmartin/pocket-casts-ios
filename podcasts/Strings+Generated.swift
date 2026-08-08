@@ -3605,6 +3605,8 @@ nonisolated internal enum L10n {
   internal static var readAloudAllLanguages: String { return L10n.tr("Localizable", "read_aloud_all_languages", fallback: "All Languages") }
   /// Title of the screen listing every installed voice by language.
   internal static var readAloudAllVoicesTitle: String { return L10n.tr("Localizable", "read_aloud_all_voices_title", fallback: "All Voices") }
+  /// Settings row for entering the provider API key.
+  internal static var readAloudApiKey: String { return L10n.tr("Localizable", "read_aloud_api_key", fallback: "API Key") }
   /// Action that cancels a narration in progress.
   internal static var readAloudCancelNarration: String { return L10n.tr("Localizable", "read_aloud_cancel_narration", fallback: "Cancel") }
   /// Shows the size of the document being narrated, e.g. "12,400 characters".
@@ -3617,6 +3619,12 @@ nonisolated internal enum L10n {
   internal static var readAloudComposePlaceholder: String { return L10n.tr("Localizable", "read_aloud_compose_placeholder", fallback: "Paste or type the text you want read aloud.") }
   /// Title of the screen for typing or pasting text to be narrated.
   internal static var readAloudComposeTitle: String { return L10n.tr("Localizable", "read_aloud_compose_title", fallback: "Paste Text") }
+  /// Section header for the paid-narration confirmation on the import sheet.
+  internal static var readAloudConfirmHeader: String { return L10n.tr("Localizable", "read_aloud_confirm_header", fallback: "This will use your provider quota") }
+  /// Toggle confirming the user accepts spending provider quota; placeholders are character count and duration.
+  internal static func readAloudConfirmToggle(_ p1: Any, _ p2: Any) -> String {
+    return L10n.tr("Localizable", "read_aloud_confirm_toggle", String(describing: p1), String(describing: p2), fallback: "Narrate %1$@ characters (about %2$@ of audio)")
+  }
   /// Action that deletes a document, its recordings and its episodes.
   internal static var readAloudDeleteDocument: String { return L10n.tr("Localizable", "read_aloud_delete_document", fallback: "Delete Document") }
   /// Confirmation message when deleting a document.
@@ -3627,6 +3635,14 @@ nonisolated internal enum L10n {
   internal static var readAloudDeleteNarration: String { return L10n.tr("Localizable", "read_aloud_delete_narration", fallback: "Delete Recording") }
   /// Label for the editable document title field on the import sheet.
   internal static var readAloudDocumentTitle: String { return L10n.tr("Localizable", "read_aloud_document_title", fallback: "Title") }
+  /// Built-in engine option: free, offline, lower quality.
+  internal static var readAloudEngineBuiltin: String { return L10n.tr("Localizable", "read_aloud_engine_builtin", fallback: "Built-in voices") }
+  /// Provider engine option.
+  internal static var readAloudEngineElevenlabs: String { return L10n.tr("Localizable", "read_aloud_engine_elevenlabs", fallback: "ElevenLabs") }
+  /// Footer explaining that provider narration spends quota.
+  internal static var readAloudEngineFooter: String { return L10n.tr("Localizable", "read_aloud_engine_footer", fallback: "Built-in voices are free and work offline. ElevenLabs sounds much better and uses your own account's quota.") }
+  /// Settings section header for choosing which engine narrates.
+  internal static var readAloudEngineSection: String { return L10n.tr("Localizable", "read_aloud_engine_section", fallback: "Voice Engine") }
   /// Error shown when a document contains nothing to narrate.
   internal static var readAloudErrorEmpty: String { return L10n.tr("Localizable", "read_aloud_error_empty", fallback: "That document has no text to narrate.") }
   /// Generic error shown when narration fails.
@@ -3643,6 +3659,12 @@ nonisolated internal enum L10n {
   internal static var readAloudGenerate: String { return L10n.tr("Localizable", "read_aloud_generate", fallback: "Narrate") }
   /// Title of the sheet shown after picking a text file, before narration starts.
   internal static var readAloudImportTitle: String { return L10n.tr("Localizable", "read_aloud_import_title", fallback: "Read Aloud") }
+  /// Shown when the provider rejected the key.
+  internal static var readAloudKeyInvalid: String { return L10n.tr("Localizable", "read_aloud_key_invalid", fallback: "That key was rejected.") }
+  /// Shown when the key is valid but lacks text-to-speech permission.
+  internal static var readAloudKeyNoPermission: String { return L10n.tr("Localizable", "read_aloud_key_no_permission", fallback: "That key works but isn't allowed to use text to speech. Check its permissions in your ElevenLabs account.") }
+  /// Shown when the entered key works.
+  internal static var readAloudKeyValid: String { return L10n.tr("Localizable", "read_aloud_key_valid", fallback: "Key works.") }
   /// Empty state message on the Read Aloud library screen.
   internal static var readAloudLibraryEmptyMessage: String { return L10n.tr("Localizable", "read_aloud_library_empty_message", fallback: "Import a text or Markdown file and Pocket Casts will narrate it into an episode you can listen to.") }
   /// Empty state title on the Read Aloud library screen.
@@ -3651,6 +3673,10 @@ nonisolated internal enum L10n {
   internal static var readAloudLibraryTitle: String { return L10n.tr("Localizable", "read_aloud_library_title", fallback: "Read Aloud") }
   /// Files screen menu action opening the Read Aloud library.
   internal static var readAloudMenuAction: String { return L10n.tr("Localizable", "read_aloud_menu_action", fallback: "Read Aloud") }
+  /// Settings row for choosing the provider model.
+  internal static var readAloudModel: String { return L10n.tr("Localizable", "read_aloud_model", fallback: "Model") }
+  /// Footer explaining the cost difference between models.
+  internal static var readAloudModelFooter: String { return L10n.tr("Localizable", "read_aloud_model_footer", fallback: "Higher quality models cost more of your provider quota per character.") }
   /// Action that narrates an existing document again, in another voice.
   internal static var readAloudNarrateAgain: String { return L10n.tr("Localizable", "read_aloud_narrate_again", fallback: "Narrate Again…") }
   /// Button that starts importing a text document to narrate.
@@ -3691,6 +3717,8 @@ nonisolated internal enum L10n {
   }
   /// Name of the Read Aloud feature: importing a text file and having it narrated.
   internal static var readAloudTitle: String { return L10n.tr("Localizable", "read_aloud_title", fallback: "Read Aloud") }
+  /// Button that checks whether the entered API key works.
+  internal static var readAloudValidateKey: String { return L10n.tr("Localizable", "read_aloud_validate_key", fallback: "Validate") }
   /// Row label for the chosen voice.
   internal static var readAloudVoice: String { return L10n.tr("Localizable", "read_aloud_voice", fallback: "Voice") }
   /// Badge on a higher-quality downloadable voice.

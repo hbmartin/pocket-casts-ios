@@ -124,6 +124,16 @@ Terms here are the ubiquitous language — code, docs and PRs should use them ex
   is frozen on the Narration — which is what makes an interrupted Narration
   resumable: chunk N always means the same text. Deliberately not a "segment" —
   that word belongs to the Transcript Corpus.
+- **Narration Engine** — what turns a Chunk into audio: either the device's own
+  voices, free and offline, or a paid provider reached over the network. The
+  choice is a setting, but it is frozen on each Narration, because it decides
+  the chunk limit and the block boundaries and so decides what "chunk N" means.
+- **Provider Key** — the user's own credential with a third-party vendor, held
+  per vendor rather than per feature: one ElevenLabs key serves both Read Aloud
+  and transcription. It belongs to the user's relationship with that vendor, not
+  to their Pocket Casts account, so signing out leaves it alone. A key can be
+  genuine and still be refused by a feature — vendors scope keys — which is why
+  "not permitted" is a different answer from "not valid".
 
 ## Feedback
 

@@ -84,6 +84,7 @@ nonisolated struct NarrationImporter: Sendable {
         title: String,
         engine: NarrationEngineKind,
         providerId: String?,
+        modelId: String?,
         voice: SynthesisVoice
     ) throws -> (document: ReadAloudDocumentRecord, narration: NarrationRecord) {
         let documentUuid = UUID().uuidString.lowercased()
@@ -114,6 +115,7 @@ nonisolated struct NarrationImporter: Sendable {
             documentUuid: documentUuid,
             engine: engine,
             providerId: providerId,
+            modelId: modelId,
             voice: voice
         )
 
@@ -131,12 +133,14 @@ nonisolated struct NarrationImporter: Sendable {
         document: ReadAloudDocumentRecord,
         engine: NarrationEngineKind,
         providerId: String?,
+        modelId: String?,
         voice: SynthesisVoice
     ) throws -> NarrationRecord {
         let narration = Self.makeNarration(
             documentUuid: document.uuid,
             engine: engine,
             providerId: providerId,
+            modelId: modelId,
             voice: voice
         )
         guard dataManager.readAloud.add(narration) else {
@@ -149,6 +153,7 @@ nonisolated struct NarrationImporter: Sendable {
         documentUuid: String,
         engine: NarrationEngineKind,
         providerId: String?,
+        modelId: String?,
         voice: SynthesisVoice
     ) -> NarrationRecord {
         var narration = NarrationRecord()
@@ -156,6 +161,7 @@ nonisolated struct NarrationImporter: Sendable {
         narration.documentUuid = documentUuid
         narration.engine = engine
         narration.providerId = providerId
+        narration.modelId = modelId
         narration.voiceId = voice.id
         narration.voiceName = voice.name
         narration.narrationState = .queued

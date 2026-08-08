@@ -629,6 +629,20 @@ class DatabaseHelper {
             CREATE INDEX IF NOT EXISTS read_aloud_document_added
             ON ReadAloudDocument (addedDate);
             """, values: nil)
+        },
+
+        // Read Aloud provider engines: which model rendered a narration.
+        //
+        // Frozen on the row for the same reason the voice is. A provider's
+        // per-request character limit differs by model, and the chunker targets
+        // a fraction of that limit — so a resumed narration re-chunks from the
+        // engine's capabilities, and if the model came from mutable settings a
+        // change mid-narration would repartition the text and the chunk files
+        // already on disk would no longer mean what their indices say.
+        //
+        // NULL for the built-in engine, which has no model.
+        SchemaMigration(toVersion: 92) { db in
+            try db.executeUpdate("ALTER TABLE Narration ADD COLUMN modelId TEXT;", values: nil)
         }
     ]
 

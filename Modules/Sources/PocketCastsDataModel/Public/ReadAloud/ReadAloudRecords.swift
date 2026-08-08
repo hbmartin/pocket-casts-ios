@@ -71,6 +71,11 @@ public struct NarrationRecord: Equatable, Sendable {
     /// Provider identifier when `engineKind` is a remote provider; nil otherwise.
     public var providerId: String?
 
+    /// The provider model that rendered this, frozen at enqueue like the voice.
+    /// Nil for the built-in engine. See migration 92 for why it cannot be read
+    /// from settings at render time.
+    public var modelId: String?
+
     public var voiceId = ""
     public var voiceName = ""
 

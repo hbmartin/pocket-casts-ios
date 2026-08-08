@@ -139,7 +139,7 @@ actor TranscriptionQueueManager {
          remoteConsent: @escaping @Sendable (String) -> Bool = { TranscriptionConsentGate.hasConsent(providerId: $0) },
          maxSpeakers: @escaping @Sendable () -> Int = { Settings.transcriptionMaxSpeakers() },
          remoteProviderId: @escaping @Sendable () -> String = { Settings.transcriptionRemoteProvider() },
-         remoteAPIKey: @escaping @Sendable (String) -> String? = { TranscriptionKeyStore.apiKey(providerId: $0) },
+         remoteAPIKey: @escaping @Sendable (String) -> String? = { ProviderKeyStore.apiKey(providerId: $0) },
          episodeDownloadURL: @escaping @Sendable (String) -> URL? = { episodeUuid in
              guard let episode = DataManager.sharedManager.findBaseEpisode(uuid: episodeUuid),
                    let urlString = episode.downloadUrl,
