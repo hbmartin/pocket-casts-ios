@@ -87,21 +87,29 @@ public struct AppleSpeechSynthesisEngine: SpeechSynthesisEngine {
     ) async throws {
         try Task.checkCancellation()
 
-        guard let systemVoice = AVSpeechSynthesisVoice(identifier: voice.id) else {
+        // Fail fast on a voice the user has since deleted, before any setup.
+        guard AVSpeechSynthesisVoice(identifier: voice.id) != nil else {
             throw ReadAloudError.voiceUnavailable
         }
 
-        let utterance = AVSpeechUtterance(string: chunk.text)
-        utterance.voice = systemVoice
-        utterance.rate = Self.utteranceRate(for: settings.rate)
+        // Only Sendable values cross into the queue below; the utterance and its
+        // voice are both non-Sendable, so they are built on the far side.
+        let voiceId = voice.id
+        let text = chunk.text
+        let utteranceRate = Self.utteranceRate(for: settings.rate)
 
         // A leftover file from a failed attempt must never be mistaken for a
         // completed chunk by the resume path.
         try? FileManager.default.removeItem(at: outputURL)
 
-        // nonisolated(unsafe): the cancellation handler may run on another
-        // thread, but `stopSpeaking` is the one call it makes and
-        // AVSpeechSynthesizer tolerates it from off-thread.
+        // `AVSpeechSynthesizer` documents no thread-safety guarantee, and the
+        // cancellation handler runs on whatever thread cancels. Both calls we
+        // make on it — `write` and `stopSpeaking` — go through this one serial
+        // queue, so they can never overlap.
+        let synthesizerQueue = DispatchQueue(label: "au.com.pocketcasts.readaloud.synthesizer")
+        // nonisolated(unsafe): lets the synthesizer be captured by the queue's
+        // closures. What makes that safe is the serialization above — every call
+        // it receives is on `synthesizerQueue` — not an assumption about the class.
         nonisolated(unsafe) let synthesizer = AVSpeechSynthesizer()
         let session = WriteSession(outputURL: outputURL)
 
@@ -114,14 +122,26 @@ public struct AppleSpeechSynthesisEngine: SpeechSynthesisEngine {
         try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
                 session.attach(continuation)
-                synthesizer.write(utterance) { buffer in
-                    session.consume(buffer)
+                synthesizerQueue.async {
+                    guard let systemVoice = AVSpeechSynthesisVoice(identifier: voiceId) else {
+                        session.settle(with: .failure(ReadAloudError.voiceUnavailable))
+                        return
+                    }
+                    let utterance = AVSpeechUtterance(string: text)
+                    utterance.voice = systemVoice
+                    utterance.rate = utteranceRate
+
+                    synthesizer.write(utterance) { buffer in
+                        session.consume(buffer)
+                    }
                 }
             }
         } onCancel: {
             // Without this a cancelled task would hang suspended until the
             // watchdog fires: the synthesizer has no reason to end the stream.
-            synthesizer.stopSpeaking(at: .immediate)
+            synthesizerQueue.async { synthesizer.stopSpeaking(at: .immediate) }
+            // Settled here rather than on the queue: the waiting task should be
+            // resumed now, not behind whatever the synthesizer is still doing.
             session.settle(with: .failure(CancellationError()))
         }
         // `synthesizer` is only referenced from inside the closure above, which

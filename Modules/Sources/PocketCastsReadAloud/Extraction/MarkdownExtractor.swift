@@ -137,8 +137,12 @@ public struct MarkdownExtractor: TextExtractor {
         guard rest.first?.isWhitespace == true || rest.isEmpty else { return nil }
         // Closing hashes ("## Title ##") are decoration, but only when a space
         // precedes them — the hash in "## Learning C#" is content.
-        let body = rest.trimmingCharacters(in: .whitespaces)
-        let withoutClosing = body.replacingOccurrences(of: "\\s+#+$", with: "", options: .regularExpression)
+        //
+        // Matched against `rest` rather than a trimmed copy, because the trim
+        // would remove the very whitespace the pattern needs: in "## #" the lone
+        // hash is a closing sequence (an empty heading), but once trimmed it
+        // looks like content and survives as a heading reading "#".
+        let withoutClosing = rest.replacingOccurrences(of: "\\s+#+$", with: "", options: .regularExpression)
         return (hashes.count, withoutClosing.trimmingCharacters(in: .whitespaces))
     }
 
