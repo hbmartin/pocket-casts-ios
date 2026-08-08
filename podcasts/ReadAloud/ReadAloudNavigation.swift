@@ -14,10 +14,15 @@ final class ReadAloudLibraryViewController: UIViewController {
         super.viewDidLoad()
         title = L10n.readAloudLibraryTitle
 
-        let libraryView = ReadAloudLibraryView(onImportTapped: { [weak self] in
-            self?.presentDocumentPicker()
-        })
+        let libraryView = ReadAloudLibraryView(
+            onImportTapped: { [weak self] in self?.presentDocumentPicker() },
+            onComposeTapped: { [weak self] in self?.presentCompose() }
+        )
         embed(PCHostingController(rootView: libraryView.setupDefaultEnvironment()))
+    }
+
+    private func presentCompose() {
+        ReadAloudNavigation.presentCompose(from: self)
     }
 
     private func presentDocumentPicker() {
@@ -57,10 +62,34 @@ final class ReadAloudSettingsViewController: UIViewController {
 enum ReadAloudNavigation {
     /// Presents the import sheet for a picked or shared file.
     static func presentImport(for url: URL, sourceKind: NarrationSourceKind, from viewController: UIViewController) {
-        let model = ReadAloudImportViewModel(source: .file(url, sourceKind))
+        presentImport(source: .file(url, sourceKind), from: viewController)
+    }
+
+    /// Presents the compose screen, then the review sheet for what was written.
+    ///
+    /// The review sheet replaces the compose sheet rather than stacking on it:
+    /// two modals deep is where a Cancel button stops meaning anything obvious.
+    static func presentCompose(from viewController: UIViewController) {
+        let box = DismissBox()
+        let composeView = ReadAloudComposeView(
+            onCancel: { box.controller?.dismiss(animated: true) },
+            onNext: { preview in
+                guard let host = box.controller, let presenter = host.presentingViewController else { return }
+                host.dismiss(animated: true) {
+                    presentImport(source: .composed(preview), from: presenter)
+                }
+            }
+        )
+        let controller = PCHostingController(rootView: composeView.setupDefaultEnvironment())
+        box.controller = controller
+        viewController.present(controller, animated: true)
+    }
+
+    /// Presents the review sheet for an already-resolved source.
+    static func presentImport(source: ReadAloudImportViewModel.Source, from viewController: UIViewController) {
         let box = DismissBox()
         let view = ReadAloudImportView(
-            model: model,
+            model: ReadAloudImportViewModel(source: source),
             onFinished: { box.controller?.dismiss(animated: true) },
             onCancel: { box.controller?.dismiss(animated: true) }
         )

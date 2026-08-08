@@ -2,6 +2,7 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsReadAloud
 import PocketCastsUtils
+import Synchronization
 import UniformTypeIdentifiers
 
 /// Renders queued narrations, one at a time.
@@ -31,9 +32,15 @@ actor NarrationQueue {
     private var pending: [String] = []
     private var runningUuid: String?
     private var runningTask: Task<Void, Never>?
-    /// Set when the app is heading to the background and the grace period is
-    /// about to expire: finish the chunk in flight, then stop.
-    private var suspended = false
+
+    /// Set when the background grace period is expiring: finish the chunk in
+    /// flight, then stop.
+    ///
+    /// Behind a `Mutex` rather than actor state because the only thing that sets
+    /// it is a `UIApplication` background-task expiration handler, which has no
+    /// time to await an actor — the OS may suspend the process the moment that
+    /// handler returns, and a hop scheduled from it can simply never land.
+    private let suspended = Mutex(false)
 
     init(
         dataManager: DataManager = .sharedManager,
@@ -54,7 +61,7 @@ actor NarrationQueue {
     // MARK: - Queue control
 
     func enqueue(uuid: String) {
-        suspended = false
+        suspended.withLock { $0 = false }
         if runningUuid != uuid, !pending.contains(uuid) {
             pending.append(uuid)
         }
@@ -96,8 +103,11 @@ actor NarrationQueue {
     /// The background grace period is ending. The chunk in flight finishes (its
     /// file and checkpoint land), then the queue stops until the next launch or
     /// foreground.
-    func suspendAfterCurrentChunk() {
-        suspended = true
+    ///
+    /// `nonisolated` so the expiration handler can set it and return, rather
+    /// than scheduling work the OS may never run.
+    nonisolated func suspendAfterCurrentChunk() {
+        suspended.withLock { $0 = true }
     }
 
     var isIdle: Bool {
@@ -116,7 +126,7 @@ actor NarrationQueue {
     // MARK: - Draining
 
     private func drain() {
-        guard runningTask == nil, !suspended, !pending.isEmpty else { return }
+        guard runningTask == nil, !suspended.withLock({ $0 }), !pending.isEmpty else { return }
         let uuid = pending.removeFirst()
         runningUuid = uuid
 
@@ -141,6 +151,12 @@ actor NarrationQueue {
 
         do {
             try await render(narration, document: document)
+        } catch is NarrationSuspended {
+            // Deliberately nothing. The narration stays `rendering` — which is
+            // in `NarrationState.resumable` — and its workspace stays on disk,
+            // so the next launch or foreground picks it up and skips the chunks
+            // already rendered. Treating this as cancellation (as it once was)
+            // threw away every rendered chunk the moment the user switched apps.
         } catch is CancellationError {
             dataManager.readAloud.markCancelled(uuid: uuid)
             storage.deleteWorkspace(narrationUuid: uuid)
@@ -172,7 +188,11 @@ actor NarrationQueue {
             throw ReadAloudError.apiKeyMissing
         }
 
-        let chunks = TextChunker().chunks(for: extracted, maxCharacters: engine.capabilities.maxCharactersPerChunk)
+        let chunks = TextChunker().chunks(
+            for: extracted,
+            maxCharacters: engine.capabilities.maxCharactersPerChunk,
+            boundary: engine.capabilities.chunkBoundary
+        )
         guard !chunks.isEmpty else { throw ReadAloudError.emptyDocument }
 
         dataManager.readAloud.markRendering(uuid: narration.uuid, chunkCount: chunks.count)
@@ -189,31 +209,16 @@ actor NarrationQueue {
         var rendered = storage.renderedChunkIndices(narrationUuid: narration.uuid, chunkCount: chunks.count)
         dataManager.readAloud.updateProgress(uuid: narration.uuid, completedChunkCount: rendered.count)
 
-        for chunk in chunks {
-            try Task.checkCancellation()
-            if suspended { throw ReadAloudError.cancelled }
-            guard !rendered.contains(chunk.index) else { continue }
-
-            let chunkURL = storage.chunkURL(narrationUuid: narration.uuid, index: chunk.index)
-            do {
-                try await engine.synthesize(
-                    chunk: chunk,
-                    voice: voice,
-                    settings: settings,
-                    apiKey: apiKey,
-                    to: chunkURL
-                )
-            } catch {
-                // Never leave a partial file behind: the resume path treats any
-                // non-empty chunk file as finished work.
-                try? FileManager.default.removeItem(at: chunkURL)
-                throw error
-            }
-
-            rendered.insert(chunk.index)
-            dataManager.readAloud.updateProgress(uuid: narration.uuid, completedChunkCount: rendered.count)
-            Self.postChanged()
-        }
+        let outstanding = chunks.filter { !rendered.contains($0.index) }
+        try await renderChunks(
+            outstanding,
+            narrationUuid: narration.uuid,
+            engine: engine,
+            voice: voice,
+            settings: settings,
+            apiKey: apiKey,
+            rendered: &rendered
+        )
 
         try Task.checkCancellation()
 
@@ -254,6 +259,79 @@ actor NarrationQueue {
         storage.deleteWorkspace(narrationUuid: narration.uuid)
     }
 
+    /// Renders the outstanding chunks, up to `maxConcurrentChunks` at a time.
+    ///
+    /// The bookkeeping deliberately stays on the actor: only `synthesize` runs in
+    /// a child task, and every mutation of `rendered` happens where `group.next()`
+    /// resumes. Chunks may therefore finish out of order, which costs nothing —
+    /// the assembler reads files back by index and progress is only a count.
+    ///
+    /// At `maxConcurrentChunks == 1` (every local engine) this is exactly the
+    /// sequential loop it replaced: one task in flight, awaited before the next
+    /// is added.
+    private func renderChunks(
+        _ chunks: [NarrationChunk],
+        narrationUuid: String,
+        engine: any SpeechSynthesisEngine,
+        voice: SynthesisVoice,
+        settings: SynthesisSettings,
+        apiKey: String?,
+        rendered: inout Set<Int>
+    ) async throws {
+        guard !chunks.isEmpty else { return }
+        let limit = max(engine.capabilities.maxConcurrentChunks, 1)
+        let storage = storage
+
+        // `inout` can't cross the group's closure boundary; copy in, copy back.
+        var completed = rendered
+        defer { rendered = completed }
+
+        try await withThrowingTaskGroup(of: Int.self) { group in
+            var next = chunks.makeIterator()
+
+            /// Adds one chunk unless the run is stopping. Returns false when
+            /// there was nothing left to add.
+            func addNext() throws -> Bool {
+                try Task.checkCancellation()
+                if suspended.withLock({ $0 }) { throw NarrationSuspended() }
+                guard let chunk = next.next() else { return false }
+
+                let chunkURL = storage.chunkURL(narrationUuid: narrationUuid, index: chunk.index)
+                group.addTask {
+                    do {
+                        try await engine.synthesize(
+                            chunk: chunk,
+                            voice: voice,
+                            settings: settings,
+                            apiKey: apiKey,
+                            to: chunkURL
+                        )
+                    } catch {
+                        // Never leave a partial file behind: the resume path
+                        // treats any non-empty chunk file as finished work.
+                        try? FileManager.default.removeItem(at: chunkURL)
+                        throw error
+                    }
+                    return chunk.index
+                }
+                return true
+            }
+
+            // Seed the window. `addNext` returns false once the chunks run
+            // out, which for a short narration happens before the limit.
+            for _ in 0..<limit {
+                guard try addNext() else { break }
+            }
+
+            while let index = try await group.next() {
+                completed.insert(index)
+                dataManager.readAloud.updateProgress(uuid: narrationUuid, completedChunkCount: completed.count)
+                Self.postChanged()
+                _ = try addNext()
+            }
+        }
+    }
+
     /// Re-reads and re-extracts the document's retained file. Done afresh on
     /// every run — including a resume — because extraction and chunking are
     /// deterministic, so this reproduces exactly the chunk indices already on
@@ -276,3 +354,10 @@ actor NarrationQueue {
         NotificationCenter.postOnMainThread(NarrationsChanged())
     }
 }
+
+/// Raised when the background grace period ends mid-render.
+///
+/// Deliberately not a `ReadAloudError`: nothing failed, the user is told
+/// nothing, and no state changes. It exists only to unwind out of the render
+/// loop without running assembly or materialization.
+private struct NarrationSuspended: Error {}

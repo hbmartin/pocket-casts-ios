@@ -32,7 +32,14 @@ public struct TextChunker: Sendable {
     public init() {}
 
     /// - Parameter maxCharacters: the engine's hard per-request limit.
-    public func chunks(for document: ExtractedDocument, maxCharacters: Int) -> [NarrationChunk] {
+    /// - Parameter boundary: which block boundaries must end a chunk. Comes from
+    ///   the engine's capabilities, and the engine is frozen on the narration
+    ///   row, so a resumed run always re-chunks the same way.
+    public func chunks(
+        for document: ExtractedDocument,
+        maxCharacters: Int,
+        boundary: ChunkBoundary = .everyBlock
+    ) -> [NarrationChunk] {
         let target = min(
             max(Int(Double(maxCharacters) * Self.fillRatio), Self.minimumTarget),
             max(maxCharacters, 1)
@@ -40,6 +47,7 @@ public struct TextChunker: Sendable {
         var chunks: [NarrationChunk] = []
         var pending = ""
         var pendingStartsBlock = true
+        var previousWasHeading = false
 
         /// Emits whatever has accumulated. `nextStartsBlock` records why we're
         /// flushing: at a block boundary the following chunk opens a new block
@@ -54,8 +62,18 @@ public struct TextChunker: Sendable {
         }
 
         for block in document.blocks {
-            // Rule 2: whatever was accumulating ends here.
-            flush(nextStartsBlock: true)
+            // Rule 2, as far as this engine wants it. A heading always breaks on
+            // both sides — before it so it is set off from what came before, and
+            // after it so it does not run into its own body text, which is the
+            // one missing pause that sounds broken rather than merely flat.
+            let mustBreak = switch boundary {
+            case .everyBlock: true
+            case .headingsOnly: block.isHeading || previousWasHeading
+            }
+            if mustBreak {
+                flush(nextStartsBlock: true)
+            }
+            previousWasHeading = block.isHeading
 
             for sentence in Self.sentences(in: block.text) {
                 for piece in Self.fitting(sentence, within: target) {

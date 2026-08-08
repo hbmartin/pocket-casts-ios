@@ -20,6 +20,12 @@ nonisolated protocol NarrationMaterializing: Sendable {
 /// Production materialization: move the rendered file into the download cache,
 /// then create the `UserEpisode` around it.
 nonisolated struct NarrationMaterializer: NarrationMaterializing {
+    private let dataManager: DataManager
+
+    init(dataManager: DataManager = .sharedManager) {
+        self.dataManager = dataManager
+    }
+
     /// Files-screen section for narrated documents. A stored literal, not an
     /// `L10n` lookup: `groupName` is persisted per row and every other value it
     /// takes is a literal folder name, so localizing it would fork the section
@@ -43,7 +49,7 @@ nonisolated struct NarrationMaterializer: NarrationMaterializing {
         // episode creation and markCompleted) replaces its stale episode
         // instead of minting a duplicate on every attempt.
         let episodeUuid = narration.uuid
-        if let stale = DataManager.sharedManager.findUserEpisode(uuid: episodeUuid) {
+        if let stale = dataManager.findUserEpisode(uuid: episodeUuid) {
             UserEpisodeManager.deleteFromDevice(userEpisode: stale)
         }
 

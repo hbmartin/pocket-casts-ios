@@ -335,6 +335,186 @@ final class NarrationQueueTests: DBTestCase {
         XCTAssertEqual(dataManager.readAloud.narration(uuid: second.uuid)?.narrationState, .completed)
     }
 
+    // MARK: - Suspension
+
+    /// The bug this replaced: suspension reused `ReadAloudError.cancelled`, so
+    /// backgrounding the app mid-narration marked it cancelled — a state that is
+    /// not resumable — and deleted the workspace every rendered chunk had been
+    /// written to. Switching apps threw away all the work.
+    func testSuspensionKeepsTheWorkspaceAndStaysResumable() async throws {
+        let narration = try makeNarration()
+        let engine = FakeSynthesisEngine(holdEachChunk: .milliseconds(20))
+        let queue = makeQueue(engine: engine)
+
+        await queue.enqueue(uuid: narration.uuid)
+        // Let a chunk or two land, then expire the grace period.
+        try await Task.sleep(for: .milliseconds(60))
+        queue.suspendAfterCurrentChunk()
+        await queue.drainUntilIdle()
+
+        let loaded = try XCTUnwrap(dataManager.readAloud.narration(uuid: narration.uuid))
+        XCTAssertTrue(
+            NarrationState.resumable.contains(loaded.narrationState),
+            "a suspended narration must still be resumable, was \(loaded.narrationState)"
+        )
+        XCTAssertTrue(
+            FileManager.default.fileExists(atPath: storage.workspaceURL(narrationUuid: narration.uuid).path),
+            "suspension destroyed the checkpoint"
+        )
+        let renderedBefore = await engine.synthesizedIndices.count
+        XCTAssertGreaterThan(renderedBefore, 0, "nothing rendered before suspension; the test proves nothing")
+    }
+
+    /// And the other half: what suspension leaves behind must actually resume,
+    /// without re-rendering what already landed.
+    func testASuspendedNarrationResumesWithoutRedoingWork() async throws {
+        let narration = try makeNarration()
+        let firstEngine = FakeSynthesisEngine(holdEachChunk: .milliseconds(20))
+        let firstQueue = makeQueue(engine: firstEngine)
+
+        await firstQueue.enqueue(uuid: narration.uuid)
+        try await Task.sleep(for: .milliseconds(60))
+        firstQueue.suspendAfterCurrentChunk()
+        await firstQueue.drainUntilIdle()
+        let renderedBeforeSuspension = await firstEngine.synthesizedIndices
+
+        // A fresh launch: restorePending should pick it up off `rendering`.
+        let secondEngine = FakeSynthesisEngine()
+        let secondQueue = makeQueue(engine: secondEngine)
+        await secondQueue.restorePending()
+        await secondQueue.drainUntilIdle()
+
+        XCTAssertEqual(dataManager.readAloud.narration(uuid: narration.uuid)?.narrationState, .completed)
+        let redone = await secondEngine.synthesizedIndices
+        XCTAssertTrue(
+            Set(redone).isDisjoint(with: Set(renderedBeforeSuspension)),
+            "resume re-rendered chunks that survived suspension"
+        )
+    }
+
+    // MARK: - Orphan sweep
+
+    /// Files can outlive their rows — an interrupted delete, a crash mid-render,
+    /// a partial restore — and nothing else would ever reclaim them.
+    func testSweepRemovesFilesWithNoRows() throws {
+        let narration = try makeNarration()
+        let document = try XCTUnwrap(dataManager.readAloud.document(uuid: narration.documentUuid))
+        try storage.prepareWorkspace(narrationUuid: narration.uuid)
+
+        // An orphan of each kind, alongside the live pair.
+        let orphanSource = try storage.writeSource(text: "orphaned", documentUuid: "no-such-document")
+        try storage.prepareWorkspace(narrationUuid: "no-such-narration")
+
+        let removed = storage.sweepOrphans(
+            liveDocumentUuids: [document.uuid],
+            liveNarrationUuids: [narration.uuid]
+        )
+
+        XCTAssertEqual(removed, 2)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: storage.sourceURL(relativePath: orphanSource).path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: storage.workspaceURL(narrationUuid: "no-such-narration").path))
+        // The live pair is untouched — the risk of a sweep is that it eats
+        // something real.
+        XCTAssertTrue(FileManager.default.fileExists(atPath: storage.sourceURL(relativePath: document.sourcePath).path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: storage.workspaceURL(narrationUuid: narration.uuid).path))
+    }
+
+    func testSweepIsANoOpWhenNothingIsOrphaned() throws {
+        let narration = try makeNarration()
+        let document = try XCTUnwrap(dataManager.readAloud.document(uuid: narration.documentUuid))
+
+        let removed = storage.sweepOrphans(
+            liveDocumentUuids: [document.uuid],
+            liveNarrationUuids: [narration.uuid]
+        )
+
+        XCTAssertEqual(removed, 0)
+    }
+
+    // MARK: - Chunk concurrency
+
+    /// Every local engine reports 1, and that path is the one verified working
+    /// end to end, so it must stay exactly what it was: one chunk at a time.
+    func testConcurrencyOfOneNeverOverlapsChunks() async throws {
+        let narration = try makeNarration()
+        let engine = FakeSynthesisEngine(concurrencyLimit: 1, holdEachChunk: .milliseconds(5))
+        let queue = makeQueue(engine: engine)
+
+        await queue.enqueue(uuid: narration.uuid)
+        await queue.drainUntilIdle()
+
+        let peak = await engine.maxConcurrent
+        XCTAssertEqual(peak, 1, "chunks overlapped on an engine that asked for one at a time")
+        let loaded = try XCTUnwrap(dataManager.readAloud.narration(uuid: narration.uuid))
+        XCTAssertEqual(loaded.narrationState, .completed)
+        XCTAssertEqual(loaded.completedChunkCount, loaded.chunkCount)
+    }
+
+    /// A network engine is latency-bound, so it may ask for several in flight.
+    func testChunksRenderConcurrentlyUpToTheEngineLimit() async throws {
+        let narration = try makeNarration()
+        let engine = FakeSynthesisEngine(concurrencyLimit: 3, holdEachChunk: .milliseconds(20))
+        let queue = makeQueue(engine: engine)
+
+        await queue.enqueue(uuid: narration.uuid)
+        await queue.drainUntilIdle()
+
+        let peak = await engine.maxConcurrent
+        XCTAssertGreaterThan(peak, 1, "the engine's concurrency allowance was ignored")
+        XCTAssertLessThanOrEqual(peak, 3, "more chunks in flight than the engine allows")
+    }
+
+    /// Out-of-order completion is fine — the assembler reads files back by index
+    /// — but every chunk must still be rendered exactly once.
+    func testConcurrentRenderingCoversEveryChunkExactlyOnce() async throws {
+        let narration = try makeNarration()
+        let engine = FakeSynthesisEngine(concurrencyLimit: 4)
+        let queue = makeQueue(engine: engine)
+
+        await queue.enqueue(uuid: narration.uuid)
+        await queue.drainUntilIdle()
+
+        let loaded = try XCTUnwrap(dataManager.readAloud.narration(uuid: narration.uuid))
+        let synthesized = await engine.synthesizedIndices
+        XCTAssertEqual(Set(synthesized).count, synthesized.count, "a chunk was rendered twice")
+        XCTAssertEqual(Set(synthesized), Set(0..<Int(loaded.chunkCount)))
+        XCTAssertEqual(loaded.narrationState, .completed)
+    }
+
+    /// A failure inside the group must still fail the narration and still leave
+    /// no partial file for the resume path to mistake for finished work.
+    func testAFailingChunkUnderConcurrencyStillCleansUp() async throws {
+        let narration = try makeNarration()
+        let engine = FakeSynthesisEngine(failAtIndex: 2, writeFileBeforeFailing: true, concurrencyLimit: 3)
+        let queue = makeQueue(engine: engine)
+
+        await queue.enqueue(uuid: narration.uuid)
+        await queue.drainUntilIdle()
+
+        let loaded = try XCTUnwrap(dataManager.readAloud.narration(uuid: narration.uuid))
+        XCTAssertEqual(loaded.narrationState, .failed)
+        XCTAssertFalse(
+            FileManager.default.fileExists(atPath: storage.chunkURL(narrationUuid: narration.uuid, index: 2).path),
+            "a partial chunk file survived a concurrent failure"
+        )
+    }
+
+    /// Resume must still skip finished work when several are in flight.
+    func testConcurrentResumeSkipsRenderedChunks() async throws {
+        let narration = try makeNarration()
+        let firstQueue = makeQueue(engine: FakeSynthesisEngine(concurrencyLimit: 3), assembler: FailingAssembler())
+        await firstQueue.enqueue(uuid: narration.uuid)
+        await firstQueue.drainUntilIdle()
+
+        let secondEngine = FakeSynthesisEngine(concurrencyLimit: 3)
+        let secondQueue = makeQueue(engine: secondEngine)
+        await secondQueue.retry(uuid: narration.uuid)
+        await secondQueue.drainUntilIdle()
+
+        let resumed = await secondEngine.synthesizedIndices
+        XCTAssertEqual(resumed, [], "resume re-rendered chunks that were already on disk")
+    }
+
     // MARK: - Serialization
 
     func testNarrationsRenderOneAtATime() async throws {
@@ -362,7 +542,7 @@ private actor FakeSynthesisEngine: SpeechSynthesisEngine {
         // Small limit so the fixture chunks several times over.
         EngineCapabilities(
             maxCharactersPerChunk: 300,
-            maxConcurrentChunks: 1,
+            maxConcurrentChunks: concurrencyLimit,
             requiresAPIKey: false,
             requiresConfirmation: false,
             supportsFreePreview: true
@@ -375,10 +555,19 @@ private actor FakeSynthesisEngine: SpeechSynthesisEngine {
 
     private let failAtIndex: Int?
     private let writeFileBeforeFailing: Bool
+    private let concurrencyLimit: Int
+    private let holdEachChunk: Duration?
 
-    init(failAtIndex: Int? = nil, writeFileBeforeFailing: Bool = false) {
+    init(
+        failAtIndex: Int? = nil,
+        writeFileBeforeFailing: Bool = false,
+        concurrencyLimit: Int = 1,
+        holdEachChunk: Duration? = nil
+    ) {
         self.failAtIndex = failAtIndex
         self.writeFileBeforeFailing = writeFileBeforeFailing
+        self.concurrencyLimit = concurrencyLimit
+        self.holdEachChunk = holdEachChunk
     }
 
     nonisolated func availableVoices(apiKey: String?) async throws -> [SynthesisVoice] {
@@ -403,6 +592,10 @@ private actor FakeSynthesisEngine: SpeechSynthesisEngine {
                 try? Data("partial".utf8).write(to: outputURL)
             }
             throw ReadAloudError.engineFailure
+        }
+
+        if let holdEachChunk {
+            try? await Task.sleep(for: holdEachChunk)
         }
 
         synthesizedIndices.append(chunk.index)

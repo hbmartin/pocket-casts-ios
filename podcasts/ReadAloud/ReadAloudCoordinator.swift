@@ -26,6 +26,7 @@ final class ReadAloudCoordinator {
         completionNotifier.start()
 
         Task {
+            await Self.sweepOrphanedFiles()
             await NarrationQueue.shared.restorePending()
         }
     }
@@ -49,7 +50,10 @@ final class ReadAloudCoordinator {
         // any moment, and a task started from an async hop may come too late.
         backgroundTask?.end()
         let task = ReadAloudBackgroundTask.begin {
-            Task { await NarrationQueue.shared.suspendAfterCurrentChunk() }
+            // Synchronous by design: the OS can suspend the process as soon as
+            // this handler returns, so a hop scheduled here may never run and
+            // the queue would keep rendering past the grace period.
+            NarrationQueue.shared.suspendAfterCurrentChunk()
         }
         backgroundTask = task
 
@@ -59,6 +63,27 @@ final class ReadAloudCoordinator {
             task.end()
             self.backgroundTask = nil
         }
+    }
+
+    /// Reconciles the retained files against the database.
+    ///
+    /// Runs before `restorePending` so a resumed narration's workspace is never
+    /// a sweep candidate, and off the main actor because it touches the
+    /// filesystem.
+    private static func sweepOrphanedFiles() async {
+        await Task.detached(priority: .utility) {
+            let dataManager = DataManager.sharedManager
+            let documents = dataManager.readAloud.allDocuments()
+            let narrations = documents.flatMap { dataManager.readAloud.narrations(documentUuid: $0.uuid) }
+
+            let removed = ReadAloudStorage.default.sweepOrphans(
+                liveDocumentUuids: Set(documents.map(\.uuid)),
+                liveNarrationUuids: Set(narrations.map(\.uuid))
+            )
+            if removed > 0 {
+                FileLog.shared.addMessage("ReadAloud: swept \(removed) orphaned file(s)")
+            }
+        }.value
     }
 
     /// The user deleted a generated episode. Its narration goes with it; the

@@ -9,6 +9,9 @@ import SwiftUI
 final class ReadAloudImportViewModel: ObservableObject {
     enum Source {
         case file(URL, NarrationSourceKind)
+        /// Text typed or pasted on the compose screen, already extracted there
+        /// so this sheet has nothing to re-read.
+        case composed(NarrationImporter.Preview)
         /// An existing document being narrated again in another voice.
         case existingDocument(ReadAloudDocumentRecord)
     }
@@ -70,6 +73,11 @@ final class ReadAloudImportViewModel: ObservableObject {
             } catch {
                 loadError = error as? ReadAloudError ?? .sourceUnreadable
             }
+        case .composed(let preview):
+            self.preview = preview
+            title = preview.document.suggestedTitle
+            characterCount = preview.document.characterCount
+            detectedLanguage = preview.document.detectedLanguage
         case .existingDocument(let document):
             title = document.title
             characterCount = Int(document.characterCount)
@@ -106,7 +114,7 @@ final class ReadAloudImportViewModel: ObservableObject {
         do {
             let narrationUuid: String
             switch source {
-            case .file:
+            case .file, .composed:
                 guard let preview else { throw ReadAloudError.sourceUnreadable }
                 let created = try importer.commit(
                     preview: preview,

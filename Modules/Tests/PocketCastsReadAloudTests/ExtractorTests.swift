@@ -97,6 +97,23 @@ struct MarkdownExtractorTests {
         #expect(document.blocks[2].text == "Deep")
     }
 
+    /// CommonMark: a closing sequence must be preceded by whitespace, so "## #"
+    /// is an *empty* heading. Regressed once by trimming before matching, which
+    /// removed the whitespace the pattern needed and left a heading reading "#".
+    @Test("A lone closing hash yields an empty heading, not a heading of '#'")
+    func loneClosingHashIsNotContent() throws {
+        let document = try extractMarkdown("## #\n\nBody text.")
+
+        #expect(document.blocks.map(\.text) == ["Body text."])
+    }
+
+    @Test("Multiple closing hashes with nothing else yield an empty heading")
+    func onlyClosingHashes() throws {
+        let document = try extractMarkdown("## ###\n\nBody text.")
+
+        #expect(document.blocks.map(\.text) == ["Body text."])
+    }
+
     @Test("Closing hashes are decoration, not content")
     func atxClosingHashes() throws {
         let document = try extractMarkdown("## Title ##\n\nBody.")

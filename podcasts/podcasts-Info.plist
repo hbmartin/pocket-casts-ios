@@ -2,8 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSContactsUsageDescription</key>
-	<string>Each time you run Find People, contact emails and phone numbers are hashed on this device. Email hashes are compared transiently; phone hashes are currently ignored. Nothing is uploaded in readable form or stored.</string>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>au.com.shiftyjelly.podcasts.Refresh</string>
@@ -85,6 +83,19 @@
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>$(PRODUCT_BUNDLE_IDENTIFIER).pcasts</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Text Document</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.plain-text</string>
+				<string>net.daringfireball.markdown</string>
 			</array>
 		</dict>
 	</array>
@@ -1006,10 +1017,14 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>This allows you to add custom images to your files</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Each time you run Find People, contact emails and phone numbers are hashed on this device. Email hashes are compared transiently; phone hashes are currently ignored. Nothing is uploaded in readable form or stored.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Pocket Casts needs permission to save this image to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Pocket Casts needs permission to save this image to your photo library.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>NSUbiquitousContainers</key>
 	<dict>
 		<key>iCloud.$(PRODUCT_BUNDLE_IDENTIFIER_ROOT)</key>
@@ -1024,6 +1039,8 @@
 	</dict>
 	<key>PCAppGroupIdentifier</key>
 	<string>$(APP_GROUP_IDENTIFIER)</string>
+	<key>PCPodcastBackendOrigin</key>
+	<string>$(PODCAST_BACKEND_ORIGIN)</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>DMSans.ttf</string>
@@ -1051,8 +1068,6 @@
 			</array>
 		</dict>
 	</dict>
-	<key>NSSupportsLiveActivities</key>
-	<true/>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
@@ -1088,8 +1103,6 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<key>PCPodcastBackendOrigin</key>
-	<string>$(PODCAST_BACKEND_ORIGIN)</string>
 	<key>UTExportedTypeDeclarations</key>
 	<array>
 		<dict>

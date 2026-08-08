@@ -547,6 +547,23 @@ class MainTabBarController: UITabBarController, NavigationProtocol {
         })
     }
 
+    /// A `.txt`/`.md` arrived from the share sheet or Open-in. Lands on the Read
+    /// Aloud library with the review sheet over it, so cancelling leaves the user
+    /// somewhere that explains what just happened rather than on an unrelated tab.
+    func navigateToReadAloudImport(_ url: URL) {
+        appDelegate()?.miniPlayer()?.closeUpNextAndFullPlayer(completion: { [weak self] in
+            guard let self, switchToTab(.profile),
+                  let navController = selectedViewController as? UINavigationController else {
+                return
+            }
+            navController.popToRootViewController(animated: false)
+
+            let library = ReadAloudLibraryViewController()
+            navController.pushViewController(library, animated: false)
+            ReadAloudNavigation.presentImport(for: url, sourceKind: .shared, from: library)
+        })
+    }
+
     func navigateToFiles() {
         guard switchToTab(.profile),
               let navController = selectedViewController as? UINavigationController else {

@@ -16,14 +16,17 @@ struct ReadAloudLibraryView: View {
     /// Presents the document picker. Injected because the picker is UIKit and
     /// the hosting controller owns it.
     let onImportTapped: () -> Void
+    /// Presents the compose screen.
+    let onComposeTapped: () -> Void
 
     var body: some View {
         List {
             Section {
                 Button(L10n.readAloudNarrateDocument, action: onImportTapped)
-                    .font(style: .body, weight: .medium)
-                    .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
+                Button(L10n.readAloudComposeAction, action: onComposeTapped)
             }
+            .font(style: .body, weight: .medium)
+            .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
             .listRowBackground(AppTheme.color(for: .primaryUi01, theme: theme))
 
             if model.entries.isEmpty {
@@ -170,6 +173,7 @@ extension ReadAloudImportViewModel.Source: Identifiable {
     var id: String {
         switch self {
         case .file(let url, _): "file:\(url.absoluteString)"
+        case .composed(let preview): "composed:\(preview.document.characterCount):\(preview.document.suggestedTitle)"
         case .existingDocument(let document): "document:\(document.uuid)"
         }
     }

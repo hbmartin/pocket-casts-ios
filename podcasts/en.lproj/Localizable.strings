@@ -8099,3 +8099,12 @@
 
 /* Generic error shown when narration fails. */
 "read_aloud_error_generic" = "Something went wrong while narrating. Try again.";
+
+/* Title of the screen for typing or pasting text to be narrated. */
+"read_aloud_compose_title" = "Paste Text";
+
+/* Button on the Read Aloud library that opens the compose screen. */
+"read_aloud_compose_action" = "Paste Text…";
+
+/* Placeholder in the compose screen's text editor. */
+"read_aloud_compose_placeholder" = "Paste or type the text you want read aloud.";

@@ -20,6 +20,11 @@ public struct DocumentBlock: Sendable, Equatable {
         self.kind = kind
         self.text = text
     }
+
+    public var isHeading: Bool {
+        if case .heading = kind { return true }
+        return false
+    }
 }
 
 /// The output of extraction: a document reduced to narratable blocks plus the
@@ -35,6 +40,12 @@ public struct ExtractedDocument: Sendable, Equatable {
     /// BCP-47 identifier from language detection, or nil when detection was
     /// inconclusive (very short documents, symbol soup).
     public let detectedLanguage: String?
+
+    /// Longest document that may be narrated. ~500k characters is roughly ten
+    /// hours of audio — past the point where synthesizing a whole document
+    /// eagerly is a sensible thing to start. Public so the compose screen can
+    /// warn while typing rather than only failing at extraction.
+    public static let maximumCharacterCount = 500_000
 
     public init(suggestedTitle: String, blocks: [DocumentBlock], characterCount: Int, detectedLanguage: String?) {
         self.suggestedTitle = suggestedTitle

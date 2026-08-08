@@ -43,6 +43,29 @@ public struct SynthesisVoice: Sendable, Equatable, Identifiable {
     }
 }
 
+/// Which block boundaries are required to end a chunk.
+///
+/// A pause exists only *between* rendered chunk files — the assembler advances a
+/// cursor between them — so this decides which of a document's pauses survive,
+/// and with it how many requests a narration costs.
+///
+/// The two answers suit two kinds of engine. Rendering locally is free, so the
+/// built-in engine breaks everywhere and keeps every pause. A network engine
+/// pays a round trip per chunk, and a document of short paragraphs is mostly
+/// boundaries: a 31k-character sample with 137 blocks produced 137 chunks at 11%
+/// of the size limit, which as sequential HTTPS calls is minutes of latency and
+/// 137 chances to fail. Packing paragraphs together and breaking only at
+/// headings cut that sample to roughly 48 while keeping the pauses that carry
+/// structure — a heading running into its own body text is the one that sounds
+/// broken.
+public enum ChunkBoundary: Sendable, Equatable, CaseIterable {
+    /// Every block ends a chunk. Every paragraph and heading keeps its pause.
+    case everyBlock
+    /// Only headings end a chunk; consecutive paragraphs pack together and lose
+    /// the pause between them.
+    case headingsOnly
+}
+
 /// What the app needs to know about an engine before it can build a sensible
 /// UI or plan a run, without special-casing engines by identity.
 public struct EngineCapabilities: Sendable, Equatable {
@@ -51,6 +74,8 @@ public struct EngineCapabilities: Sendable, Equatable {
     /// How many chunks may be in flight at once. Local engines stay at 1 —
     /// they're CPU-bound, so concurrency buys nothing and costs battery.
     public let maxConcurrentChunks: Int
+    /// Which block boundaries must end a chunk.
+    public let chunkBoundary: ChunkBoundary
     public let requiresAPIKey: Bool
     /// Whether a run costs the user money, and so must be confirmed first.
     public let requiresConfirmation: Bool
@@ -62,10 +87,12 @@ public struct EngineCapabilities: Sendable, Equatable {
         maxConcurrentChunks: Int,
         requiresAPIKey: Bool,
         requiresConfirmation: Bool,
-        supportsFreePreview: Bool
+        supportsFreePreview: Bool,
+        chunkBoundary: ChunkBoundary = .everyBlock
     ) {
         self.maxCharactersPerChunk = maxCharactersPerChunk
         self.maxConcurrentChunks = maxConcurrentChunks
+        self.chunkBoundary = chunkBoundary
         self.requiresAPIKey = requiresAPIKey
         self.requiresConfirmation = requiresConfirmation
         self.supportsFreePreview = supportsFreePreview

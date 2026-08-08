@@ -113,6 +113,44 @@ nonisolated struct ReadAloudStorage: Sendable {
         return rendered
     }
 
+    // MARK: - Sweeping
+
+    /// Removes retained files nothing references any more.
+    ///
+    /// The database and the filesystem can diverge for several reasons — a
+    /// delete interrupted partway, a crash mid-render, a restore that brought
+    /// back one and not the other — and every one of them leaves regenerable
+    /// bytes that nothing will ever reclaim. Rather than making each delete path
+    /// individually crash-safe, this reconciles the two on launch.
+    ///
+    /// Deliberately scoped to files this type owns. Generated *episodes* are not
+    /// swept: those are visible `UserEpisode`s the user can see and delete, and
+    /// removing someone's audio because a row looked wrong is far worse than
+    /// leaving a stale file on disk.
+    ///
+    /// - Returns: how many entries were removed, for logging.
+    @discardableResult
+    func sweepOrphans(liveDocumentUuids: Set<String>, liveNarrationUuids: Set<String>) -> Int {
+        var removed = 0
+
+        // A source file is named for its document, so the stem is the uuid.
+        for name in (try? FileManager.default.contentsOfDirectory(atPath: sourcesURL.path)) ?? [] {
+            let uuid = (name as NSString).deletingPathExtension
+            guard !liveDocumentUuids.contains(uuid) else { continue }
+            try? FileManager.default.removeItem(at: sourcesURL.appendingPathComponent(name))
+            removed += 1
+        }
+
+        // A workspace directory is named for its narration.
+        for name in (try? FileManager.default.contentsOfDirectory(atPath: workURL.path)) ?? [] {
+            guard !liveNarrationUuids.contains(name) else { continue }
+            try? FileManager.default.removeItem(at: workURL.appendingPathComponent(name))
+            removed += 1
+        }
+
+        return removed
+    }
+
     // MARK: - Directories
 
     private func preparedSourcesDirectory() throws -> URL {

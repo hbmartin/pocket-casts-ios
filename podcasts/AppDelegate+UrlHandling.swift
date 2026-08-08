@@ -12,6 +12,7 @@ nonisolated enum InboundAction: Equatable, Sendable {
     case importOpml(URL)
     case importArchive(URL)
     case uploadMedia(URL)
+    case readAloudText(URL)
     case unsupported
 }
 
@@ -41,6 +42,14 @@ nonisolated enum InboundActionRouter {
 
         if type.conforms(to: .audio) || type.conforms(to: .movie) {
             return .uploadMedia(url)
+        }
+
+        // Deliberately after the OPML/XML checks. OPML and XML conform to
+        // `public.text` but not to `public.plain-text`, so they cannot land here
+        // by accident — the ordering is belt-and-braces, since a subscription
+        // list misrouted into a narration would be both wrong and slow.
+        if FeatureFlag.readAloud.enabled, ReadAloudFileTypes.isReadAloudDocument(url: url) {
+            return .readAloudText(url)
         }
 
         return .unsupported
@@ -93,6 +102,12 @@ extension AppDelegate {
             })
         case .uploadMedia:
             NavigationManager.sharedManager.navigateTo(NavigationManager.uploadedPageKey, data: [NavigationManager.uploadFileKey: url])
+        case .readAloudText(let textURL):
+            Analytics.track(.readAloudSharedTextReceived)
+            NavigationManager.sharedManager.navigateTo(
+                NavigationManager.readAloudImportPageKey,
+                data: [NavigationManager.readAloudFileKey: textURL]
+            )
         case .route:
             JLRoutes.routeURL(url)
         case .unsupported:

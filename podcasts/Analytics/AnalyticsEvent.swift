@@ -953,6 +953,9 @@ enum AnalyticsEvent: String {
     // MARK: - Read Aloud (text document narrated into an episode)
 
     case readAloudImportShown
+    case readAloudComposeShown
+    case readAloudSharedTextReceived
+    case readAloudIntentInvoked
     case readAloudNarrationQueued
     case readAloudNarrationCompleted
     case readAloudNarrationFailed
