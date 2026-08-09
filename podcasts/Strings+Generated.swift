@@ -3647,6 +3647,8 @@ nonisolated internal enum L10n {
   internal static var readAloudErrorEmpty: String { return L10n.tr("Localizable", "read_aloud_error_empty", fallback: "That document has no text to narrate.") }
   /// Generic error shown when narration fails.
   internal static var readAloudErrorGeneric: String { return L10n.tr("Localizable", "read_aloud_error_generic", fallback: "Something went wrong while narrating. Try again.") }
+  /// Shown when narration needs a provider API key that hasn't been entered yet. Used on the import sheet and as a Shortcuts error.
+  internal static var readAloudErrorKeyMissing: String { return L10n.tr("Localizable", "read_aloud_error_key_missing", fallback: "Add your provider API key in Pocket Casts settings first.") }
   /// Error shown when a document is too long to narrate.
   internal static var readAloudErrorTooLarge: String { return L10n.tr("Localizable", "read_aloud_error_too_large", fallback: "That document is too long to narrate.") }
   /// Error shown when a document can't be read as text.
@@ -3659,6 +3661,16 @@ nonisolated internal enum L10n {
   internal static var readAloudGenerate: String { return L10n.tr("Localizable", "read_aloud_generate", fallback: "Narrate") }
   /// Title of the sheet shown after picking a text file, before narration starts.
   internal static var readAloudImportTitle: String { return L10n.tr("Localizable", "read_aloud_import_title", fallback: "Read Aloud") }
+  /// Shortcuts error shown when the narration document can't be saved.
+  internal static var readAloudIntentErrorCouldNotSave: String { return L10n.tr("Localizable", "read_aloud_intent_error_could_not_save", fallback: "The document couldn't be saved.") }
+  /// Shortcuts error shown when no narration voice is installed.
+  internal static var readAloudIntentErrorNoVoice: String { return L10n.tr("Localizable", "read_aloud_intent_error_no_voice", fallback: "No narration voice is installed on this device.") }
+  /// Shortcuts error shown when a narration that spends provider quota runs without the shortcut's confirmation parameter enabled.
+  internal static var readAloudIntentErrorPaidNotConfirmed: String { return L10n.tr("Localizable", "read_aloud_intent_error_paid_not_confirmed", fallback: "This narration uses your provider quota. Turn on Confirm Paid Narration in the shortcut to allow it.") }
+  /// Shortcuts error shown when the Read Aloud feature is unavailable.
+  internal static var readAloudIntentErrorUnavailable: String { return L10n.tr("Localizable", "read_aloud_intent_error_unavailable", fallback: "Read Aloud isn't available.") }
+  /// Shortcuts error shown when the shared text can't be narrated.
+  internal static var readAloudIntentErrorUnreadableText: String { return L10n.tr("Localizable", "read_aloud_intent_error_unreadable_text", fallback: "That text couldn't be read.") }
   /// Shown when the provider rejected the key.
   internal static var readAloudKeyInvalid: String { return L10n.tr("Localizable", "read_aloud_key_invalid", fallback: "That key was rejected.") }
   /// Shown when the key is valid but lacks text-to-speech permission.
@@ -3673,10 +3685,10 @@ nonisolated internal enum L10n {
   internal static var readAloudLibraryTitle: String { return L10n.tr("Localizable", "read_aloud_library_title", fallback: "Read Aloud") }
   /// Files screen menu action opening the Read Aloud library.
   internal static var readAloudMenuAction: String { return L10n.tr("Localizable", "read_aloud_menu_action", fallback: "Read Aloud") }
-  /// Settings row for choosing the provider model.
-  internal static var readAloudModel: String { return L10n.tr("Localizable", "read_aloud_model", fallback: "Model") }
   /// Footer explaining the cost difference between models.
   internal static var readAloudModelFooter: String { return L10n.tr("Localizable", "read_aloud_model_footer", fallback: "Higher quality models cost more of your provider quota per character.") }
+  /// Settings row for choosing the provider model.
+  internal static var readAloudModelLabel: String { return L10n.tr("Localizable", "read_aloud_model_label", fallback: "Model") }
   /// Action that narrates an existing document again, in another voice.
   internal static var readAloudNarrateAgain: String { return L10n.tr("Localizable", "read_aloud_narrate_again", fallback: "Narrate Again…") }
   /// Button that starts importing a text document to narrate.

@@ -95,6 +95,30 @@ final class ProviderKeyStoreTests: XCTestCase {
         XCTAssertEqual(ProviderKeyStore.apiKey(providerId: "elevenlabs"), "current-key")
     }
 
+    /// Interleaves the legacy read-then-promote sequence with deletion. Without
+    /// the store's internal lock, a read that has already found the legacy value
+    /// can promote it back after the delete, resurrecting a key the user
+    /// removed. Whichever order wins under the lock, the end state is "gone".
+    func testDeletionIsNotUndoneByAConcurrentLegacyPromotion() {
+        for _ in 0 ..< 200 {
+            KeychainHelper.save(string: "legacy-key",
+                                key: ProviderKeyStore.legacyTranscriptionKey(providerId: "elevenlabs"),
+                                accessibility: kSecAttrAccessibleAfterFirstUnlock)
+
+            let group = DispatchGroup()
+            DispatchQueue.global().async(group: group) {
+                _ = ProviderKeyStore.apiKey(providerId: "elevenlabs")
+            }
+            DispatchQueue.global().async(group: group) {
+                ProviderKeyStore.deleteAPIKey(providerId: "elevenlabs")
+            }
+            group.wait()
+
+            XCTAssertNil(ProviderKeyStore.apiKey(providerId: "elevenlabs"),
+                         "A deleted key must stay deleted even with a legacy promotion in flight")
+        }
+    }
+
     /// Otherwise "remove my key" leaves a copy the fallback resurrects on the
     /// next read.
     func testDeletingAlsoClearsTheLegacyItem() {

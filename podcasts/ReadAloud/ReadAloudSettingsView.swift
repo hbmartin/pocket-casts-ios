@@ -84,7 +84,7 @@ struct ReadAloudSettingsView: View {
             .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
             .disabled(model.apiKeyInput.isEmpty || model.isValidating)
 
-            Picker(L10n.readAloudModel, selection: Binding(
+            Picker(L10n.readAloudModelLabel, selection: Binding(
                 get: { model.modelId },
                 set: { model.selectModel($0) }
             )) {

@@ -25,6 +25,11 @@ struct CreateNarrationIntent: AppIntent {
     @Parameter(title: "Title")
     var title: String?
 
+    /// Opt-in for engines that spend the user's provider quota. Off by default
+    /// so an automation can never pay for audio nobody asked for.
+    @Parameter(title: "Confirm Paid Narration", default: false)
+    var confirmPaidNarration: Bool
+
     @MainActor
     func perform() async throws -> some IntentResult {
         guard FeatureFlag.readAloud.enabled else {
@@ -63,13 +68,14 @@ struct CreateNarrationIntent: AppIntent {
             throw ReadAloudIntentError.noVoiceAvailable
         }
 
-        // No confirmation, by decision: the intent behaves exactly like the
-        // import sheet's Narrate button so automations stay predictable.
-        //
-        // The consequence to keep in view when a paid provider ships: a shortcut
-        // running unattended would then spend the user's quota with nothing in
-        // the loop. `EngineCapabilities.requiresConfirmation` exists to gate
-        // that, and this is where it would be honoured.
+        // A paid engine spends the user's quota with nobody in the loop, so an
+        // unattended shortcut must opt in explicitly — the same consent the
+        // import sheet collects with its confirmation toggle. Free engines
+        // never look at the parameter.
+        if engine.capabilities.requiresConfirmation, !confirmPaidNarration {
+            throw ReadAloudIntentError.paidNarrationNotConfirmed
+        }
+
         let narration: NarrationRecord
         do {
             narration = try importer.commit(
@@ -101,14 +107,34 @@ enum ReadAloudIntentError: Error, CustomLocalizedStringResourceConvertible {
     case unreadableText
     case noVoiceAvailable
     case couldNotSave
+    case paidNarrationNotConfirmed
 
     var localizedStringResource: LocalizedStringResource {
         switch self {
-        case .unavailable: "Read Aloud isn't available."
-        case .missingKey: "Add your provider API key in Pocket Casts settings first."
-        case .unreadableText: "That text couldn't be read."
-        case .noVoiceAvailable: "No narration voice is installed on this device."
-        case .couldNotSave: "The document couldn't be saved."
+        case .unavailable:
+            LocalizedStringResource("read_aloud_intent_error_unavailable",
+                                    defaultValue: "Read Aloud isn't available.",
+                                    table: "Localizable")
+        case .missingKey:
+            LocalizedStringResource("read_aloud_error_key_missing",
+                                    defaultValue: "Add your provider API key in Pocket Casts settings first.",
+                                    table: "Localizable")
+        case .unreadableText:
+            LocalizedStringResource("read_aloud_intent_error_unreadable_text",
+                                    defaultValue: "That text couldn't be read.",
+                                    table: "Localizable")
+        case .noVoiceAvailable:
+            LocalizedStringResource("read_aloud_intent_error_no_voice",
+                                    defaultValue: "No narration voice is installed on this device.",
+                                    table: "Localizable")
+        case .couldNotSave:
+            LocalizedStringResource("read_aloud_intent_error_could_not_save",
+                                    defaultValue: "The document couldn't be saved.",
+                                    table: "Localizable")
+        case .paidNarrationNotConfirmed:
+            LocalizedStringResource("read_aloud_intent_error_paid_not_confirmed",
+                                    defaultValue: "This narration uses your provider quota. Turn on Confirm Paid Narration in the shortcut to allow it.",
+                                    table: "Localizable")
         }
     }
 }

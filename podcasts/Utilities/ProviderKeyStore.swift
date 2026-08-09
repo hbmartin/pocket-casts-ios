@@ -19,6 +19,12 @@ import PocketCastsUtils
 /// adapters) writes the key anywhere except the keychain and the provider's
 /// auth header.
 nonisolated enum ProviderKeyStore {
+    /// Serializes reads, writes and deletes. The legacy fallback in
+    /// `apiKey(providerId:)` is a read-then-promote sequence; without the lock,
+    /// a delete landing between those two steps would be undone when the
+    /// in-flight promotion re-saves the key the user just removed.
+    private static let lock = NSLock()
+
     /// `kSecAttrAccessibleAfterFirstUnlock` so a queued job restored by a
     /// background task can read the key without the device being unlocked.
     static func keychainKey(providerId: String) -> String {
@@ -39,6 +45,8 @@ nonisolated enum ProviderKeyStore {
     /// forward on the way past. The legacy item is left in place: an older build
     /// running against the same keychain still expects to find it there.
     static func apiKey(providerId: String) -> String? {
+        lock.lock()
+        defer { lock.unlock() }
         if let key = try? KeychainHelper.string(for: keychainKey(providerId: providerId)), !key.isEmpty {
             return key
         }
@@ -46,15 +54,22 @@ nonisolated enum ProviderKeyStore {
               !legacy.isEmpty else {
             return nil
         }
-        setAPIKey(legacy, providerId: providerId)
+        store(legacy, providerId: providerId)
         return legacy
     }
 
     /// Stores (or, for nil/whitespace-only input, deletes) the vendor's key.
+    static func setAPIKey(_ apiKey: String?, providerId: String) {
+        lock.lock()
+        defer { lock.unlock() }
+        store(apiKey, providerId: providerId)
+    }
+
+    /// Callers must hold `lock`.
     ///
     /// A delete clears the legacy item too — otherwise "remove my key" would
     /// leave a copy that the fallback above immediately resurrects.
-    static func setAPIKey(_ apiKey: String?, providerId: String) {
+    private static func store(_ apiKey: String?, providerId: String) {
         let trimmed = apiKey?.trimmingCharacters(in: .whitespacesAndNewlines)
         if let trimmed, !trimmed.isEmpty {
             KeychainHelper.save(string: trimmed,

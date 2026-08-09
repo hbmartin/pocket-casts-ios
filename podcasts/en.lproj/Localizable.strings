@@ -8140,10 +8140,28 @@
 "read_aloud_key_no_permission" = "That key works but isn't allowed to use text to speech. Check its permissions in your ElevenLabs account.";
 
 /* Settings row for choosing the provider model. */
-"read_aloud_model" = "Model";
+"read_aloud_model_label" = "Model";
 
 /* Footer explaining the cost difference between models. */
 "read_aloud_model_footer" = "Higher quality models cost more of your provider quota per character.";
 
 /* Footer explaining that provider narration spends quota. */
 "read_aloud_engine_footer" = "Built-in voices are free and work offline. ElevenLabs sounds much better and uses your own account's quota.";
+
+/* Shown when narration needs a provider API key that hasn't been entered yet. Used on the import sheet and as a Shortcuts error. */
+"read_aloud_error_key_missing" = "Add your provider API key in Pocket Casts settings first.";
+
+/* Shortcuts error shown when the Read Aloud feature is unavailable. */
+"read_aloud_intent_error_unavailable" = "Read Aloud isn't available.";
+
+/* Shortcuts error shown when the shared text can't be narrated. */
+"read_aloud_intent_error_unreadable_text" = "That text couldn't be read.";
+
+/* Shortcuts error shown when no narration voice is installed. */
+"read_aloud_intent_error_no_voice" = "No narration voice is installed on this device.";
+
+/* Shortcuts error shown when the narration document can't be saved. */
+"read_aloud_intent_error_could_not_save" = "The document couldn't be saved.";
+
+/* Shortcuts error shown when a narration that spends provider quota runs without the shortcut's confirmation parameter enabled. */
+"read_aloud_intent_error_paid_not_confirmed" = "This narration uses your provider quota. Turn on Confirm Paid Narration in the shortcut to allow it.";

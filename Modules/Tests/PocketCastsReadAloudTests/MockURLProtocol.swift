@@ -112,5 +112,8 @@ final class MockURLProtocol: URLProtocol {
         }
     }
 
-    override func stopLoading() {}
+    override func stopLoading() {
+        // Responses are delivered synchronously in startLoading(), so by the
+        // time a cancel could arrive there is nothing in flight to stop.
+    }
 }

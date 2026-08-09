@@ -85,9 +85,16 @@ final class ReadAloudImportViewModel: ObservableObject {
     // MARK: - Loading
 
     func load() async {
-        let voices = (try? await engine.availableVoices(
-            apiKey: providerId.flatMap { ProviderKeyStore.apiKey(providerId: $0) }
-        )) ?? []
+        // A missing key is the one voices failure the user can act on, so it
+        // becomes the sheet's error; anything else falls back to an empty list.
+        var voices: [SynthesisVoice] = []
+        do {
+            voices = try await engine.availableVoices(
+                apiKey: providerId.flatMap { ProviderKeyStore.apiKey(providerId: $0) }
+            )
+        } catch ReadAloudError.apiKeyMissing {
+            loadError = .apiKeyMissing
+        } catch {}
         catalog = VoiceCatalog(voices: voices)
 
         switch source {
@@ -135,7 +142,10 @@ final class ReadAloudImportViewModel: ObservableObject {
     /// Creates the rows and queues the render. Returns false when nothing was
     /// enqueued, so the caller can keep the sheet up.
     func narrate() async -> Bool {
-        guard let voice = selectedVoice, !isCommitting else { return false }
+        // The confirmation check is enforced here as well as in `isReady`: a
+        // paid run must never start without consent, whatever the caller.
+        guard let voice = selectedVoice, !isCommitting,
+              !requiresCostConfirmation || hasConfirmedCost else { return false }
         isCommitting = true
         defer { isCommitting = false }
 
@@ -228,6 +238,8 @@ extension ReadAloudError {
             L10n.readAloudErrorTooLarge
         case .emptyDocument:
             L10n.readAloudErrorEmpty
+        case .apiKeyMissing:
+            L10n.readAloudErrorKeyMissing
         default:
             L10n.readAloudErrorGeneric
         }
