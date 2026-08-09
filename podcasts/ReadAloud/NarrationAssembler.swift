@@ -60,6 +60,7 @@ nonisolated struct NarrationAssembler: NarrationAssembling {
         var cursor = CMTime.zero
 
         for (index, chunkURL) in chunkURLs.enumerated() {
+            try Task.checkCancellation()
             // A pause before the first chunk would just be dead air at the head
             // of the episode.
             if index > 0, pauseBefore.contains(index) {
@@ -67,8 +68,26 @@ nonisolated struct NarrationAssembler: NarrationAssembling {
             }
 
             let asset = AVURLAsset(url: chunkURL)
-            guard let sourceTrack = try? await asset.loadTracks(withMediaType: .audio).first,
-                  let duration = try? await asset.load(.duration), duration.isValid, duration.seconds > 0 else {
+            let sourceTrack: AVAssetTrack
+            let duration: CMTime
+            do {
+                guard let loadedTrack = try await asset.loadTracks(withMediaType: .audio).first else {
+                    throw ReadAloudError.assemblyFailed
+                }
+                sourceTrack = loadedTrack
+                duration = try await asset.load(.duration)
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                if Task.isCancelled { throw CancellationError() }
+                // A chunk that renders to nothing means the checkpoint and the
+                // workspace disagree; assembling around the gap would ship a
+                // silently truncated episode.
+                FileLog.shared.addMessage("ReadAloud: chunk \(index) is unreadable or empty")
+                throw ReadAloudError.assemblyFailed
+            }
+            try Task.checkCancellation()
+            guard duration.isValid, duration.seconds > 0 else {
                 // A chunk that renders to nothing means the checkpoint and the
                 // workspace disagree; assembling around the gap would ship a
                 // silently truncated episode.
@@ -85,6 +104,7 @@ nonisolated struct NarrationAssembler: NarrationAssembling {
                     at: cursor
                 )
             } catch {
+                if Task.isCancelled { throw CancellationError() }
                 throw ReadAloudError.assemblyFailed
             }
             cursor = cursor + duration
@@ -96,7 +116,10 @@ nonisolated struct NarrationAssembler: NarrationAssembling {
                 outputURL: outputURL,
                 bitRate: Self.bitRate
             )
+        } catch is CancellationError {
+            throw CancellationError()
         } catch {
+            if Task.isCancelled { throw CancellationError() }
             throw ReadAloudError.assemblyFailed
         }
 
@@ -106,7 +129,9 @@ nonisolated struct NarrationAssembler: NarrationAssembling {
         // Measured off the encoded file rather than the composition: the encoder
         // pads and trims at frame boundaries, and the episode row must agree
         // with what the player will actually report.
+        try Task.checkCancellation()
         let encodedDuration = (try? await AVURLAsset(url: outputURL).load(.duration).seconds) ?? composition.duration.seconds
+        try Task.checkCancellation()
 
         return AssembledNarration(url: outputURL, duration: encodedDuration, sizeInBytes: sizeInBytes)
     }

@@ -32,9 +32,11 @@ nonisolated struct AudioTranscodeHelper: Sendable {
     /// runs on AVFoundation's own queue; cancellation is coarse — the caller's
     /// `Task.checkCancellation()` before/after bounds a stale job to one encode.
     func transcodeForUpload(sourceURL: URL) async throws -> Output {
+        try Task.checkCancellation()
         if Self.passthroughExtensions.contains(sourceURL.pathExtension.lowercased()),
            let size = try? FileManager.default.attributesOfItem(atPath: sourceURL.path)[.size] as? Int64,
            size <= Self.passthroughLimitBytes {
+            try Task.checkCancellation()
             return Output(url: sourceURL, mimeType: "audio/mp4", isTemporary: false)
         }
 
@@ -43,7 +45,14 @@ nonisolated struct AudioTranscodeHelper: Sendable {
 
         do {
             try await Self.encodeToMonoAAC(asset: AVURLAsset(url: sourceURL), outputURL: outputURL, bitRate: Self.outputBitRate)
+        } catch is CancellationError {
+            try? FileManager.default.removeItem(at: outputURL)
+            throw CancellationError()
         } catch {
+            if Task.isCancelled {
+                try? FileManager.default.removeItem(at: outputURL)
+                throw CancellationError()
+            }
             throw TranscriptionError.audioUnreadable
         }
 
@@ -60,9 +69,17 @@ nonisolated struct AudioTranscodeHelper: Sendable {
     ///
     /// Mono is right for both callers: speech, and smaller files.
     static func encodeToMonoAAC(asset: AVAsset, outputURL: URL, bitRate: Int) async throws {
-        guard let audioTrack = try? await asset.loadTracks(withMediaType: .audio).first else {
+        let audioTracks: [AVAssetTrack]
+        do {
+            audioTracks = try await asset.loadTracks(withMediaType: .audio)
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            if Task.isCancelled { throw CancellationError() }
             throw AudioEncodeError.failed
         }
+        try Task.checkCancellation()
+        guard let audioTrack = audioTracks.first else { throw AudioEncodeError.failed }
 
         try? FileManager.default.removeItem(at: outputURL)
 
@@ -147,10 +164,16 @@ nonisolated struct AudioTranscodeHelper: Sendable {
         if cancelled.withLock({ $0 }) {
             writer.cancelWriting()
             try? FileManager.default.removeItem(at: outputURL)
-            throw AudioEncodeError.failed
+            throw CancellationError()
         }
 
         await writer.finishWriting()
+
+        if Task.isCancelled {
+            writer.cancelWriting()
+            try? FileManager.default.removeItem(at: outputURL)
+            throw CancellationError()
+        }
 
         // Both sides must have finished cleanly — a reader that stopped early
         // (failed OR cancelled) with a completed writer is a truncated file.

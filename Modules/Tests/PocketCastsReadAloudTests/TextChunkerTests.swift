@@ -131,6 +131,21 @@ struct TextChunkerTests {
         #expect(rejoined == sentence)
     }
 
+    @Test("Splitting an oversized sentence preserves punctuation")
+    func oversizedSentencePreservesPunctuation() {
+        let sentence = Array(
+            repeating: "Wait, really? Parentheses (and semicolons; too) must survive!",
+            count: 20
+        ).joined(separator: " ")
+        let target = 120
+
+        let pieces = TextChunker.fitting(sentence, within: target)
+
+        #expect(pieces.count > 1)
+        #expect(pieces.allSatisfy { $0.count <= target })
+        #expect(pieces.joined(separator: " ") == sentence)
+    }
+
     /// A "word" with no break opportunity at all — a URL, a base64 blob — must
     /// still be cut rather than exceeding the limit.
     @Test("A single unbreakable token is cut by character")
