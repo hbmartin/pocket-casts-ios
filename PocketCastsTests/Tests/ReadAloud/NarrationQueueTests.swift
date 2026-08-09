@@ -28,7 +28,11 @@ final class NarrationQueueTests: DBTestCase {
         }
         root = FileManager.default.temporaryDirectory
             .appendingPathComponent("ReadAloudTests-\(UUID().uuidString)", isDirectory: true)
-        storage = ReadAloudStorage(rootURL: root)
+        storage = ReadAloudStorage(rootURL: root) { url in
+            guard let data = try? Data(contentsOf: url),
+                  let text = String(data: data, encoding: .utf8) else { return false }
+            return text.hasPrefix("chunk-")
+        }
     }
 
     override func tearDown() async throws {
@@ -259,6 +263,49 @@ final class NarrationQueueTests: DBTestCase {
 
     // MARK: - Failure and cancellation
 
+    func testWaitingForOneAttemptDoesNotWaitForUnrelatedQueueWork() async throws {
+        let first = try makeNarration(text: "First narration.")
+        let second = try makeNarration(text: "Second narration.")
+        let engine = ControllableSynthesisEngine(concurrencyLimit: 1, gateStartingAtCall: 2)
+        let queue = makeQueue(engine: engine)
+
+        let firstAttempt = await queue.enqueue(uuid: first.uuid)
+        let secondAttempt = await queue.enqueue(uuid: second.uuid)
+        await engine.waitUntilStarted(2)
+
+        let firstOutcome = await queue.waitForAttempt(firstAttempt)
+        let isIdleWhileSecondIsBlocked = await queue.isIdle
+
+        XCTAssertEqual(firstOutcome, .completed)
+        XCTAssertFalse(isIdleWhileSecondIsBlocked, "waiting for the first attempt also waited for the blocked second attempt")
+        await engine.open()
+        let secondOutcome = await queue.waitForAttempt(secondAttempt)
+        XCTAssertEqual(secondOutcome, .completed)
+    }
+
+    func testRetryWhileCancelledAttemptUnwindsCannotClobberReplacement() async throws {
+        let narration = try makeNarration()
+        let engine = ControllableSynthesisEngine(concurrencyLimit: 1, gateStartingAtCall: 1)
+        let queue = makeQueue(engine: engine)
+
+        let firstAttempt = await queue.enqueue(uuid: narration.uuid)
+        await engine.waitUntilStarted(1)
+        await queue.cancel(uuid: narration.uuid)
+        XCTAssertEqual(dataManager.readAloud.narration(uuid: narration.uuid)?.narrationState, .cancelled)
+        let retried = await queue.retry(uuid: narration.uuid)
+        let retryAttempt = try XCTUnwrap(retried)
+        await engine.open()
+
+        let firstOutcome = await queue.waitForAttempt(firstAttempt)
+        let retryOutcome = await queue.waitForAttempt(retryAttempt)
+        XCTAssertEqual(firstOutcome, .superseded)
+        XCTAssertEqual(retryOutcome, .completed)
+        XCTAssertEqual(dataManager.readAloud.narration(uuid: narration.uuid)?.narrationState, .completed)
+        XCTAssertFalse(FileManager.default.fileExists(
+            atPath: storage.workspaceURL(narrationUuid: narration.uuid).path
+        ))
+    }
+
     func testAFailedChunkLeavesNoPartialFileBehind() async throws {
         let narration = try makeNarration()
         let engine = FakeSynthesisEngine(failAtIndex: 1, writeFileBeforeFailing: true)
@@ -390,6 +437,81 @@ final class NarrationQueueTests: DBTestCase {
             Set(redone).isDisjoint(with: Set(renderedBeforeSuspension)),
             "resume re-rendered chunks that survived suspension"
         )
+    }
+
+    func testParallelSuspensionDrainsInflightChunksBeforeCheckpointing() async throws {
+        let narration = try makeNarration()
+        let engine = ControllableSynthesisEngine(concurrencyLimit: 3, gateStartingAtCall: 1)
+        let queue = makeQueue(engine: engine)
+
+        let attempt = await queue.enqueue(uuid: narration.uuid)
+        await engine.waitUntilStarted(3)
+        queue.suspendAfterCurrentChunk()
+        await engine.open()
+
+        let outcome = await queue.waitForAttempt(attempt)
+        let completedCount = await engine.completedCount
+        let activeCount = await engine.activeCount
+        XCTAssertEqual(outcome, .suspended)
+        XCTAssertEqual(completedCount, 3, "suspension started replacement chunks instead of only draining in-flight work")
+        XCTAssertEqual(activeCount, 0, "attempt resolved before every in-flight child drained")
+        let loaded = try XCTUnwrap(dataManager.readAloud.narration(uuid: narration.uuid))
+        XCTAssertEqual(loaded.completedChunkCount, 3)
+        XCTAssertEqual(
+            storage.renderedChunkIndices(narrationUuid: narration.uuid, chunkCount: Int(loaded.chunkCount)).count,
+            3
+        )
+    }
+
+    func testChangedContentInvalidatesThePersistedWorkspaceManifest() async throws {
+        let narration = try makeNarration()
+        let firstEngine = FakeSynthesisEngine()
+        let firstQueue = makeQueue(engine: firstEngine, assembler: FailingAssembler())
+        await firstQueue.enqueue(uuid: narration.uuid)
+        await firstQueue.drainUntilIdle()
+
+        let original = try XCTUnwrap(dataManager.readAloud.narration(uuid: narration.uuid))
+        XCTAssertGreaterThan(original.completedChunkCount, 0)
+        let document = try XCTUnwrap(dataManager.readAloud.document(uuid: narration.documentUuid))
+        let changedText = Self.sourceText.replacingOccurrences(of: "test document", with: "changed text!")
+        try changedText.write(
+            to: storage.sourceURL(relativePath: document.sourcePath),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let retryEngine = FakeSynthesisEngine()
+        let retryQueue = makeQueue(engine: retryEngine)
+        await retryQueue.retry(uuid: narration.uuid)
+        await retryQueue.drainUntilIdle()
+
+        let synthesizedCount = await retryEngine.synthesizedIndices.count
+        XCTAssertEqual(dataManager.readAloud.narration(uuid: narration.uuid)?.narrationState, .completed)
+        XCTAssertGreaterThan(
+            synthesizedCount,
+            0,
+            "changed content reused checkpoints from the old manifest"
+        )
+    }
+
+    func testInvalidChunkIsNeverPromotedOrTrustedAsACheckpoint() throws {
+        let narrationUuid = "invalid-chunk"
+        try storage.prepareWorkspace(narrationUuid: narrationUuid)
+        let temporary = storage.partialChunkURL(narrationUuid: narrationUuid, index: 0, generation: 1)
+        try Data("torn".utf8).write(to: temporary)
+
+        XCTAssertThrowsError(
+            try storage.commitRenderedChunk(from: temporary, narrationUuid: narrationUuid, index: 0)
+        ) { error in
+            XCTAssertEqual(error as? ReadAloudError, .synthesisProducedNoAudio)
+        }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: temporary.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: storage.chunkURL(narrationUuid: narrationUuid, index: 0).path))
+
+        let tornFinal = storage.chunkURL(narrationUuid: narrationUuid, index: 0)
+        try Data("torn".utf8).write(to: tornFinal)
+        XCTAssertEqual(storage.renderedChunkIndices(narrationUuid: narrationUuid, chunkCount: 1), [])
+        XCTAssertFalse(FileManager.default.fileExists(atPath: tornFinal.path))
     }
 
     // MARK: - Orphan sweep
@@ -639,6 +761,77 @@ private actor GatedSynthesisEngine: SpeechSynthesisEngine {
         if !isOpen {
             await withCheckedContinuation { waiters.append($0) }
         }
+        try Data("chunk-\(chunk.index)".utf8).write(to: outputURL)
+    }
+}
+
+/// Gates synthesis from a chosen call onward, while deliberately ignoring task
+/// cancellation at the gate. That models provider work already in flight and
+/// lets tests prove the queue waits for stale children to unwind safely.
+private actor ControllableSynthesisEngine: SpeechSynthesisEngine {
+    nonisolated let id = "test.controllable"
+    nonisolated var capabilities: EngineCapabilities {
+        EngineCapabilities(
+            maxCharactersPerChunk: 300,
+            maxConcurrentChunks: concurrencyLimit,
+            requiresAPIKey: false,
+            requiresConfirmation: false,
+        )
+    }
+
+    private let concurrencyLimit: Int
+    private let gateStartingAtCall: Int
+    private var isOpen = false
+    private var started = 0
+    private(set) var completedCount = 0
+    private(set) var activeCount = 0
+    private var gateWaiters: [CheckedContinuation<Void, Never>] = []
+    private var startTarget: Int?
+    private var startWaiter: CheckedContinuation<Void, Never>?
+
+    init(concurrencyLimit: Int, gateStartingAtCall: Int) {
+        self.concurrencyLimit = concurrencyLimit
+        self.gateStartingAtCall = gateStartingAtCall
+    }
+
+    func waitUntilStarted(_ count: Int) async {
+        guard started < count else { return }
+        await withCheckedContinuation { continuation in
+            startTarget = count
+            startWaiter = continuation
+        }
+    }
+
+    func open() {
+        isOpen = true
+        gateWaiters.forEach { $0.resume() }
+        gateWaiters.removeAll()
+    }
+
+    nonisolated func availableVoices(apiKey: String?) async throws -> [SynthesisVoice] {
+        [SynthesisVoice(id: "test.voice", name: "Test Voice", language: "en-US")]
+    }
+
+    func synthesize(
+        chunk: NarrationChunk,
+        voice: SynthesisVoice,
+        settings: SynthesisSettings,
+        apiKey: String?,
+        to outputURL: URL
+    ) async throws {
+        started += 1
+        activeCount += 1
+        if let startTarget, started >= startTarget {
+            self.startTarget = nil
+            startWaiter?.resume()
+            startWaiter = nil
+        }
+        defer { activeCount -= 1 }
+
+        if started >= gateStartingAtCall, !isOpen {
+            await withCheckedContinuation { gateWaiters.append($0) }
+        }
+        completedCount += 1
         try Data("chunk-\(chunk.index)".utf8).write(to: outputURL)
     }
 }

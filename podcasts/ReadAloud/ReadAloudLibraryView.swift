@@ -174,6 +174,7 @@ extension ReadAloudImportViewModel.Source: Identifiable {
         switch self {
         case .file(let url, _): "file:\(url.absoluteString)"
         case .composed(let preview): "composed:\(preview.document.characterCount):\(preview.document.suggestedTitle)"
+        case .draftDocument(let document): "draft:\(document.uuid)"
         case .existingDocument(let document): "document:\(document.uuid)"
         }
     }

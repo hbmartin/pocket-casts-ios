@@ -12,6 +12,10 @@ final class ReadAloudImportViewModel: ObservableObject {
         /// Text typed or pasted on the compose screen, already extracted there
         /// so this sheet has nothing to re-read.
         case composed(NarrationImporter.Preview)
+        /// Composed text persisted before the compose sheet was dismissed. It
+        /// has no narration yet, but survives process termination and is visible
+        /// in the library if review is cancelled.
+        case draftDocument(ReadAloudDocumentRecord)
         /// An existing document being narrated again in another voice.
         case existingDocument(ReadAloudDocumentRecord)
     }
@@ -116,7 +120,7 @@ final class ReadAloudImportViewModel: ObservableObject {
             title = preview.document.suggestedTitle
             characterCount = preview.document.characterCount
             detectedLanguage = preview.document.detectedLanguage
-        case .existingDocument(let document):
+        case .draftDocument(let document), .existingDocument(let document):
             title = document.title
             characterCount = Int(document.characterCount)
             detectedLanguage = document.language
@@ -182,6 +186,23 @@ final class ReadAloudImportViewModel: ObservableObject {
                 )
                 narrationUuid = narration.uuid
                 Analytics.track(.readAloudNarratedAgain, properties: [
+                    "character_count": characterCount,
+                    "voice_quality": voice.quality.analyticsValue,
+                ])
+            case .draftDocument(let document):
+                if title != document.title {
+                    _ = DataManager.sharedManager.readAloud.renameDocument(uuid: document.uuid, title: title)
+                }
+                let narration = try importer.narrateAgain(
+                    document: document,
+                    engine: engineKind,
+                    providerId: providerId,
+                    modelId: modelId,
+                    voice: voice
+                )
+                narrationUuid = narration.uuid
+                Analytics.track(.readAloudNarrationQueued, properties: [
+                    "source": NarrationSourceKind.composed.analyticsValue,
                     "character_count": characterCount,
                     "voice_quality": voice.quality.analyticsValue,
                 ])

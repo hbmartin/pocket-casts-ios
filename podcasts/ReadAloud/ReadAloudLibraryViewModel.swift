@@ -61,17 +61,30 @@ final class ReadAloudLibraryViewModel: ObservableObject {
 
     func delete(_ narration: NarrationRecord) {
         Analytics.track(.readAloudNarrationDeleted)
-        importer.delete(narration: narration)
-        refresh()
+        Task {
+            // A renderer may be inside a non-cooperative framework call. Wait
+            // until its exact attempt has unwound before removing rows/files it
+            // could otherwise recreate or write into.
+            await NarrationQueue.shared.cancelAndWait(uuid: narration.uuid)
+            importer.delete(narration: narration)
+            refresh()
+        }
     }
 
     func confirmDelete(_ document: ReadAloudDocumentRecord) {
+        let narrations = entries.first { $0.document.uuid == document.uuid }?.narrations
+            ?? dataManager.readAloud.narrations(documentUuid: document.uuid)
         Analytics.track(.readAloudDocumentDeleted, properties: [
-            "narration_count": entries.first { $0.document.uuid == document.uuid }?.narrations.count ?? 0,
+            "narration_count": narrations.count,
         ])
-        importer.delete(document: document)
         pendingDeletion = nil
-        refresh()
+        Task {
+            for narration in narrations {
+                await NarrationQueue.shared.cancelAndWait(uuid: narration.uuid)
+            }
+            importer.delete(document: document)
+            refresh()
+        }
     }
 
     /// Total bytes of the retained source documents — the only Read Aloud
@@ -80,7 +93,8 @@ final class ReadAloudLibraryViewModel: ObservableObject {
     func sourceStorageBytes(storage: ReadAloudStorage = .default) -> Int64 {
         entries.reduce(into: Int64(0)) { total, entry in
             let url = storage.sourceURL(relativePath: entry.document.sourcePath)
-            total += (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int64) as? Int64 ?? 0
+            let attributes = try? FileManager.default.attributesOfItem(atPath: url.path)
+            total += (attributes?[.size] as? NSNumber)?.int64Value ?? 0
         }
     }
 }

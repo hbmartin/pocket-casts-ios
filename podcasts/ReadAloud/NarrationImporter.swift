@@ -72,6 +72,34 @@ nonisolated struct NarrationImporter: Sendable {
 
     // MARK: - Commit
 
+    /// Persists composed text before the compose screen is dismissed. The voice
+    /// review can outlive the process, so keeping the only copy in a view model
+    /// would lose user-authored text if iOS terminates the app between screens.
+    /// A draft is an ordinary document with no narrations yet; after a relaunch
+    /// it remains visible in the library and can be narrated normally.
+    func saveDraft(preview: Preview, title: String) throws -> ReadAloudDocumentRecord {
+        guard preview.sourceKind == .composed, preview.composedText != nil else {
+            throw ReadAloudError.sourceUnreadable
+        }
+
+        return try storage.withReconciliationLock {
+            let documentUuid = UUID().uuidString.lowercased()
+            let sourcePath = try persistSource(of: preview, documentUuid: documentUuid)
+            let document = Self.makeDocument(
+                preview: preview,
+                uuid: documentUuid,
+                sourcePath: sourcePath,
+                title: title
+            )
+
+            guard dataManager.readAloud.add(document) else {
+                storage.deleteSource(relativePath: sourcePath)
+                throw ReadAloudError.persistenceFailure
+            }
+            return document
+        }
+    }
+
     /// Retains the source, then writes the document and its first narration in
     /// one transaction.
     ///
@@ -87,19 +115,51 @@ nonisolated struct NarrationImporter: Sendable {
         modelId: String?,
         voice: SynthesisVoice
     ) throws -> (document: ReadAloudDocumentRecord, narration: NarrationRecord) {
-        let documentUuid = UUID().uuidString.lowercased()
+        try storage.withReconciliationLock {
+            let documentUuid = UUID().uuidString.lowercased()
 
-        let sourcePath: String
-        if let composedText = preview.composedText {
-            sourcePath = try storage.writeSource(text: composedText, documentUuid: documentUuid)
-        } else if let sourceURL = preview.sourceURL {
-            sourcePath = try storage.importSource(from: sourceURL, documentUuid: documentUuid)
-        } else {
-            throw ReadAloudError.sourceUnreadable
+            let sourcePath = try persistSource(of: preview, documentUuid: documentUuid)
+            let document = Self.makeDocument(
+                preview: preview,
+                uuid: documentUuid,
+                sourcePath: sourcePath,
+                title: title
+            )
+
+            let narration = Self.makeNarration(
+                documentUuid: documentUuid,
+                engine: engine,
+                providerId: providerId,
+                modelId: modelId,
+                voice: voice
+            )
+
+            guard dataManager.readAloud.add(document: document, narration: narration) else {
+                storage.deleteSource(relativePath: sourcePath)
+                throw ReadAloudError.persistenceFailure
+            }
+            return (document, narration)
         }
+    }
 
+    private func persistSource(of preview: Preview, documentUuid: String) throws -> String {
+        if let composedText = preview.composedText {
+            return try storage.writeSource(text: composedText, documentUuid: documentUuid)
+        }
+        if let sourceURL = preview.sourceURL {
+            return try storage.importSource(from: sourceURL, documentUuid: documentUuid)
+        }
+        throw ReadAloudError.sourceUnreadable
+    }
+
+    private static func makeDocument(
+        preview: Preview,
+        uuid: String,
+        sourcePath: String,
+        title: String
+    ) -> ReadAloudDocumentRecord {
         var document = ReadAloudDocumentRecord()
-        document.uuid = documentUuid
+        document.uuid = uuid
         document.title = title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             ? preview.document.suggestedTitle
             : title
@@ -110,20 +170,7 @@ nonisolated struct NarrationImporter: Sendable {
         document.characterCount = Int32(preview.document.characterCount)
         document.language = preview.document.detectedLanguage
         document.addedDate = Date().timeIntervalSince1970
-
-        let narration = Self.makeNarration(
-            documentUuid: documentUuid,
-            engine: engine,
-            providerId: providerId,
-            modelId: modelId,
-            voice: voice
-        )
-
-        guard dataManager.readAloud.add(document: document, narration: narration) else {
-            storage.deleteSource(relativePath: sourcePath)
-            throw ReadAloudError.persistenceFailure
-        }
-        return (document, narration)
+        return document
     }
 
     /// Narrates an existing document again — a different voice, or a fresh

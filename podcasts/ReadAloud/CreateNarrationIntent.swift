@@ -51,7 +51,9 @@ struct CreateNarrationIntent: AppIntent {
         let modelId = engineKind == .remoteProvider
             ? (Settings.readAloudProviderModelId() ?? ElevenLabsModel.default.id)
             : nil
-        let apiKey = providerId.flatMap { ProviderKeyStore.apiKey(providerId: $0) }
+        let apiKey = providerId.flatMap {
+            ProviderKeyStore.apiKey(providerId: $0, purpose: .textToSpeech)
+        }
 
         guard let engine = try? NarrationEngineFactory().makeEngine(
             for: engineKind, providerId: providerId, modelId: modelId
@@ -63,8 +65,10 @@ struct CreateNarrationIntent: AppIntent {
         }
 
         let catalog = VoiceCatalog(voices: (try? await engine.availableVoices(apiKey: apiKey)) ?? [])
-        guard let voice = catalog.voice(id: Settings.readAloudDefaultVoiceId())
-            ?? catalog.preferredVoice(for: preview.document.detectedLanguage) else {
+        guard let voice = catalog.preferredVoice(
+            storedId: Settings.readAloudDefaultVoiceId(),
+            for: preview.document.detectedLanguage
+        ) else {
             throw ReadAloudIntentError.noVoiceAvailable
         }
 
@@ -93,7 +97,15 @@ struct CreateNarrationIntent: AppIntent {
         Analytics.track(.readAloudIntentInvoked, properties: [
             "character_count": preview.document.characterCount,
         ])
-        await NarrationQueue.shared.enqueue(uuid: narration.uuid)
+        let outcome = await NarrationQueue.shared.enqueueAndWait(uuid: narration.uuid)
+        switch outcome {
+        case .completed, .suspended:
+            // A suspended attempt has reached a durable chunk/manifest
+            // checkpoint and remains resumable on the next foreground.
+            break
+        case .failed, .cancelled, .superseded, .missing:
+            throw ReadAloudIntentError.couldNotSave
+        }
 
         return .result()
     }
