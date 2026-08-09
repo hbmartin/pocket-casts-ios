@@ -5,7 +5,7 @@ import PocketCastsReadAloud
 /// Resolves the synthesis engine and API key for a narration. The queue goes
 /// through this seam so tests can inject a fake engine instead of speaking.
 nonisolated protocol NarrationEngineProviding: Sendable {
-    func makeEngine(for kind: NarrationEngineKind, providerId: String?) throws -> any SpeechSynthesisEngine
+    func makeEngine(for kind: NarrationEngineKind, providerId: String?, modelId: String?) throws -> any SpeechSynthesisEngine
     /// The user's key for a provider-backed engine, or nil when the engine
     /// needs none.
     func apiKey(providerId: String?) -> String?
@@ -13,7 +13,7 @@ nonisolated protocol NarrationEngineProviding: Sendable {
 
 /// The single engine-selection point across Read Aloud phases.
 nonisolated struct NarrationEngineFactory: NarrationEngineProviding {
-    func makeEngine(for kind: NarrationEngineKind, providerId: String?) throws -> any SpeechSynthesisEngine {
+    func makeEngine(for kind: NarrationEngineKind, providerId: String?, modelId: String?) throws -> any SpeechSynthesisEngine {
         switch kind {
         case .appleBuiltIn:
             return AppleSpeechSynthesisEngine()
@@ -24,11 +24,20 @@ nonisolated struct NarrationEngineFactory: NarrationEngineProviding {
             // silently narrating in a voice the user didn't pick.
             throw ReadAloudError.engineFailure
         case .remoteProvider:
-            throw ReadAloudError.engineFailure
+            switch providerId {
+            case ElevenLabsTTSEngine.providerId:
+                // The model comes off the narration, never from settings: it
+                // determines the chunk size, and a resumed run must partition
+                // the text exactly as the original did.
+                return ElevenLabsTTSEngine(model: .resolve(id: modelId))
+            default:
+                throw ReadAloudError.engineFailure
+            }
         }
     }
 
     func apiKey(providerId: String?) -> String? {
-        nil
+        guard let providerId else { return nil }
+        return ProviderKeyStore.apiKey(providerId: providerId)
     }
 }

@@ -157,8 +157,13 @@ public extension ReadAloudError {
         }
     }
 
-    /// Whether retrying the same chunk could plausibly succeed. Drives the
-    /// queue's backoff; everything else fails the narration immediately.
+    /// Whether retrying could plausibly succeed on its own.
+    ///
+    /// There is deliberately no automatic retry — a failed narration keeps its
+    /// workspace, so the user's Retry resumes from the last good chunk with
+    /// nothing re-rendered or re-paid. This exists to choose what the failure
+    /// *says*: "try again" for a blip the user can simply re-run, versus
+    /// something they have to go and fix, like a rejected key.
     var isTransient: Bool {
         switch self {
         case .rateLimited, .networkUnavailable:

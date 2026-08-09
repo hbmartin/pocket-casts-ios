@@ -26,7 +26,6 @@ public struct AppleSpeechSynthesisEngine: SpeechSynthesisEngine {
             maxConcurrentChunks: 1,
             requiresAPIKey: false,
             requiresConfirmation: false,
-            supportsFreePreview: true
         )
     }
 

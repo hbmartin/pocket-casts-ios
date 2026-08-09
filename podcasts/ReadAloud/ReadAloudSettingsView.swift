@@ -15,8 +15,14 @@ struct ReadAloudSettingsView: View {
 
     var body: some View {
         List {
+            engineSection
+            if model.engineKind == .remoteProvider {
+                providerSection
+            }
             defaultVoiceSection
-            VoiceQualityExplainerSection()
+            if model.engineKind == .appleBuiltIn {
+                VoiceQualityExplainerSection()
+            }
             storageSection
         }
         .listStyle(.insetGrouped)
@@ -27,6 +33,78 @@ struct ReadAloudSettingsView: View {
             await model.load()
         }
         .onDisappear { previewPlayer.stop() }
+    }
+
+    private var engineSection: some View {
+        Section {
+            engineRow(.appleBuiltIn, title: L10n.readAloudEngineBuiltin)
+            engineRow(.remoteProvider, title: L10n.readAloudEngineElevenlabs)
+        } header: {
+            Text(L10n.readAloudEngineSection)
+                .font(style: .footnote, weight: .semibold)
+                .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+        } footer: {
+            Text(L10n.readAloudEngineFooter)
+                .font(style: .footnote)
+                .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+        }
+        .listRowBackground(AppTheme.color(for: .primaryUi01, theme: theme))
+    }
+
+    private func engineRow(_ kind: NarrationEngineKind, title: String) -> some View {
+        Button {
+            Task { await model.selectEngine(kind) }
+        } label: {
+            HStack {
+                Text(title)
+                    .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
+                Spacer()
+                if model.engineKind == kind {
+                    Image(systemName: "checkmark")
+                        .foregroundColor(AppTheme.color(for: .primaryIcon01, theme: theme))
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .font(style: .body)
+    }
+
+    private var providerSection: some View {
+        Section {
+            SecureField(L10n.readAloudApiKey, text: $model.apiKeyInput)
+                .font(style: .body)
+                .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
+                .onSubmit { Task { await model.saveAndValidateKey() } }
+
+            Button(L10n.readAloudValidateKey) {
+                Task { await model.saveAndValidateKey() }
+            }
+            .font(style: .body)
+            .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
+            .disabled(model.apiKeyInput.isEmpty || model.isValidating)
+
+            Picker(L10n.readAloudModel, selection: Binding(
+                get: { model.modelId },
+                set: { model.selectModel($0) }
+            )) {
+                ForEach(ElevenLabsModel.allCases) { option in
+                    Text(option.displayName).tag(option.id)
+                }
+            }
+            .font(style: .body)
+        } footer: {
+            VStack(alignment: .leading, spacing: 4) {
+                if let status = model.keyStatus {
+                    Text(status.message)
+                        .foregroundColor(AppTheme.color(for: status.isGood ? .primaryText02 : .support05, theme: theme))
+                }
+                Text(L10n.readAloudModelFooter)
+                    .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+            }
+            .font(style: .footnote)
+        }
+        .listRowBackground(AppTheme.color(for: .primaryUi01, theme: theme))
     }
 
     private var defaultVoiceSection: some View {
@@ -90,21 +168,90 @@ struct ReadAloudSettingsView: View {
 
 @MainActor
 final class ReadAloudSettingsViewModel: ObservableObject {
+    struct KeyStatus {
+        let message: String
+        let isGood: Bool
+    }
+
     @Published private(set) var catalog = VoiceCatalog(voices: [])
     @Published private(set) var defaultVoice: SynthesisVoice?
     @Published private(set) var documentCount = 0
     @Published private(set) var storageDescription = ""
+    @Published private(set) var engineKind: NarrationEngineKind = .appleBuiltIn
+    @Published var apiKeyInput = ""
+    @Published private(set) var modelId = ElevenLabsModel.default.id
+    @Published private(set) var keyStatus: KeyStatus?
+    @Published private(set) var isValidating = false
 
-    private let engine: any SpeechSynthesisEngine
     private let storage: ReadAloudStorage
 
-    init(engine: any SpeechSynthesisEngine = AppleSpeechSynthesisEngine(), storage: ReadAloudStorage = .default) {
-        self.engine = engine
+    init(storage: ReadAloudStorage = .default) {
         self.storage = storage
     }
 
+    private var providerId: String? {
+        engineKind == .remoteProvider ? ElevenLabsTTSEngine.providerId : nil
+    }
+
+    /// The engine whose voices the picker should show — the same one a narration
+    /// started now would use.
+    private func currentEngine() -> any SpeechSynthesisEngine {
+        (try? NarrationEngineFactory().makeEngine(for: engineKind, providerId: providerId, modelId: modelId))
+            ?? AppleSpeechSynthesisEngine()
+    }
+
+    func selectEngine(_ kind: NarrationEngineKind) async {
+        guard kind != engineKind else { return }
+        engineKind = kind
+        Settings.setReadAloudEngineKind(kind.rawValue)
+        Analytics.track(.readAloudEngineChanged, properties: ["engine": kind == .remoteProvider ? "elevenlabs" : "builtin"])
+        // The voice list is engine-specific, and a stored default from the other
+        // engine will not resolve — reload so the row shows something real.
+        await load()
+    }
+
+    func selectModel(_ id: String) {
+        modelId = id
+        Settings.setReadAloudProviderModelId(id)
+    }
+
+    /// Saves the key, then spends one cheap authenticated request to say whether
+    /// it actually works — so a bad key is discovered here rather than as a
+    /// failed narration later.
+    func saveAndValidateKey() async {
+        guard let providerId else { return }
+        ProviderKeyStore.setAPIKey(apiKeyInput, providerId: providerId)
+
+        isValidating = true
+        defer { isValidating = false }
+
+        let result = await ElevenLabsTTSEngine(model: .resolve(id: modelId)).validate(apiKey: apiKeyInput)
+        switch result {
+        case .success:
+            keyStatus = KeyStatus(message: L10n.readAloudKeyValid, isGood: true)
+            Analytics.track(.readAloudKeyValidated, properties: ["result": "valid"])
+            await load()
+        case .failure(.insufficientKeyPermissions):
+            // Distinct from an invalid key on purpose: this key is real, it just
+            // isn't allowed to do text to speech, and telling someone to
+            // regenerate it would send them after the wrong thing.
+            keyStatus = KeyStatus(message: L10n.readAloudKeyNoPermission, isGood: false)
+            Analytics.track(.readAloudKeyValidated, properties: ["result": "no_permission"])
+        case .failure(let error):
+            keyStatus = KeyStatus(message: error.userMessage, isGood: false)
+            Analytics.track(.readAloudKeyValidated, properties: ["result": "invalid"])
+        }
+    }
+
     func load() async {
-        catalog = VoiceCatalog(voices: (try? await engine.availableVoices(apiKey: nil)) ?? [])
+        engineKind = NarrationEngineKind(rawValue: Settings.readAloudEngineKind()) ?? .appleBuiltIn
+        modelId = Settings.readAloudProviderModelId() ?? ElevenLabsModel.default.id
+        if let providerId {
+            apiKeyInput = ProviderKeyStore.apiKey(providerId: providerId) ?? ""
+        }
+
+        let key = providerId.flatMap { ProviderKeyStore.apiKey(providerId: $0) }
+        catalog = VoiceCatalog(voices: (try? await currentEngine().availableVoices(apiKey: key)) ?? [])
         // Falls back to the best installed voice for this device rather than
         // showing nothing: an unset default still has an effective value, and
         // hiding it would make the row look broken.

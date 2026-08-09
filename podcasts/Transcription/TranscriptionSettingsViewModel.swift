@@ -73,7 +73,7 @@ final class TranscriptionSettingsViewModel: ObservableObject {
         languageOverride = Settings.transcriptionLanguageOverride() ?? ""
         let providerId = Settings.transcriptionRemoteProvider()
         selectedProviderId = providerId
-        apiKeyInput = TranscriptionKeyStore.apiKey(providerId: providerId) ?? ""
+        apiKeyInput = ProviderKeyStore.apiKey(providerId: providerId) ?? ""
         selectedModelVariant = Settings.transcriptionWhisperModel()
         allowCellularModelDownloads = Settings.transcriptionAllowCellularModelDownloads()
         maxSpeakers = Settings.transcriptionMaxSpeakers()
@@ -112,7 +112,7 @@ final class TranscriptionSettingsViewModel: ObservableObject {
         guard providerId != selectedProviderId else { return }
         selectedProviderId = providerId
         Settings.setTranscriptionRemoteProvider(providerId)
-        apiKeyInput = TranscriptionKeyStore.apiKey(providerId: providerId) ?? ""
+        apiKeyInput = ProviderKeyStore.apiKey(providerId: providerId) ?? ""
         keyValidation = .idle
         validationTask?.cancel()
     }
@@ -126,7 +126,7 @@ final class TranscriptionSettingsViewModel: ObservableObject {
 
     /// Persists the entered key to the keychain (empty input deletes the item).
     func commitAPIKey() {
-        TranscriptionKeyStore.setAPIKey(apiKeyInput, providerId: selectedProviderId)
+        ProviderKeyStore.setAPIKey(apiKeyInput, providerId: selectedProviderId)
         keyValidation = .idle
     }
 

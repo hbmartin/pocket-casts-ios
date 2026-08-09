@@ -3,7 +3,7 @@ import PocketCastsUtils
 
 /// Keychain storage for the user's Readwise access token (Highlights S6).
 ///
-/// Same policy as `TranscriptionKeyStore`: this is the user's own third-party
+/// Same policy as `ProviderKeyStore`: this is the user's own third-party
 /// credential, entered by hand — it is DELIBERATELY NOT cleared on sign-out
 /// (signing out of Pocket Casts shouldn't cost the user their Readwise setup).
 /// Do not add this key to any sign-out cleanup path. Token material must never

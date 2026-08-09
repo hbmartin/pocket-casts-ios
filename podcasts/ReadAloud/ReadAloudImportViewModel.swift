@@ -28,23 +28,49 @@ final class ReadAloudImportViewModel: ObservableObject {
     /// selection fell back to the device language.
     @Published private(set) var fellBackToDeviceLanguage = false
 
+    /// True once the user has seen and accepted the cost of a paid run.
+    @Published var hasConfirmedCost = false
+
     let source: Source
     private let importer: NarrationImporter
     private let engine: any SpeechSynthesisEngine
+    private let engineKind: NarrationEngineKind
+    private let providerId: String?
+    private let modelId: String?
     private var preview: NarrationImporter.Preview?
 
     init(
         source: Source,
         importer: NarrationImporter = NarrationImporter(),
-        engine: any SpeechSynthesisEngine = AppleSpeechSynthesisEngine()
+        engine: (any SpeechSynthesisEngine)? = nil
     ) {
         self.source = source
         self.importer = importer
+
+        // Resolved once here rather than read per-access: whatever the user has
+        // configured now is what this narration is committed to, and settings
+        // changing mid-sheet must not repartition the text under it.
+        let kind = NarrationEngineKind(rawValue: Settings.readAloudEngineKind()) ?? .appleBuiltIn
+        let providerId = kind == .remoteProvider ? ElevenLabsTTSEngine.providerId : nil
+        let modelId = kind == .remoteProvider
+            ? (Settings.readAloudProviderModelId() ?? ElevenLabsModel.default.id)
+            : nil
+        self.engineKind = kind
+        self.providerId = providerId
+        self.modelId = modelId
         self.engine = engine
+            ?? (try? NarrationEngineFactory().makeEngine(for: kind, providerId: providerId, modelId: modelId))
+            ?? AppleSpeechSynthesisEngine()
+    }
+
+    /// Whether this run will spend the user's provider quota.
+    var requiresCostConfirmation: Bool {
+        engine.capabilities.requiresConfirmation
     }
 
     var isReady: Bool {
         selectedVoice != nil && loadError == nil && characterCount > 0 && !isCommitting
+            && (!requiresCostConfirmation || hasConfirmedCost)
     }
 
     var estimatedDuration: TimeInterval {
@@ -59,7 +85,9 @@ final class ReadAloudImportViewModel: ObservableObject {
     // MARK: - Loading
 
     func load() async {
-        let voices = (try? await engine.availableVoices(apiKey: nil)) ?? []
+        let voices = (try? await engine.availableVoices(
+            apiKey: providerId.flatMap { ProviderKeyStore.apiKey(providerId: $0) }
+        )) ?? []
         catalog = VoiceCatalog(voices: voices)
 
         switch source {
@@ -119,8 +147,9 @@ final class ReadAloudImportViewModel: ObservableObject {
                 let created = try importer.commit(
                     preview: preview,
                     title: title,
-                    engine: .appleBuiltIn,
-                    providerId: nil,
+                    engine: engineKind,
+                    providerId: providerId,
+                    modelId: modelId,
                     voice: voice
                 )
                 narrationUuid = created.narration.uuid
@@ -135,8 +164,9 @@ final class ReadAloudImportViewModel: ObservableObject {
                 }
                 let narration = try importer.narrateAgain(
                     document: document,
-                    engine: .appleBuiltIn,
-                    providerId: nil,
+                    engine: engineKind,
+                    providerId: providerId,
+                    modelId: modelId,
                     voice: voice
                 )
                 narrationUuid = narration.uuid

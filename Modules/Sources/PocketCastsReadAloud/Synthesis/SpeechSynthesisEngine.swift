@@ -79,15 +79,12 @@ public struct EngineCapabilities: Sendable, Equatable {
     public let requiresAPIKey: Bool
     /// Whether a run costs the user money, and so must be confirmed first.
     public let requiresConfirmation: Bool
-    /// Whether the engine can speak a sample at no cost.
-    public let supportsFreePreview: Bool
 
     public init(
         maxCharactersPerChunk: Int,
         maxConcurrentChunks: Int,
         requiresAPIKey: Bool,
         requiresConfirmation: Bool,
-        supportsFreePreview: Bool,
         chunkBoundary: ChunkBoundary = .everyBlock
     ) {
         self.maxCharactersPerChunk = maxCharactersPerChunk
@@ -95,7 +92,6 @@ public struct EngineCapabilities: Sendable, Equatable {
         self.chunkBoundary = chunkBoundary
         self.requiresAPIKey = requiresAPIKey
         self.requiresConfirmation = requiresConfirmation
-        self.supportsFreePreview = supportsFreePreview
     }
 }
 

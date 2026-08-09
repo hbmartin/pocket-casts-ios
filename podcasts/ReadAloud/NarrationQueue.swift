@@ -182,7 +182,11 @@ actor NarrationQueue {
 
     private func render(_ narration: NarrationRecord, document: ReadAloudDocumentRecord) async throws {
         let extracted = try loadText(of: document)
-        let engine = try engineFactory.makeEngine(for: narration.engine, providerId: narration.providerId)
+        let engine = try engineFactory.makeEngine(
+            for: narration.engine,
+            providerId: narration.providerId,
+            modelId: narration.modelId
+        )
         let apiKey = engineFactory.apiKey(providerId: narration.providerId)
         if engine.capabilities.requiresAPIKey, apiKey?.isEmpty != false {
             throw ReadAloudError.apiKeyMissing

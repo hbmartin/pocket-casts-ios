@@ -134,6 +134,34 @@ nonisolated class Settings: NSObject {
         }
     }
 
+    private static let readAloudEngineKindKey = "SJReadAloudEngineKind"
+    private static let readAloudProviderModelKey = "SJReadAloudProviderModel"
+
+    /// Raw `NarrationEngineKind` new narrations start from (0 = built-in,
+    /// 2 = remote provider). Defaults to 0.
+    class func readAloudEngineKind() -> Int32 {
+        Int32(UserDefaults.standard.integer(forKey: Settings.readAloudEngineKindKey))
+    }
+
+    class func setReadAloudEngineKind(_ kind: Int32) {
+        UserDefaults.standard.set(Int(kind), forKey: Settings.readAloudEngineKindKey)
+    }
+
+    /// Provider model id new narrations start from. The chosen model is copied
+    /// onto each narration at enqueue, so changing this never disturbs one that
+    /// is already rendering.
+    class func readAloudProviderModelId() -> String? {
+        UserDefaults.standard.string(forKey: Settings.readAloudProviderModelKey)
+    }
+
+    class func setReadAloudProviderModelId(_ modelId: String?) {
+        if let modelId, !modelId.isEmpty {
+            UserDefaults.standard.set(modelId, forKey: Settings.readAloudProviderModelKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: Settings.readAloudProviderModelKey)
+        }
+    }
+
     // MARK: - Diarized Transcription
 
     private static let transcriptionEngineModeKey = "SJTranscriptionEngineMode"

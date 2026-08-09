@@ -49,7 +49,7 @@ final class NarrationImporterTests: DBTestCase {
         let preview = try importer.preview(text: "First sentence. Second sentence.", title: "My Note")
 
         let created = try importer.commit(
-            preview: preview, title: "My Note", engine: .appleBuiltIn, providerId: nil, voice: voice()
+            preview: preview, title: "My Note", engine: .appleBuiltIn, providerId: nil, modelId: nil, voice: voice()
         )
         track(created.document)
 
@@ -75,7 +75,7 @@ final class NarrationImporterTests: DBTestCase {
         let preview = try importer.preview(text: text, title: "Fox")
 
         let created = try importer.commit(
-            preview: preview, title: "Fox", engine: .appleBuiltIn, providerId: nil, voice: voice()
+            preview: preview, title: "Fox", engine: .appleBuiltIn, providerId: nil, modelId: nil, voice: voice()
         )
         track(created.document)
 
@@ -87,7 +87,7 @@ final class NarrationImporterTests: DBTestCase {
         let preview = try importer.preview(text: "# A Leading Heading\n\nBody text follows.", title: nil)
 
         let created = try importer.commit(
-            preview: preview, title: "   ", engine: .appleBuiltIn, providerId: nil, voice: voice()
+            preview: preview, title: "   ", engine: .appleBuiltIn, providerId: nil, modelId: nil, voice: voice()
         )
         track(created.document)
 
@@ -105,7 +105,7 @@ final class NarrationImporterTests: DBTestCase {
 
         let created = try importer.commit(
             preview: preview, title: preview.document.suggestedTitle,
-            engine: .appleBuiltIn, providerId: nil, voice: voice()
+            engine: .appleBuiltIn, providerId: nil, modelId: nil, voice: voice()
         )
         track(created.document)
 
@@ -138,7 +138,7 @@ final class NarrationImporterTests: DBTestCase {
 
         XCTAssertThrowsError(
             try importer.commit(
-                preview: preview, title: "Doc", engine: .appleBuiltIn, providerId: nil, voice: voice()
+                preview: preview, title: "Doc", engine: .appleBuiltIn, providerId: nil, modelId: nil, voice: voice()
             )
         )
         XCTAssertEqual(dataManager.readAloud.allDocuments().count, documentsBefore)
@@ -151,14 +151,14 @@ final class NarrationImporterTests: DBTestCase {
     func testNarrateAgainSharesTheSourceFile() throws {
         let preview = try importer.preview(text: "Shared source text.", title: "Shared")
         let created = try importer.commit(
-            preview: preview, title: "Shared", engine: .appleBuiltIn, providerId: nil, voice: voice()
+            preview: preview, title: "Shared", engine: .appleBuiltIn, providerId: nil, modelId: nil, voice: voice()
         )
         track(created.document)
         let afterFirst = try sourceFileCount()
 
         let second = try importer.narrateAgain(
             document: created.document, engine: .appleBuiltIn, providerId: nil,
-            voice: SynthesisVoice(id: "other.voice", name: "Other", language: "en-US")
+            modelId: nil, voice: SynthesisVoice(id: "other.voice", name: "Other", language: "en-US")
         )
 
         XCTAssertEqual(try sourceFileCount(), afterFirst, "re-narration duplicated the source file")
@@ -171,7 +171,7 @@ final class NarrationImporterTests: DBTestCase {
     func testDeletingADocumentRemovesItsRetainedSource() throws {
         let preview = try importer.preview(text: "Doomed text.", title: "Doomed")
         let created = try importer.commit(
-            preview: preview, title: "Doomed", engine: .appleBuiltIn, providerId: nil, voice: voice()
+            preview: preview, title: "Doomed", engine: .appleBuiltIn, providerId: nil, modelId: nil, voice: voice()
         )
         let sourcePath = created.document.sourcePath
 
@@ -186,7 +186,7 @@ final class NarrationImporterTests: DBTestCase {
     func testDeletingANarrationKeepsTheDocument() throws {
         let preview = try importer.preview(text: "Kept text.", title: "Kept")
         let created = try importer.commit(
-            preview: preview, title: "Kept", engine: .appleBuiltIn, providerId: nil, voice: voice()
+            preview: preview, title: "Kept", engine: .appleBuiltIn, providerId: nil, modelId: nil, voice: voice()
         )
         track(created.document)
 

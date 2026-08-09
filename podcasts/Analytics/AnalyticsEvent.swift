@@ -966,6 +966,8 @@ enum AnalyticsEvent: String {
     case readAloudSettingsShown
     case readAloudVoicePreviewPlayed
     case readAloudVoiceChanged
+    case readAloudEngineChanged
+    case readAloudKeyValidated
     case readAloudDocumentDeleted
     case readAloudNarrationDeleted
 

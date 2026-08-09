@@ -545,7 +545,6 @@ private actor FakeSynthesisEngine: SpeechSynthesisEngine {
             maxConcurrentChunks: concurrencyLimit,
             requiresAPIKey: false,
             requiresConfirmation: false,
-            supportsFreePreview: true
         )
     }
 
@@ -613,7 +612,6 @@ private actor GatedSynthesisEngine: SpeechSynthesisEngine {
             maxConcurrentChunks: 1,
             requiresAPIKey: false,
             requiresConfirmation: false,
-            supportsFreePreview: true
         )
     }
 
@@ -648,7 +646,7 @@ private actor GatedSynthesisEngine: SpeechSynthesisEngine {
 private struct FakeEngineFactory: NarrationEngineProviding {
     let engine: any SpeechSynthesisEngine
 
-    func makeEngine(for kind: NarrationEngineKind, providerId: String?) throws -> any SpeechSynthesisEngine {
+    func makeEngine(for kind: NarrationEngineKind, providerId: String?, modelId: String?) throws -> any SpeechSynthesisEngine {
         engine
     }
 

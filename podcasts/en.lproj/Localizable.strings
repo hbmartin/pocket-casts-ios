@@ -8108,3 +8108,42 @@
 
 /* Placeholder in the compose screen's text editor. */
 "read_aloud_compose_placeholder" = "Paste or type the text you want read aloud.";
+
+/* Section header for the paid-narration confirmation on the import sheet. */
+"read_aloud_confirm_header" = "This will use your provider quota";
+
+/* Toggle confirming the user accepts spending provider quota; placeholders are character count and duration. */
+"read_aloud_confirm_toggle" = "Narrate %1$@ characters (about %2$@ of audio)";
+
+/* Settings section header for choosing which engine narrates. */
+"read_aloud_engine_section" = "Voice Engine";
+
+/* Built-in engine option: free, offline, lower quality. */
+"read_aloud_engine_builtin" = "Built-in voices";
+
+/* Provider engine option. */
+"read_aloud_engine_elevenlabs" = "ElevenLabs";
+
+/* Settings row for entering the provider API key. */
+"read_aloud_api_key" = "API Key";
+
+/* Button that checks whether the entered API key works. */
+"read_aloud_validate_key" = "Validate";
+
+/* Shown when the entered key works. */
+"read_aloud_key_valid" = "Key works.";
+
+/* Shown when the provider rejected the key. */
+"read_aloud_key_invalid" = "That key was rejected.";
+
+/* Shown when the key is valid but lacks text-to-speech permission. */
+"read_aloud_key_no_permission" = "That key works but isn't allowed to use text to speech. Check its permissions in your ElevenLabs account.";
+
+/* Settings row for choosing the provider model. */
+"read_aloud_model" = "Model";
+
+/* Footer explaining the cost difference between models. */
+"read_aloud_model_footer" = "Higher quality models cost more of your provider quota per character.";
+
+/* Footer explaining that provider narration spends quota. */
+"read_aloud_engine_footer" = "Built-in voices are free and work offline. ElevenLabs sounds much better and uses your own account's quota.";
