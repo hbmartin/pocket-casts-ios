@@ -692,6 +692,191 @@ final class SmokeUITests: PocketCastsUITestCase {
     }
 }
 
+/// Read Aloud's end-to-end path, which unit tests structurally cannot reach.
+///
+/// Everything between "commit the document" and "there is an episode" runs
+/// across a queue, a synthesizer callback, an AVMutableComposition and a
+/// materializer — and until this existed the only thing that had ever run all
+/// of it together was one manual pass. The system document picker is
+/// out-of-process and undrivable, which is exactly why the compose screen
+/// exists: it puts text into the same pipeline through UI we own.
+///
+/// Uses the built-in Apple voices deliberately — free, offline, and no API key,
+/// so this is safe to run anywhere. The provider path is verified in
+/// PocketCastsReadAloudTests against a stubbed transport.
+@MainActor
+final class ReadAloudUITests: PocketCastsUITestCase {
+    /// A fresh title per run: even with a reset library, a failed run can leave
+    /// a document behind, and a fixed title would then match the wrong one.
+    private lazy var documentTitle = "Narration \(UUID().uuidString.prefix(8))"
+
+    /// Launches through a seeded scenario, which resets the database — including
+    /// the Read Aloud tables. Without it the library accumulates documents
+    /// across runs and "the delete button" stops being a single element.
+    private func launchWithCleanLibrary() -> XCUIApplication {
+        let app = launchApp(additionalEnvironment: ["UI_TEST_SCENARIO": "libraryWithQueue"])
+        waitForTabBar(in: app)
+        waitForScenario("libraryWithQueue", in: app, containing: ["mode=seed"])
+        return app
+    }
+
+    private func openReadAloudLibrary(in app: XCUIApplication) {
+        let profileTab = app.tabBars.firstMatch.buttons["Profile"]
+        XCTAssertTrue(profileTab.waitForExistence(timeout: 10), "Missing Profile tab")
+        profileTab.tap()
+
+        let filesRow = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label == 'Files'")
+        ).firstMatch
+        XCTAssertTrue(filesRow.waitForExistence(timeout: 10), "Profile did not expose the Files row")
+        filesRow.tap()
+
+        let optionsButton = app.buttons["Sort and Options"]
+        XCTAssertTrue(optionsButton.waitForExistence(timeout: 10), "Files did not expose its options menu")
+        optionsButton.tap()
+
+        let readAloudAction = app.buttons["Read Aloud"]
+        XCTAssertTrue(readAloudAction.waitForExistence(timeout: 10),
+                      "Files options did not offer Read Aloud — is the feature flag off?")
+        readAloudAction.tap()
+
+        XCTAssertTrue(app.buttons["readAloudComposeButton"].waitForExistence(timeout: 10),
+                      "Read Aloud library did not open")
+    }
+
+    private func composeDocument(text: String, in app: XCUIApplication) {
+        app.buttons["readAloudComposeButton"].tap()
+
+        let titleField = app.textFields["readAloudComposeTitleField"]
+        XCTAssertTrue(titleField.waitForExistence(timeout: 10), "Compose screen did not expose its title field")
+
+        let editor = app.textViews["readAloudComposeTextEditor"]
+        XCTAssertTrue(editor.waitForExistence(timeout: 10), "Compose screen did not expose its text editor")
+        // The editor takes focus on appear, so the keyboard introduction (if the
+        // simulator is showing it) lands here rather than on the first tap.
+        dismissKeyboardIntroductionIfNeeded(in: app)
+        editor.tap()
+        editor.typeText(text)
+
+        titleField.tap()
+        titleField.typeText(documentTitle)
+
+        let next = app.buttons["readAloudComposeNextButton"]
+        XCTAssertTrue(next.waitForExistence(timeout: 10), "Compose screen did not expose Next")
+        XCTAssertTrue(next.isEnabled, "Next stayed disabled with text entered")
+        next.tap()
+    }
+
+    private func dismissKeyboardIntroductionIfNeeded(in app: XCUIApplication) {
+        let keyboardIntroduction = app.otherElements["UIContinuousPathIntroductionView"]
+        if keyboardIntroduction.waitForExistence(timeout: 2) {
+            keyboardIntroduction.buttons["Continue"].tap()
+        }
+    }
+
+    /// Types text, narrates it, and requires a real episode at the end.
+    ///
+    /// The final assertion is deliberately the episode in Files rather than the
+    /// library's own status row: a narration can reach `completed` with the
+    /// UserEpisode never materialized, and that failure would be invisible from
+    /// the screen that just rendered it.
+    func testComposedTextBecomesAPlayableEpisode() throws {
+        let app = launchWithCleanLibrary()
+        openReadAloudLibrary(in: app)
+
+        composeDocument(
+            text: "The kettle had boiled twice before anyone noticed. "
+                + "Outside, the street was doing its usual impression of being asleep.",
+            in: app
+        )
+
+        let narrateButton = app.buttons["readAloudNarrateButton"]
+        XCTAssertTrue(narrateButton.waitForExistence(timeout: 10), "Review sheet did not open")
+        XCTAssertTrue(narrateButton.isEnabled,
+                      "Narrate was disabled — the built-in engine needs no confirmation and no key")
+        narrateButton.tap()
+
+        // Generous: synthesis, the AVMutableComposition assembly and the AAC
+        // re-encode all happen here, on a simulator that may be under load.
+        let completed = app.descendants(matching: .any)["readAloudNarration.completed"]
+        let failed = app.descendants(matching: .any)["readAloudNarration.failed"]
+        XCTAssertTrue(completed.waitForExistence(timeout: 240),
+                      failed.exists
+                          ? "The narration failed to render"
+                          : "The narration never reached completed")
+
+        app.navigationBars.buttons.firstMatch.tap()
+
+        let episode = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label CONTAINS %@", documentTitle)
+        ).firstMatch
+        XCTAssertTrue(episode.waitForExistence(timeout: 30),
+                      "The narration completed but no episode appeared in Files")
+    }
+
+    /// The one Read Aloud path that can spend money unattended.
+    ///
+    /// `CreateNarrationIntent` is invoked by the Shortcuts app, out of process,
+    /// so no UI test can drive it and no unit test can start it — it runs here
+    /// through an in-app harness instead. All three runs use the same text and
+    /// the same stored key; only the engine and the consent flag differ.
+    func testTheIntentRefusesToSpendQuotaWithoutConsent() throws {
+        let app = launchApp(additionalEnvironment: [
+            "UI_TEST_SCENARIO": "libraryWithQueue",
+            "POCKET_CASTS_UI_TEST_EXERCISE_READ_ALOUD_INTENT": "1"
+        ])
+        waitForTabBar(in: app)
+
+        let failed = app.descendants(matching: .any)["readAloudIntentFailed"]
+        let completed = app.descendants(matching: .any)["readAloudIntentCompleted"]
+        XCTAssertTrue(completed.waitForExistence(timeout: 60),
+                      failed.exists
+                          ? "Intent harness failed: \(failed.value as? String ?? "unknown")"
+                          : "Intent harness did not complete")
+
+        let result = completed.value as? String ?? ""
+
+        XCTAssertTrue(result.contains("paidUnconfirmed=paidNarrationNotConfirmed"),
+                      "A paid narration ran without consent: \(result)")
+        // Getting as far as the voice list proves consent was the only thing
+        // stopping the run above — not a missing key or a disabled feature.
+        XCTAssertTrue(result.contains("paidConfirmed=noVoiceAvailable"),
+                      "With consent the intent should have passed the gate: \(result)")
+        XCTAssertTrue(result.contains("free=enqueued"),
+                      "The free engine must ignore the consent flag: \(result)")
+    }
+
+    /// The document outlives its narration — the whole reason the two are
+    /// separate records (ADR-0020). Deleting the episode must leave the text
+    /// behind, ready to narrate again.
+    func testDeletingANarrationLeavesTheDocument() throws {
+        let app = launchWithCleanLibrary()
+        openReadAloudLibrary(in: app)
+        composeDocument(text: "A short paragraph is enough to render.", in: app)
+
+        app.buttons["readAloudNarrateButton"].tap()
+        let completed = app.descendants(matching: .any)["readAloudNarration.completed"]
+        XCTAssertTrue(completed.waitForExistence(timeout: 240), "The narration never reached completed")
+
+        let deleteNarration = app.buttons["Delete Recording"]
+        XCTAssertTrue(deleteNarration.waitForExistence(timeout: 10),
+                      "A completed narration did not offer to be deleted")
+        deleteNarration.tap()
+
+        XCTAssertTrue(completed.waitForNonExistence(timeout: 15), "The narration row did not go away")
+
+        let document = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label CONTAINS %@", documentTitle)
+        ).firstMatch
+        XCTAssertTrue(document.waitForExistence(timeout: 10),
+                      "Deleting the narration took the document with it")
+        XCTAssertTrue(
+            app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Narrate Again'")).firstMatch.exists,
+            "The surviving document could not be narrated again"
+        )
+    }
+}
+
 /// Reporting-only performance baselines (Deferred Item 39): cold launch, podcast
 /// page entry and episode card entry over the deterministic seeded library — no
 /// scrolling (simulator scroll timings are too noisy to baseline). Runs in its

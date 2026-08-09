@@ -3,6 +3,7 @@ import Combine
 import JLRoutes
 import UIKit
 import PocketCastsDataModel
+import PocketCastsReadAloud
 import PocketCastsServer
 import PocketCastsUtils
 
@@ -33,6 +34,7 @@ class SceneDelegate: UIResponder, UISceneDelegate, UIWindowSceneDelegate {
         PR263UITestHarness.exerciseIfRequested(in: window)
         PR264UITestHarness.exerciseIfRequested()
         MediaConcurrencyUITestHarness.exerciseIfRequested()
+        ReadAloudIntentUITestHarness.exerciseIfRequested()
         #endif
 
         if let shortcutItem = connectionOptions.shortcutItem {
@@ -207,6 +209,13 @@ enum UITestScenarioLauncher {
 
         Settings.setPrimaryRowAction(.stream)
         Settings.setLibraryType(.list)
+
+        // The selected tab is persisted, and MainTabBarController restores it on
+        // launch — so a test that navigates away leaves the *next* test starting
+        // somewhere else, and every assertion about seeded content silently
+        // looks at the wrong screen. Clearing it is what makes "seeded" mean the
+        // same thing however the previous test ended.
+        UserDefaults.standard.removeObject(forKey: Constants.UserDefaults.lastTabOpened)
     }
 
     private static func resetDatabase() {
@@ -224,6 +233,19 @@ enum UITestScenarioLauncher {
             dataManager.delete(podcast: podcast)
         }
         dataManager.clearAllFolderInformation()
+        resetReadAloudLibrary(dataManager: dataManager)
+    }
+
+    /// Read Aloud documents survive the loop above — they are their own tables,
+    /// and their episodes are user episodes that would already have been deleted
+    /// out from under them, leaving narrations pointing at nothing. Goes through
+    /// the importer so the retained source files and render workspaces go too,
+    /// rather than accumulating on disk across every seeded run.
+    private static func resetReadAloudLibrary(dataManager: DataManager) {
+        let importer = NarrationImporter(dataManager: dataManager)
+        for entry in dataManager.readAloud.library() {
+            importer.delete(document: entry.document)
+        }
     }
 
     private static func seedLibraryWithQueue() {
@@ -468,6 +490,15 @@ enum UITestAccessibilityMarker {
         marker.accessibilityValue = value
         window.addSubview(marker)
         return marker
+    }
+
+    /// For harnesses that finish after launch and have no window in hand.
+    static func addToKeyWindow(identifier: String, value: String? = nil) {
+        guard let window = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .flatMap(\.windows)
+            .first(where: \.isKeyWindow) else { return }
+        add(identifier: identifier, value: value, to: window)
     }
 }
 
@@ -719,6 +750,89 @@ enum MediaConcurrencyUITestHarness {
         marker.isAccessibilityElement = true
         marker.accessibilityIdentifier = identifier
         window.addSubview(marker)
+    }
+}
+
+/// Debug-only driver for `CreateNarrationIntent`, which no UI can reach.
+///
+/// An App Intent is invoked by the Shortcuts app, out of process, so XCUITest
+/// cannot drive it and a unit test cannot start it — but it is the one Read
+/// Aloud entry point that can run with nobody watching, which is exactly why
+/// its consent gate needs proving. This runs `perform()` in the live app and
+/// publishes what it did.
+@MainActor
+enum ReadAloudIntentUITestHarness {
+    private static let environment = "POCKET_CASTS_UI_TEST_EXERCISE_READ_ALOUD_INTENT"
+    private static let completedIdentifier = "readAloudIntentCompleted"
+    private static let failedIdentifier = "readAloudIntentFailed"
+
+    static func exerciseIfRequested() {
+        guard ProcessInfo.processInfo.environment[environment] == "1" else { return }
+
+        Task { @MainActor in
+            do {
+                let result = try await exercise()
+                UITestAccessibilityMarker.addToKeyWindow(identifier: completedIdentifier, value: result)
+            } catch {
+                UITestAccessibilityMarker.addToKeyWindow(
+                    identifier: failedIdentifier,
+                    value: String(describing: error)
+                )
+            }
+        }
+    }
+
+    private static func exercise() async throws -> String {
+        let paidUnconfirmed = await runPaid(confirmed: false)
+        let paidConfirmed = await runPaid(confirmed: true)
+        let free = await runFree()
+        return "paidUnconfirmed=\(paidUnconfirmed)|paidConfirmed=\(paidConfirmed)|free=\(free)"
+    }
+
+    /// Points the intent at the paid engine with a key present, so the only
+    /// thing separating the two runs is consent.
+    ///
+    /// With consent it is *expected* to fail later, at the voice list: the key
+    /// is a placeholder and the catalog comes back empty. That later failure is
+    /// the point — it proves the gate, and not something else, is what stopped
+    /// the unconfirmed run.
+    private static func runPaid(confirmed: Bool) async -> String {
+        let previousKind = Settings.readAloudEngineKind()
+        let previousKey = ProviderKeyStore.apiKey(providerId: ElevenLabsTTSEngine.providerId)
+        defer {
+            Settings.setReadAloudEngineKind(previousKind)
+            ProviderKeyStore.setAPIKey(previousKey, providerId: ElevenLabsTTSEngine.providerId)
+        }
+
+        Settings.setReadAloudEngineKind(NarrationEngineKind.remoteProvider.rawValue)
+        ProviderKeyStore.setAPIKey("ui-test-placeholder-key", providerId: ElevenLabsTTSEngine.providerId)
+
+        return await outcome(text: "A paid narration nobody asked for.", confirmed: confirmed)
+    }
+
+    /// The built-in engine is free, so it must ignore the parameter entirely —
+    /// otherwise the gate would have broken every shortcut that already exists.
+    private static func runFree() async -> String {
+        let previousKind = Settings.readAloudEngineKind()
+        defer { Settings.setReadAloudEngineKind(previousKind) }
+
+        Settings.setReadAloudEngineKind(NarrationEngineKind.appleBuiltIn.rawValue)
+        return await outcome(text: "A free narration from a shortcut.", confirmed: false)
+    }
+
+    private static func outcome(text: String, confirmed: Bool) async -> String {
+        let intent = CreateNarrationIntent()
+        intent.text = text
+        intent.title = "Intent Harness"
+        intent.confirmPaidNarration = confirmed
+        do {
+            _ = try await intent.perform()
+            return "enqueued"
+        } catch let error as ReadAloudIntentError {
+            return String(describing: error)
+        } catch {
+            return "unexpected"
+        }
     }
 }
 #endif

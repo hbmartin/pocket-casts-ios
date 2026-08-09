@@ -25,6 +25,7 @@ struct ReadAloudComposeView: View {
                     TextField(L10n.readAloudDocumentTitle, text: $model.title)
                         .font(style: .body)
                         .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
+                        .accessibilityIdentifier("readAloudComposeTitleField")
                 }
                 .listRowBackground(AppTheme.color(for: .primaryUi01, theme: theme))
 
@@ -35,6 +36,7 @@ struct ReadAloudComposeView: View {
                         .scrollContentBackground(.hidden)
                         .frame(minHeight: 220)
                         .focused($bodyFocused)
+                        .accessibilityIdentifier("readAloudComposeTextEditor")
                         .overlay(alignment: .topLeading) {
                             // TextEditor has no placeholder of its own.
                             if model.text.isEmpty {
@@ -69,6 +71,7 @@ struct ReadAloudComposeView: View {
                         if let document = model.saveDraft() { onNext(document) }
                     }
                     .disabled(!model.canContinue)
+                    .accessibilityIdentifier("readAloudComposeNextButton")
                 }
             }
         }

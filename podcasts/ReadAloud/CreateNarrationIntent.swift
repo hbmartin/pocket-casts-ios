@@ -64,20 +64,24 @@ struct CreateNarrationIntent: AppIntent {
             throw ReadAloudIntentError.missingKey
         }
 
+        // A paid engine spends the user's quota with nobody in the loop, so an
+        // unattended shortcut must opt in explicitly — the same consent the
+        // import sheet collects with its confirmation toggle. Free engines
+        // never look at the parameter.
+        //
+        // Checked before the voice list, not after: listing voices is a request
+        // to the provider, and a shortcut that hasn't opted in should not reach
+        // them at all.
+        if engine.capabilities.requiresConfirmation, !confirmPaidNarration {
+            throw ReadAloudIntentError.paidNarrationNotConfirmed
+        }
+
         let catalog = VoiceCatalog(voices: (try? await engine.availableVoices(apiKey: apiKey)) ?? [])
         guard let voice = catalog.preferredVoice(
             storedId: Settings.readAloudDefaultVoiceId(),
             for: preview.document.detectedLanguage
         ) else {
             throw ReadAloudIntentError.noVoiceAvailable
-        }
-
-        // A paid engine spends the user's quota with nobody in the loop, so an
-        // unattended shortcut must opt in explicitly — the same consent the
-        // import sheet collects with its confirmation toggle. Free engines
-        // never look at the parameter.
-        if engine.capabilities.requiresConfirmation, !confirmPaidNarration {
-            throw ReadAloudIntentError.paidNarrationNotConfirmed
         }
 
         let narration: NarrationRecord
