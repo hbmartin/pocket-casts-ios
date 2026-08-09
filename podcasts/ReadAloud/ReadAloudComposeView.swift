@@ -1,3 +1,4 @@
+import PocketCastsDataModel
 import PocketCastsReadAloud
 import SwiftUI
 
@@ -15,7 +16,7 @@ struct ReadAloudComposeView: View {
 
     let onCancel: () -> Void
     /// Hands the extracted text on to the review sheet.
-    let onNext: (NarrationImporter.Preview) -> Void
+    let onNext: (ReadAloudDocumentRecord) -> Void
 
     var body: some View {
         NavigationStack {
@@ -24,6 +25,7 @@ struct ReadAloudComposeView: View {
                     TextField(L10n.readAloudDocumentTitle, text: $model.title)
                         .font(style: .body)
                         .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
+                        .accessibilityIdentifier("readAloudComposeTitleField")
                 }
                 .listRowBackground(AppTheme.color(for: .primaryUi01, theme: theme))
 
@@ -34,6 +36,7 @@ struct ReadAloudComposeView: View {
                         .scrollContentBackground(.hidden)
                         .frame(minHeight: 220)
                         .focused($bodyFocused)
+                        .accessibilityIdentifier("readAloudComposeTextEditor")
                         .overlay(alignment: .topLeading) {
                             // TextEditor has no placeholder of its own.
                             if model.text.isEmpty {
@@ -65,9 +68,10 @@ struct ReadAloudComposeView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(L10n.next) {
-                        if let preview = model.makePreview() { onNext(preview) }
+                        if let document = model.saveDraft() { onNext(document) }
                     }
                     .disabled(!model.canContinue)
+                    .accessibilityIdentifier("readAloudComposeNextButton")
                 }
             }
         }
@@ -92,7 +96,7 @@ final class ReadAloudComposeViewModel: ObservableObject {
     /// Counts what will actually be narrated, so it matches the number the
     /// review sheet then shows. Whitespace-only input counts as nothing.
     var characterCount: Int {
-        text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0 : text.count
+        PlainTextExtractor().narratableCharacterCount(in: text)
     }
 
     var isOverLimit: Bool {
@@ -112,8 +116,10 @@ final class ReadAloudComposeViewModel: ObservableObject {
     /// Extracts now rather than at commit time so the review sheet has a real
     /// character count and detected language to show, and so a document that
     /// can't be extracted fails here rather than two screens later.
-    func makePreview() -> NarrationImporter.Preview? {
-        try? importer.preview(text: text, title: title.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty())
+    func saveDraft() -> ReadAloudDocumentRecord? {
+        let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let preview = try? importer.preview(text: text, title: cleanTitle.nilIfEmpty()) else { return nil }
+        return try? importer.saveDraft(preview: preview, title: cleanTitle)
     }
 }
 

@@ -138,9 +138,18 @@ nonisolated class Settings: NSObject {
     private static let readAloudProviderModelKey = "SJReadAloudProviderModel"
 
     /// Raw `NarrationEngineKind` new narrations start from (0 = built-in,
-    /// 2 = remote provider). Defaults to 0.
+    /// 2 = remote provider). Defaults to 0. Values this build cannot make an
+    /// engine for — the reserved `.localModel`, or anything a future build may
+    /// have written — normalize to built-in rather than reaching callers, which
+    /// would otherwise stamp them onto narrations the render queue can't run.
     class func readAloudEngineKind() -> Int32 {
-        Int32(UserDefaults.standard.integer(forKey: Settings.readAloudEngineKindKey))
+        let raw = Int32(UserDefaults.standard.integer(forKey: Settings.readAloudEngineKindKey))
+        switch NarrationEngineKind(rawValue: raw) {
+        case .appleBuiltIn, .remoteProvider:
+            return raw
+        case .localModel, .none:
+            return NarrationEngineKind.appleBuiltIn.rawValue
+        }
     }
 
     class func setReadAloudEngineKind(_ kind: Int32) {

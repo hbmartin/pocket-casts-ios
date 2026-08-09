@@ -23,7 +23,9 @@ struct ReadAloudLibraryView: View {
         List {
             Section {
                 Button(L10n.readAloudNarrateDocument, action: onImportTapped)
+                    .accessibilityIdentifier("readAloudImportButton")
                 Button(L10n.readAloudComposeAction, action: onComposeTapped)
+                    .accessibilityIdentifier("readAloudComposeButton")
             }
             .font(style: .body, weight: .medium)
             .foregroundColor(AppTheme.color(for: .primaryInteractive01, theme: theme))
@@ -128,6 +130,11 @@ struct ReadAloudLibraryView: View {
                 Text(statusText(narration))
                     .font(style: .caption)
                     .foregroundColor(AppTheme.color(for: .primaryText02, theme: theme))
+                    // The state is in the *identifier* rather than an
+                    // accessibility value so a UI test can wait on it without
+                    // parsing a localized duration — and without VoiceOver
+                    // gaining a second, redundant thing to read out.
+                    .accessibilityIdentifier("readAloudNarration.\(Self.stateSlug(narration))")
             }
 
             if narration.narrationState == .rendering {
@@ -153,6 +160,17 @@ struct ReadAloudLibraryView: View {
         .padding(.vertical, 2)
     }
 
+    /// Stable, unlocalized name for a narration's state, for test identifiers.
+    static func stateSlug(_ narration: NarrationRecord) -> String {
+        switch narration.narrationState {
+        case .queued: "queued"
+        case .rendering: "rendering"
+        case .completed: "completed"
+        case .failed: "failed"
+        case .cancelled: "cancelled"
+        }
+    }
+
     private func statusText(_ narration: NarrationRecord) -> String {
         switch narration.narrationState {
         case .queued:
@@ -174,6 +192,7 @@ extension ReadAloudImportViewModel.Source: Identifiable {
         switch self {
         case .file(let url, _): "file:\(url.absoluteString)"
         case .composed(let preview): "composed:\(preview.document.characterCount):\(preview.document.suggestedTitle)"
+        case .draftDocument(let document): "draft:\(document.uuid)"
         case .existingDocument(let document): "document:\(document.uuid)"
         }
     }

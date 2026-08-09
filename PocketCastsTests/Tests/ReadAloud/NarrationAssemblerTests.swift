@@ -154,4 +154,56 @@ final class NarrationAssemblerTests: XCTestCase {
         let readBack = try await duration(of: outputURL)
         XCTAssertEqual(readBack, 0.5, accuracy: 0.1)
     }
+
+    func testCancellationIsNotMappedToAssemblyFailure() async throws {
+        let chunk = try makeChunk(seconds: 0.5, name: "cancelled")
+        let outputURL = root.appendingPathComponent("cancelled.m4a")
+        let gate = NarrationCancellationGate()
+        let task = Task {
+            await gate.wait()
+            return try await NarrationAssembler().assemble(
+                chunkURLs: [chunk],
+                pauseBefore: [],
+                outputURL: outputURL
+            )
+        }
+
+        await gate.waitUntilEntered()
+        task.cancel()
+        await gate.open()
+
+        do {
+            _ = try await task.value
+            XCTFail("expected cancellation")
+        } catch {
+            XCTAssertTrue(error is CancellationError, "unexpected error: \(error)")
+        }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: outputURL.path))
+    }
+}
+
+private actor NarrationCancellationGate {
+    private var continuation: CheckedContinuation<Void, Never>?
+    private var enteredContinuation: CheckedContinuation<Void, Never>?
+    private var isWaiting = false
+
+    func wait() async {
+        await withCheckedContinuation {
+            continuation = $0
+            isWaiting = true
+            enteredContinuation?.resume()
+            enteredContinuation = nil
+        }
+    }
+
+    func waitUntilEntered() async {
+        guard !isWaiting else { return }
+        await withCheckedContinuation { enteredContinuation = $0 }
+    }
+
+    func open() {
+        continuation?.resume()
+        continuation = nil
+        isWaiting = false
+    }
 }

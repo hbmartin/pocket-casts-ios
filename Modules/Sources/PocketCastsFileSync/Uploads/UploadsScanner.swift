@@ -49,7 +49,7 @@ public actor UploadsScanner {
                 uuid: episode.uuid,
                 relativePath: path,
                 sizeBytes: episode.sizeInBytes,
-                mtimeMs: 0, // mtime isn't persisted; rename matching uses size via planner rules
+                mtimeMs: 0, // mtime isn't persisted, so this row cannot safely drive rename identity
                 contentHash: episode.contentHash,
                 isCanonical: episode.identity == .canonical)
         }

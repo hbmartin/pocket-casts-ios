@@ -70,6 +70,40 @@ final class SalientSegmentDataManagerTests: DataManagerTestCase {
         }
     }
 
+    func testConditionalStatusTransitionRejectsReplacementGeneration() throws {
+        try runWithBothImplementations { dataManager, impl in
+            dataManager.salientSegments.replaceGeneration(
+                episodeUuid: "ep-race", podcastUuid: nil, transcriptSource: "generated",
+                generatedAt: Date(timeIntervalSince1970: 1),
+                segments: [segment(rank: 0)], markPendingTop: 1
+            )
+            let snapshot = try XCTUnwrap(
+                dataManager.salientSegments.generation(episodeUuid: "ep-race"),
+                "\(impl): initial generation"
+            )
+
+            var replacement = segment(rank: 0, start: 100, end: 130, status: .pending)
+            replacement.title = "Replacement"
+            dataManager.salientSegments.replaceGeneration(
+                episodeUuid: "ep-race", podcastUuid: nil, transcriptSource: "generated",
+                generatedAt: Date(timeIntervalSince1970: 2), segments: [replacement]
+            )
+
+            XCTAssertFalse(
+                dataManager.salientSegments.setStatus(
+                    .accepted,
+                    matching: try XCTUnwrap(snapshot.segments.first),
+                    generatedAt: snapshot.meta.generatedAt,
+                    bookmarkUuid: "bm-stale"
+                ),
+                "\(impl): a rendered snapshot must not mutate its replacement"
+            )
+            let stored = dataManager.salientSegments.generation(episodeUuid: "ep-race")?.segments.first
+            XCTAssertEqual(stored?.status, .pending, "\(impl)")
+            XCTAssertNil(stored?.bookmarkUuid, "\(impl)")
+        }
+    }
+
     func testMarkTopCandidatesPendingSkipsResolvedRows() throws {
         try runWithBothImplementations { dataManager, impl in
             dataManager.salientSegments.replaceGeneration(

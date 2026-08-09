@@ -197,8 +197,7 @@ struct SuggestedHighlightsManager {
         // resolves no metadata and bails the same way.
         guard let generation = dataManager.salientSegments.generation(episodeUuid: suggestion.episodeUuid),
               let live = generation.segments.first(where: { $0.rank == suggestion.rank }),
-              live.startTime == suggestion.startTime,
-              live.title == suggestion.title else {
+              live == suggestion else {
             NotificationCenter.postOnMainThread(SuggestedHighlightsUpdated())
             return
         }
@@ -215,8 +214,57 @@ struct SuggestedHighlightsManager {
                                            mapsReferenceTime: mapsReferenceTime,
                                            episodeUuid: suggestion.episodeUuid)
 
-        let bookmark = bookmarkManager.add(to: episode, at: startTime, title: suggestion.title)
-        guard let bookmark else { return }
+        // Reserve the bookmark identity and conditionally accept the exact
+        // generation before creating anything from this render-time snapshot.
+        // This prevents a replacement generation from leaving behind a stale
+        // bookmark even when it reuses the same episode/rank pair.
+        let bookmarkUuid = bookmarkManager.existingBookmark(for: episode, at: startTime)?.uuid
+            ?? UUID().uuidString.lowercased()
+        guard dataManager.salientSegments.setStatus(
+            .accepted,
+            matching: suggestion,
+            generatedAt: generation.meta.generatedAt,
+            bookmarkUuid: bookmarkUuid
+        ) else {
+            NotificationCenter.postOnMainThread(SuggestedHighlightsUpdated())
+            return
+        }
+
+        var acceptedSnapshot = suggestion
+        acceptedSnapshot.status = .accepted
+        acceptedSnapshot.bookmarkUuid = bookmarkUuid
+
+        guard let bookmark = bookmarkManager.add(
+            to: episode,
+            at: startTime,
+            title: suggestion.title,
+            uuid: bookmarkUuid
+        ) else {
+            // Undo only the row we just accepted. If a regeneration raced the
+            // failed insert, its replacement is left untouched.
+            _ = dataManager.salientSegments.setStatus(
+                suggestion.status,
+                matching: acceptedSnapshot,
+                generatedAt: generation.meta.generatedAt,
+                clearBookmarkUuid: true
+            )
+            NotificationCenter.postOnMainThread(SuggestedHighlightsUpdated())
+            return
+        }
+
+        if bookmark.uuid != bookmarkUuid {
+            // Another path created the same-time bookmark between the lookup
+            // and insert. Retarget the accepted row only if it is still ours.
+            guard dataManager.salientSegments.setStatus(
+                .accepted,
+                matching: acceptedSnapshot,
+                generatedAt: generation.meta.generatedAt,
+                bookmarkUuid: bookmark.uuid
+            ) else {
+                NotificationCenter.postOnMainThread(SuggestedHighlightsUpdated())
+                return
+            }
+        }
 
         if let excerpt = suggestion.excerpt, !excerpt.isEmpty {
             let trimmed = await bookmarkManager.updateTrim(excerpt: excerpt, endTime: endTime, for: bookmark)
@@ -226,8 +274,6 @@ struct SuggestedHighlightsManager {
                 FileLog.shared.addMessage("SuggestedHighlights: trim enrichment failed for accepted suggestion \(bookmark.uuid)")
             }
         }
-        dataManager.salientSegments.setStatus(.accepted, episodeUuid: suggestion.episodeUuid,
-                                              rank: suggestion.rank, bookmarkUuid: bookmark.uuid)
         NotificationCenter.postOnMainThread(SuggestedHighlightsUpdated())
         Analytics.track(.suggestedHighlightAccepted, properties: ["episode_uuid": suggestion.episodeUuid])
     }

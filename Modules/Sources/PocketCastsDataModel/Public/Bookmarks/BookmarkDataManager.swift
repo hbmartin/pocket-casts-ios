@@ -260,7 +260,7 @@ public struct BookmarkDataManager: Sendable {
 
         var groups: [String: (display: String, count: Int)] = [:]
         for tag in tags {
-            let key = tag.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+            let key = Self.canonicalTagKey(tag)
             if var group = groups[key] {
                 group.count += 1
                 if tag < group.display { group.display = tag }
@@ -273,7 +273,7 @@ public struct BookmarkDataManager: Sendable {
             .sorted {
                 $0.count != $1.count
                     ? $0.count > $1.count
-                    : $0.display.localizedCaseInsensitiveCompare($1.display) == .orderedAscending
+                    : Self.tagSortsBefore($0.display, $1.display)
             }
             .map(\.display)
     }
@@ -285,11 +285,30 @@ public struct BookmarkDataManager: Sendable {
         for raw in tags {
             let tag = raw.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !tag.isEmpty else { continue }
-            let key = tag.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+            let key = Self.canonicalTagKey(tag)
             guard seen.insert(key).inserted else { continue }
             result.append(tag)
         }
-        return result.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+        return result.sorted(by: Self.tagSortsBefore)
+    }
+
+    /// A locale-independent total order. Tag arrays are persisted and synced,
+    /// so the device's current locale and database iteration order must not
+    /// change their representation.
+    static func tagSortsBefore(_ lhs: String, _ rhs: String) -> Bool {
+        let lhsKey = canonicalTagKey(lhs)
+        let rhsKey = canonicalTagKey(rhs)
+        if lhsKey != rhsKey {
+            return lhsKey < rhsKey
+        }
+        return lhs < rhs
+    }
+
+    private static func canonicalTagKey(_ tag: String) -> String {
+        tag.folding(
+            options: [.caseInsensitive, .diacriticInsensitive],
+            locale: Locale(identifier: "en_US_POSIX")
+        )
     }
 
     // MARK: - Retrieving
@@ -485,7 +504,7 @@ private extension BookmarkDataManager {
             BookmarkTagRow.filter(uuids.contains(BookmarkTagRow.Columns.bookmarkUuid))
         )
         return Dictionary(grouping: tagRows, by: \.bookmarkUuid).mapValues { rows in
-            rows.map(\.tag).sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+            rows.map(\.tag).sorted(by: Self.tagSortsBefore)
         }
     }
 }

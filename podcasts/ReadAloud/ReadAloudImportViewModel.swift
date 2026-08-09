@@ -12,6 +12,10 @@ final class ReadAloudImportViewModel: ObservableObject {
         /// Text typed or pasted on the compose screen, already extracted there
         /// so this sheet has nothing to re-read.
         case composed(NarrationImporter.Preview)
+        /// Composed text persisted before the compose sheet was dismissed. It
+        /// has no narration yet, but survives process termination and is visible
+        /// in the library if review is cancelled.
+        case draftDocument(ReadAloudDocumentRecord)
         /// An existing document being narrated again in another voice.
         case existingDocument(ReadAloudDocumentRecord)
     }
@@ -53,7 +57,7 @@ final class ReadAloudImportViewModel: ObservableObject {
         let kind = NarrationEngineKind(rawValue: Settings.readAloudEngineKind()) ?? .appleBuiltIn
         let providerId = kind == .remoteProvider ? ElevenLabsTTSEngine.providerId : nil
         let modelId = kind == .remoteProvider
-            ? (Settings.readAloudProviderModelId() ?? ElevenLabsModel.default.id)
+            ? (ElevenLabsModel.resolve(id: Settings.readAloudProviderModelId()) ?? .default).id
             : nil
         self.engineKind = kind
         self.providerId = providerId
@@ -85,9 +89,19 @@ final class ReadAloudImportViewModel: ObservableObject {
     // MARK: - Loading
 
     func load() async {
-        let voices = (try? await engine.availableVoices(
-            apiKey: providerId.flatMap { ProviderKeyStore.apiKey(providerId: $0) }
-        )) ?? []
+        loadError = nil
+        var voices: [SynthesisVoice] = []
+        do {
+            voices = try await engine.availableVoices(
+                apiKey: providerId.flatMap {
+                    ProviderKeyStore.apiKey(providerId: $0, purpose: .textToSpeech)
+                }
+            )
+        } catch let error as ReadAloudError {
+            loadError = error
+        } catch {
+            loadError = .engineFailure
+        }
         catalog = VoiceCatalog(voices: voices)
 
         switch source {
@@ -106,7 +120,7 @@ final class ReadAloudImportViewModel: ObservableObject {
             title = preview.document.suggestedTitle
             characterCount = preview.document.characterCount
             detectedLanguage = preview.document.detectedLanguage
-        case .existingDocument(let document):
+        case .draftDocument(let document), .existingDocument(let document):
             title = document.title
             characterCount = Int(document.characterCount)
             detectedLanguage = document.language
@@ -119,12 +133,10 @@ final class ReadAloudImportViewModel: ObservableObject {
     /// the right language, otherwise the best voice for the document.
     private func selectDefaultVoice() {
         let documentVoices = catalog.voices(matching: detectedLanguage)
-        if let stored = catalog.voice(id: Settings.readAloudDefaultVoiceId()),
-           detectedLanguage == nil || documentVoices.contains(stored) {
-            selectedVoice = stored
-        } else {
-            selectedVoice = catalog.preferredVoice(for: detectedLanguage)
-        }
+        selectedVoice = catalog.preferredVoice(
+            storedId: Settings.readAloudDefaultVoiceId(),
+            for: detectedLanguage
+        )
         // Only a document whose language we actually detected can mismatch;
         // "we couldn't tell" is not a mismatch worth explaining.
         fellBackToDeviceLanguage = detectedLanguage != nil && documentVoices.isEmpty && selectedVoice != nil
@@ -135,7 +147,10 @@ final class ReadAloudImportViewModel: ObservableObject {
     /// Creates the rows and queues the render. Returns false when nothing was
     /// enqueued, so the caller can keep the sheet up.
     func narrate() async -> Bool {
-        guard let voice = selectedVoice, !isCommitting else { return false }
+        // The confirmation check is enforced here as well as in `isReady`: a
+        // paid run must never start without consent, whatever the caller.
+        guard let voice = selectedVoice, !isCommitting,
+              !requiresCostConfirmation || hasConfirmedCost else { return false }
         isCommitting = true
         defer { isCommitting = false }
 
@@ -171,6 +186,23 @@ final class ReadAloudImportViewModel: ObservableObject {
                 )
                 narrationUuid = narration.uuid
                 Analytics.track(.readAloudNarratedAgain, properties: [
+                    "character_count": characterCount,
+                    "voice_quality": voice.quality.analyticsValue,
+                ])
+            case .draftDocument(let document):
+                if title != document.title {
+                    _ = DataManager.sharedManager.readAloud.renameDocument(uuid: document.uuid, title: title)
+                }
+                let narration = try importer.narrateAgain(
+                    document: document,
+                    engine: engineKind,
+                    providerId: providerId,
+                    modelId: modelId,
+                    voice: voice
+                )
+                narrationUuid = narration.uuid
+                Analytics.track(.readAloudNarrationQueued, properties: [
+                    "source": NarrationSourceKind.composed.analyticsValue,
                     "character_count": characterCount,
                     "voice_quality": voice.quality.analyticsValue,
                 ])
@@ -228,6 +260,20 @@ extension ReadAloudError {
             L10n.readAloudErrorTooLarge
         case .emptyDocument:
             L10n.readAloudErrorEmpty
+        case .apiKeyMissing:
+            L10n.readAloudErrorKeyMissing
+        case .invalidAPIKey:
+            L10n.readAloudKeyInvalid
+        case .insufficientKeyPermissions:
+            L10n.readAloudKeyNoPermission
+        case .providerQuotaExceeded:
+            L10n.readAloudErrorProviderQuota
+        case .providerIPRestricted:
+            L10n.readAloudErrorProviderIpRestricted
+        case .networkUnavailable:
+            L10n.readAloudErrorNetwork
+        case .voiceUnavailable:
+            L10n.readAloudErrorVoiceUnavailable
         default:
             L10n.readAloudErrorGeneric
         }

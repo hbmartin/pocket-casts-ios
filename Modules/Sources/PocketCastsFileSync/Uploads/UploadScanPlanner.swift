@@ -41,7 +41,8 @@ public enum UploadScanPlanner {
         /// uploads root, "" for loose files.
         case createProvisional(entry: FolderEntry, group: String)
         /// A known episode's file moved/renamed. The absent path and file size
-        /// must match; mtime also matches when the known value is nonzero.
+        /// and both a persisted and matching mtime are required. Size alone is
+        /// not file identity: unrelated recordings commonly share byte counts.
         case updatePath(episodeUuid: String, entry: FolderEntry, group: String)
         /// The file changed in place (same path, different size/mtime):
         /// identity is void; re-hash on next materialization.
@@ -78,14 +79,16 @@ public enum UploadScanPlanner {
             }
 
             // Rename detection: an episode whose path vanished and whose size
-            // matches in a complete listing. mtime is an additional signal
-            // only when it was persisted.
+            // and persisted mtime match in a complete listing. When mtime was
+            // never persisted, treating size alone as identity can transfer
+            // playback state and a canonical hash to unrelated content.
             if let moved = knownEpisodes.first(where: { known in
                 listingIsComplete
                     && !claimedEpisodes.contains(known.uuid)
                     && !mediaEntries.contains(where: { $0.relativePath == known.relativePath })
                     && known.sizeBytes == entry.sizeBytes
-                    && (known.mtimeMs == 0 || known.mtimeMs == entry.mtimeMs)
+                    && known.mtimeMs != 0
+                    && known.mtimeMs == entry.mtimeMs
             }) {
                 claimedEpisodes.insert(moved.uuid)
                 actions.append(.updatePath(episodeUuid: moved.uuid, entry: entry, group: group(of: entry)))

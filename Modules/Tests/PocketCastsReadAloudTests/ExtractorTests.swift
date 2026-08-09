@@ -67,6 +67,16 @@ struct PlainTextExtractorTests {
         #expect(document.characterCount == 6)
     }
 
+    @Test("Lightweight count matches normalized extraction")
+    func narratableCharacterCountMatchesExtraction() throws {
+        let text = "  First   wrapped\nline.  \n\n  Second paragraph.  "
+        let extractor = PlainTextExtractor()
+        let document = try extractor.extract(data: Data(text.utf8), filename: nil)
+
+        #expect(extractor.narratableCharacterCount(in: text) == document.characterCount)
+        #expect(extractor.narratableCharacterCount(in: " \n\t\n ") == 0)
+    }
+
     @Test("A document with no narratable text is refused")
     func emptyDocumentThrows() {
         #expect(throws: ReadAloudError.emptyDocument) {
@@ -304,5 +314,11 @@ struct TextExtractorRegistryTests {
         #expect(throws: ReadAloudError.unsupportedFileType) {
             try registry.extract(data: Data("x".utf8), filename: "clip.mp3", type: .mp3)
         }
+    }
+
+    @Test("Structured text formats do not fall through to plain text")
+    func structuredTextRequiresADedicatedExtractor() {
+        #expect(registry.extractor(filename: nil, type: .rtf) == nil)
+        #expect(registry.extractor(filename: nil, type: .html) == nil)
     }
 }

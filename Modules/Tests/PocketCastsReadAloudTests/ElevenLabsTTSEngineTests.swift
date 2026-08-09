@@ -18,6 +18,13 @@ struct ElevenLabsTTSEngineTests {
         }
     }
 
+    private func stubAudio(_ key: String, body: Data? = nil, contentType: String = "audio/mpeg") {
+        let mp3 = body ?? Data([0x49, 0x44, 0x33, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+        MockURLProtocol.register(apiKey: key) { _ in
+            .respond(statusCode: 200, headers: ["Content-Type": contentType], body: mp3)
+        }
+    }
+
     private func chunk(_ text: String = "Hello there.") -> NarrationChunk {
         NarrationChunk(index: 0, text: text, startsBlock: true)
     }
@@ -54,9 +61,9 @@ struct ElevenLabsTTSEngineTests {
         #expect(engine(model: .flashV2_5).capabilities.maxCharactersPerChunk == 40_000)
     }
 
-    @Test("An unknown persisted model falls back rather than guessing a limit")
-    func unknownModelFallsBack() {
-        #expect(ElevenLabsModel.resolve(id: "eleven_something_new_v9") == .default)
+    @Test("An unknown persisted model stays unresolved rather than corrupting a resume")
+    func unknownModelDoesNotFallBack() {
+        #expect(ElevenLabsModel.resolve(id: "eleven_something_new_v9") == nil)
         #expect(ElevenLabsModel.resolve(id: nil) == .default)
         #expect(ElevenLabsModel.resolve(id: ElevenLabsModel.flashV2_5.id) == .flashV2_5)
     }
@@ -67,7 +74,8 @@ struct ElevenLabsTTSEngineTests {
     func synthesisRequestShape() async throws {
         let key = makeKey("shape")
         defer { MockURLProtocol.unregister(apiKey: key) }
-        stub(key, 200, "audio-bytes")
+        let audio = Data([0x49, 0x44, 0x33, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+        stubAudio(key, body: audio)
         let output = tempURL()
         defer { try? FileManager.default.removeItem(at: output) }
 
@@ -81,7 +89,7 @@ struct ElevenLabsTTSEngineTests {
         #expect(request.url?.path.contains("/v1/text-to-speech/voice-1") == true)
         #expect(request.url?.query?.contains("output_format=") == true)
         #expect(request.value(forHTTPHeaderField: "xi-api-key") == key)
-        #expect(try Data(contentsOf: output) == Data("audio-bytes".utf8))
+        #expect(try Data(contentsOf: output) == audio)
     }
 
     @Test("A missing key never reaches the network")
@@ -100,9 +108,42 @@ struct ElevenLabsTTSEngineTests {
     func emptyBodyIsRejected() async {
         let key = makeKey("empty")
         defer { MockURLProtocol.unregister(apiKey: key) }
-        stub(key, 200, "")
+        stubAudio(key, body: Data())
 
         await #expect(throws: ReadAloudError.synthesisProducedNoAudio) {
+            try await engine().synthesize(
+                chunk: chunk(), voice: voice(), settings: SynthesisSettings(),
+                apiKey: key, to: tempURL()
+            )
+        }
+    }
+
+    @Test("A non-audio success is rejected without replacing an existing chunk")
+    func nonAudioSuccessIsRejectedAtomically() async throws {
+        let key = makeKey("not-audio")
+        defer { MockURLProtocol.unregister(apiKey: key) }
+        stubAudio(key, contentType: "application/json")
+        let output = tempURL()
+        let existing = Data("previous-good-chunk".utf8)
+        try existing.write(to: output)
+        defer { try? FileManager.default.removeItem(at: output) }
+
+        await #expect(throws: ReadAloudError.self) {
+            try await engine().synthesize(
+                chunk: chunk(), voice: voice(), settings: SynthesisSettings(),
+                apiKey: key, to: output
+            )
+        }
+        #expect(try Data(contentsOf: output) == existing)
+    }
+
+    @Test("An audio MIME response must also contain MP3 bytes")
+    func invalidMP3IsRejected() async {
+        let key = makeKey("bad-mp3")
+        defer { MockURLProtocol.unregister(apiKey: key) }
+        stubAudio(key, body: Data("not really audio".utf8))
+
+        await #expect(throws: ReadAloudError.self) {
             try await engine().synthesize(
                 chunk: chunk(), voice: voice(), settings: SynthesisSettings(),
                 apiKey: key, to: tempURL()
@@ -126,8 +167,28 @@ struct ElevenLabsTTSEngineTests {
         #expect(voices.count == 1)
         #expect(voices[0].id == "v1")
         #expect(voices[0].name == "Rachel")
+        #expect(voices[0].language == "mul")
         #expect(voices[0].previewURL?.absoluteString == "https://example.test/a.mp3")
         #expect(voices[0].quality == .premium)
+    }
+
+    @Test("Voice listing follows every v2 pagination token")
+    func voicesPaginate() async throws {
+        let key = makeKey("voice-pages")
+        defer { MockURLProtocol.unregister(apiKey: key) }
+        MockURLProtocol.register(apiKey: key) { request in
+            if request.url?.query?.contains("next_page_token=page-2") == true {
+                return .json(#"{"voices":[{"voice_id":"v2","name":"Second"}],"has_more":false}"#)
+            }
+            return .json(#"{"voices":[{"voice_id":"v1","name":"First"}],"has_more":true,"next_page_token":"page-2"}"#)
+        }
+
+        let voices = try await engine().availableVoices(apiKey: key)
+
+        #expect(voices.map(\.id) == ["v1", "v2"])
+        let requests = MockURLProtocol.requests(apiKey: key)
+        #expect(requests.count == 2)
+        #expect(requests.allSatisfy { $0.url?.path == "/v2/voices" })
     }
 
     @Test("A voice with no preview simply has none")
@@ -189,6 +250,34 @@ struct ElevenLabsTTSEngineTests {
         } catch let error as ReadAloudError {
             #expect(error == .rateLimited(retryAfter: 12))
             #expect(error.isTransient, "a rate limit is worth telling the user to try again")
+        }
+    }
+
+    @Test("Quota exhaustion is not mislabeled as a bad key")
+    func quotaExceeded() async {
+        let key = makeKey("quota")
+        defer { MockURLProtocol.unregister(apiKey: key) }
+        stub(key, 401, #"{"detail":{"status":"quota_exceeded"}}"#)
+
+        await #expect(throws: ReadAloudError.providerQuotaExceeded) {
+            try await engine().synthesize(
+                chunk: chunk(), voice: voice(), settings: SynthesisSettings(),
+                apiKey: key, to: tempURL()
+            )
+        }
+    }
+
+    @Test("An IP allowlist rejection has actionable error mapping")
+    func ipAllowlistRejected() async {
+        let key = makeKey("ip")
+        defer { MockURLProtocol.unregister(apiKey: key) }
+        stub(key, 403, #"{"detail":{"code":"ip_not_allowed","message":"IP is not on the allowlist"}}"#)
+
+        await #expect(throws: ReadAloudError.providerIPRestricted) {
+            try await engine().synthesize(
+                chunk: chunk(), voice: voice(), settings: SynthesisSettings(),
+                apiKey: key, to: tempURL()
+            )
         }
     }
 

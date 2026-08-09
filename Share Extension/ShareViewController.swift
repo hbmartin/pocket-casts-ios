@@ -56,47 +56,53 @@ class ShareViewController: UIViewController {
     }
 
     private func loadFile(from attachment: NSItemProvider, identifier: String, isOPML: Bool) {
-        attachment.loadItem(forTypeIdentifier: identifier, options: nil) { [weak self] data, _ in
-            guard let url = data as? URL else {
-                Task { @MainActor [weak self] in self?.close() }
-                return
-            }
-
-            // Save the file to the shared group directory
+        attachment.loadItem(forTypeIdentifier: identifier, options: nil) { [weak self] item, _ in
+            // Save the file to the shared group directory. Every hand-off gets an
+            // immutable directory of its own: the host may leave its review sheet
+            // open while another share arrives, and reusing a filename would let
+            // the later share change the bytes the first sheet commits.
             let fileManager = FileManager.default
             guard let container = fileManager.containerURL(forSecurityApplicationGroupIdentifier: SharedConstants.GroupUserDefaults.groupContainerId) else {
                 Task { @MainActor [weak self] in self?.close() }
                 return
             }
 
-            // OPML arrives under many extensions (and sometimes none), and the
-            // host app routes it by extension — so it is renamed on the way in.
-            // Everything else keeps its own name: the name is what the host app
-            // shows the user, and for text it is what the document is titled.
-            let destURL = isOPML
-                ? container.appendingPathComponent("opml.opml")
-                : container.appendingPathComponent(url.lastPathComponent)
+            let stagingDirectory = container
+                .appendingPathComponent("share-imports", isDirectory: true)
+                .appendingPathComponent(UUID().uuidString.lowercased(), isDirectory: true)
 
             do {
-                // A previous share of the same name leaves a file behind, and
-                // `copyItem` refuses to overwrite. Swallowing that error meant
-                // the host app silently re-imported the *older* file.
-                if fileManager.fileExists(atPath: destURL.path) {
-                    try fileManager.removeItem(at: destURL)
+                try fileManager.createDirectory(at: stagingDirectory, withIntermediateDirectories: true)
+
+                let destination: URL
+                if isOPML {
+                    destination = stagingDirectory.appendingPathComponent("opml.opml")
+                } else if let sourceURL = item as? URL {
+                    destination = stagingDirectory.appendingPathComponent(sourceURL.lastPathComponent)
+                } else {
+                    destination = stagingDirectory.appendingPathComponent("Shared Text.txt")
                 }
-                try fileManager.copyItem(at: url, to: destURL)
+
+                switch item {
+                case let sourceURL as URL:
+                    try fileManager.copyItem(at: sourceURL, to: destination)
+                case let string as String:
+                    try Data(string.utf8).write(to: destination, options: .atomic)
+                case let attributed as NSAttributedString:
+                    try Data(attributed.string.utf8).write(to: destination, options: .atomic)
+                case let data as Data:
+                    try data.write(to: destination, options: .atomic)
+                default:
+                    throw CocoaError(.fileReadUnknown)
+                }
+
+                Task { @MainActor [weak self] in
+                    self?.close()
+                    self?.redirectToHostApp(destination.absoluteString)
+                }
             } catch {
+                try? fileManager.removeItem(at: stagingDirectory)
                 Task { @MainActor [weak self] in self?.close() }
-                return
-            }
-
-            // The item-provider callback is off-main; UI/extension work belongs on the main actor
-            let destination = destURL.absoluteString
-            Task { @MainActor [weak self] in
-                self?.close()
-
-                // Redirect to Pocket Casts to handle the file
-                self?.redirectToHostApp(destination)
             }
         }
     }

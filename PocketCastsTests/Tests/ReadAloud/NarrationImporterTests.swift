@@ -95,6 +95,21 @@ final class NarrationImporterTests: DBTestCase {
         XCTAssertFalse(created.document.title.trimmingCharacters(in: .whitespaces).isEmpty)
     }
 
+    func testSaveDraftPersistsComposedTextWithoutStartingNarration() throws {
+        let text = "Text that must survive while the voice sheet is open."
+        let preview = try importer.preview(text: text, title: "Durable Draft")
+
+        let document = try importer.saveDraft(preview: preview, title: "Durable Draft")
+        track(document)
+
+        XCTAssertEqual(dataManager.readAloud.document(uuid: document.uuid)?.title, "Durable Draft")
+        XCTAssertTrue(dataManager.readAloud.narrations(documentUuid: document.uuid).isEmpty)
+        XCTAssertEqual(
+            try String(contentsOf: storage.sourceURL(relativePath: document.sourcePath), encoding: .utf8),
+            text
+        )
+    }
+
     // MARK: - Picked files
 
     func testCommitCopiesAPickedFileIn() throws {

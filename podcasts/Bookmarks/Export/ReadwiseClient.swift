@@ -5,6 +5,9 @@ import PocketCastsUtils
 /// deliberately does NOT ride the first-party `URLConnection` boundary (origin
 /// policy and App Attest apply only to the fork backend).
 nonisolated struct ReadwiseClient: Sendable {
+    static let defaultRetryAfter: TimeInterval = 60
+    static let maximumRetryAfter: TimeInterval = 60 * 60
+
     /// One highlight in Readwise's batch-create shape. `highlight_url` carries
     /// the bookmark identity, making re-pushes update-in-place (Readwise
     /// dedupes on it) instead of duplicating.
@@ -69,7 +72,13 @@ nonisolated struct ReadwiseClient: Sendable {
         case 401, 403:
             throw ClientError.unauthorized
         case 429:
-            let retryAfter = http.value(forHTTPHeaderField: "Retry-After").flatMap(TimeInterval.init) ?? 60
+            let requestedDelay = http.value(forHTTPHeaderField: "Retry-After").flatMap(TimeInterval.init)
+            let retryAfter: TimeInterval
+            if let requestedDelay, requestedDelay.isFinite {
+                retryAfter = min(max(requestedDelay, 0), Self.maximumRetryAfter)
+            } else {
+                retryAfter = Self.defaultRetryAfter
+            }
             throw ClientError.rateLimited(retryAfter: retryAfter)
         default:
             throw ClientError.httpError(http.statusCode)

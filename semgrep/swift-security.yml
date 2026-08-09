@@ -3,6 +3,33 @@
 # Upstream README declares GNU GPL terms for these rules.
 # Local copy avoids network access during Semgrep scans.
 rules:
+  - id: pocketcasts.provider-synthesis-must-stream-file-responses
+    severity: ERROR
+    metadata:
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios]
+    message: Provider synthesis writes audio to a file; stream the response with URLSession.download(for:) instead of buffering the complete payload with data(for:).
+    languages: [swift]
+    paths:
+      include:
+        - "**/Synthesis/Providers/*.swift"
+        - "**/semgrep/tests/swift-security-provider-downloads.swift"
+    patterns:
+      - pattern-inside: |
+          func synthesize(..., to $OUTPUT: URL) async throws {
+            ...
+          }
+      - pattern-either:
+          - pattern: "try await $SESSION.data(for: $REQUEST)"
+          - patterns:
+              - pattern: "let ($DATA, $RESPONSE) = try await $SEND($REQUEST)"
+              - metavariable-regex:
+                  metavariable: $DATA
+                  regex: (?i).*(data|bytes|audio).*
+
   - id: semgrep.absolute-path-include
     severity: WARNING
     metadata:

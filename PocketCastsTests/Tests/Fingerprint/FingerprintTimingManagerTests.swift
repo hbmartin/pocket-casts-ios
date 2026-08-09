@@ -139,6 +139,25 @@ final class FingerprintTimingManagerTests: XCTestCase {
         XCTAssertEqual(result, 45.0, accuracy: 0.001)
     }
 
+    func testTimeMappingSnapshotOwnsStableBidirectionalTables() throws {
+        let snapshot = FingerprintTimingManager.TimeMappingSnapshot(entries: [
+            Entry(playbackTime: 20, referenceTime: 30),
+            Entry(playbackTime: 0, referenceTime: 0),
+            Entry(playbackTime: 10, referenceTime: 20),
+        ])
+
+        XCTAssertEqual(
+            try XCTUnwrap(snapshot.referenceTime(forPlaybackTime: 15)),
+            25,
+            accuracy: 0.001
+        )
+        XCTAssertEqual(
+            try XCTUnwrap(snapshot.playbackTime(forReferenceTime: 25)),
+            15,
+            accuracy: 0.001
+        )
+    }
+
     // MARK: - Streaming start resolution
 
     func testResolvedStartPositionClampsBeyondEOFToLastFrame() {

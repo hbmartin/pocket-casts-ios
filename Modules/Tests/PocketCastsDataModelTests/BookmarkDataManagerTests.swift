@@ -506,6 +506,11 @@ final class BookmarkDataManagerTests: DataManagerTestCase {
         }
     }
 
+    func testTagOrderingHasDeterministicTieBreaker() {
+        XCTAssertTrue(BookmarkDataManager.tagSortsBefore("Tag", "tag"))
+        XCTAssertFalse(BookmarkDataManager.tagSortsBefore("tag", "Tag"))
+    }
+
     func testSetTagsStampsAndMarksForSync() async throws {
         try await runWithBothImplementations { dataManager, impl in
             let bookmark = addBookmark(syncStatus: .synced, dataManager: dataManager)

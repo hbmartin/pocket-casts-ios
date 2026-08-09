@@ -8100,6 +8100,18 @@
 /* Generic error shown when narration fails. */
 "read_aloud_error_generic" = "Something went wrong while narrating. Try again.";
 
+/* Error shown when the remote provider cannot be reached. */
+"read_aloud_error_network" = "ElevenLabs couldn't be reached. Check your connection and try again.";
+
+/* Error shown when the provider account or key has no narration quota remaining. */
+"read_aloud_error_provider_quota" = "Your ElevenLabs account or API key has no narration quota remaining.";
+
+/* Error shown when the provider key restricts requests to other IP addresses. */
+"read_aloud_error_provider_ip_restricted" = "This ElevenLabs key doesn't allow requests from your current IP address. Check its IP allowlist.";
+
+/* Error shown when the selected provider voice is no longer available. */
+"read_aloud_error_voice_unavailable" = "That ElevenLabs voice is no longer available. Choose another voice.";
+
 /* Title of the screen for typing or pasting text to be narrated. */
 "read_aloud_compose_title" = "Paste Text";
 
@@ -8109,11 +8121,11 @@
 /* Placeholder in the compose screen's text editor. */
 "read_aloud_compose_placeholder" = "Paste or type the text you want read aloud.";
 
-/* Section header for the paid-narration confirmation on the import sheet. */
-"read_aloud_confirm_header" = "This will use your provider quota";
+/* Section header explaining that remote narration uploads the document to a third party. */
+"read_aloud_confirm_header" = "Upload this document to ElevenLabs?";
 
-/* Toggle confirming the user accepts spending provider quota; placeholders are character count and duration. */
-"read_aloud_confirm_toggle" = "Narrate %1$@ characters (about %2$@ of audio)";
+/* Toggle confirming the user accepts uploading document text and spending provider quota; placeholders are character count and duration. */
+"read_aloud_confirm_toggle" = "Upload and narrate %1$@ characters (about %2$@ of audio). ElevenLabs may retain requests in your provider history.";
 
 /* Settings section header for choosing which engine narrates. */
 "read_aloud_engine_section" = "Voice Engine";
@@ -8131,19 +8143,40 @@
 "read_aloud_validate_key" = "Validate";
 
 /* Shown when the entered key works. */
-"read_aloud_key_valid" = "Key works.";
+"read_aloud_key_valid" = "Key can load ElevenLabs voices. Text-to-speech access and quota are checked when narration starts.";
+
+/* Shown when a validated provider key could not be persisted securely. */
+"read_aloud_key_save_failed" = "Key works, but it couldn't be saved securely. Try again.";
 
 /* Shown when the provider rejected the key. */
 "read_aloud_key_invalid" = "That key was rejected.";
 
 /* Shown when the key is valid but lacks text-to-speech permission. */
-"read_aloud_key_no_permission" = "That key works but isn't allowed to use text to speech. Check its permissions in your ElevenLabs account.";
+"read_aloud_key_no_permission" = "That key can't access the ElevenLabs voice catalog. Grant it the voice and text-to-speech permissions needed for narration.";
 
 /* Settings row for choosing the provider model. */
-"read_aloud_model" = "Model";
+"read_aloud_model_label" = "Model";
 
 /* Footer explaining the cost difference between models. */
 "read_aloud_model_footer" = "Higher quality models cost more of your provider quota per character.";
 
-/* Footer explaining that provider narration spends quota. */
-"read_aloud_engine_footer" = "Built-in voices are free and work offline. ElevenLabs sounds much better and uses your own account's quota.";
+/* Footer disclosing the remote provider's data transfer, quota use, and provider-side retention. */
+"read_aloud_engine_footer" = "Built-in voices are free and work offline. ElevenLabs uploads your document text to its service, uses your account quota, and may retain requests in your provider history according to your account settings.";
+
+/* Shown when narration needs a provider API key that hasn't been entered yet. Used on the import sheet and as a Shortcuts error. */
+"read_aloud_error_key_missing" = "Add your provider API key in Pocket Casts settings first.";
+
+/* Shortcuts error shown when the Read Aloud feature is unavailable. */
+"read_aloud_intent_error_unavailable" = "Read Aloud isn't available.";
+
+/* Shortcuts error shown when the shared text can't be narrated. */
+"read_aloud_intent_error_unreadable_text" = "That text couldn't be read.";
+
+/* Shortcuts error shown when no narration voice is installed. */
+"read_aloud_intent_error_no_voice" = "No narration voice is installed on this device.";
+
+/* Shortcuts error shown when the narration document can't be saved. */
+"read_aloud_intent_error_could_not_save" = "The document couldn't be saved.";
+
+/* Shortcuts error shown when a narration that spends provider quota runs without the shortcut's confirmation parameter enabled. */
+"read_aloud_intent_error_paid_not_confirmed" = "This narration uses your provider quota. Turn on Confirm Paid Narration in the shortcut to allow it.";

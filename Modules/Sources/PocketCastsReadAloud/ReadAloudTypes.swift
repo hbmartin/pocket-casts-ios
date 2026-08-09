@@ -96,6 +96,13 @@ public enum ReadAloudError: Error, Sendable, Equatable {
     /// key granted only speech-to-text hits this, and it must never be reported
     /// as an invalid key.
     case insufficientKeyPermissions
+    /// The provider refused the request because the account or key has no
+    /// remaining credits. This is distinct from a burst/concurrency limit:
+    /// waiting and retrying cannot repair it.
+    case providerQuotaExceeded
+    /// The key is valid but restricted to public IP addresses that do not
+    /// include the device's current egress address.
+    case providerIPRestricted
     /// Provider refused for billing/rate reasons; `retryAfter` is the provider's
     /// hint in seconds when it supplied one.
     case rateLimited(retryAfter: TimeInterval?)
@@ -133,6 +140,8 @@ public extension ReadAloudError {
         case .apiKeyMissing: "api_key_missing"
         case .invalidAPIKey: "invalid_api_key"
         case .insufficientKeyPermissions: "insufficient_key_permissions"
+        case .providerQuotaExceeded: "provider_quota_exceeded"
+        case .providerIPRestricted: "provider_ip_restricted"
         case .rateLimited: "rate_limited"
         case .providerResponseFailure: "provider_response_failure"
         case .networkUnavailable: "network_unavailable"

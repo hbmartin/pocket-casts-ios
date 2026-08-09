@@ -45,6 +45,7 @@ struct ReadAloudImportView: View {
                         }
                     }
                     .disabled(!model.isReady)
+                    .accessibilityIdentifier("readAloudNarrateButton")
                 }
             }
         }
@@ -92,6 +93,8 @@ struct ReadAloudImportView: View {
     private var costConfirmationSection: some View {
         Section {
             Toggle(isOn: $model.hasConfirmedCost) {
+                // Identified so a test can prove the gate: the Narrate action
+                // must stay disabled until this is on.
                 Text(L10n.readAloudConfirmToggle(
                     model.characterCount.formatted(),
                     Self.durationText(model.estimatedDuration)
@@ -99,6 +102,7 @@ struct ReadAloudImportView: View {
                 .font(style: .footnote)
                 .foregroundColor(AppTheme.color(for: .primaryText01, theme: theme))
             }
+            .accessibilityIdentifier("readAloudCostConfirmToggle")
         } header: {
             Text(L10n.readAloudConfirmHeader)
                 .font(style: .footnote, weight: .semibold)

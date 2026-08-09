@@ -88,4 +88,34 @@ final class ReadwiseClientTests: XCTestCase {
             XCTAssertEqual(error as? ReadwiseClient.ClientError, .rateLimited(retryAfter: 120))
         }
     }
+
+    func testRateLimitCapsUntrustedRetryAfter() {
+        let response = HTTPURLResponse(
+            url: URL(string: "https://readwise.io/api/v2/highlights/")!,
+            statusCode: 429, httpVersion: nil,
+            headerFields: ["Retry-After": "999999999"]
+        )!
+
+        XCTAssertThrowsError(try ReadwiseClient.check(response)) { error in
+            XCTAssertEqual(
+                error as? ReadwiseClient.ClientError,
+                .rateLimited(retryAfter: ReadwiseClient.maximumRetryAfter)
+            )
+        }
+    }
+
+    func testRateLimitUsesDefaultForNonFiniteRetryAfter() {
+        let response = HTTPURLResponse(
+            url: URL(string: "https://readwise.io/api/v2/highlights/")!,
+            statusCode: 429, httpVersion: nil,
+            headerFields: ["Retry-After": "infinity"]
+        )!
+
+        XCTAssertThrowsError(try ReadwiseClient.check(response)) { error in
+            XCTAssertEqual(
+                error as? ReadwiseClient.ClientError,
+                .rateLimited(retryAfter: ReadwiseClient.defaultRetryAfter)
+            )
+        }
+    }
 }

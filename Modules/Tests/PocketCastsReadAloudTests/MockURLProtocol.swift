@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// Intercepts every request of a test `URLSession` and serves canned responses.
 ///
@@ -19,53 +20,34 @@ final class MockURLProtocol: URLProtocol {
 
     typealias Handler = @Sendable (URLRequest) -> Outcome
 
-    /// NSLock-guarded handler table.
-    /// @unchecked Sendable: state is only ever read or written while the lock is held.
-    private final class Registry: @unchecked Sendable {
-        private let lock = NSLock()
-        private var handlers: [String: Handler] = [:]
-        private var requests: [String: [URLRequest]] = [:]
-
-        func set(_ handler: Handler?, for key: String) {
-            lock.lock()
-            defer { lock.unlock() }
-            handlers[key] = handler
-            if handler == nil { requests[key] = nil }
-        }
-
-        func handler(for key: String) -> Handler? {
-            lock.lock()
-            defer { lock.unlock() }
-            return handlers[key]
-        }
-
-        func record(_ request: URLRequest, for key: String) {
-            lock.lock()
-            defer { lock.unlock() }
-            requests[key, default: []].append(request)
-        }
-
-        func recorded(for key: String) -> [URLRequest] {
-            lock.lock()
-            defer { lock.unlock() }
-            return requests[key] ?? []
-        }
+    /// The handler table and the requests seen for each key.
+    ///
+    /// Held in a `Mutex` rather than behind a hand-rolled lock, so the type is
+    /// Sendable on its own terms instead of asserting it with
+    /// `@unchecked Sendable` — the sibling in `PocketCastsTranscriptionTests`
+    /// predates that pattern.
+    private struct Registry: Sendable {
+        var handlers: [String: Handler] = [:]
+        var requests: [String: [URLRequest]] = [:]
     }
 
-    private static let registry = Registry()
+    private static let registry = Mutex(Registry())
 
     static func register(apiKey: String, handler: @escaping Handler) {
-        registry.set(handler, for: apiKey)
+        registry.withLock { $0.handlers[apiKey] = handler }
     }
 
     static func unregister(apiKey: String) {
-        registry.set(nil, for: apiKey)
+        registry.withLock {
+            $0.handlers[apiKey] = nil
+            $0.requests[apiKey] = nil
+        }
     }
 
     /// Requests seen for a key, so a test can assert on the shape of what was
     /// sent as well as what came back.
     static func requests(apiKey: String) -> [URLRequest] {
-        registry.recorded(for: apiKey)
+        registry.withLock { $0.requests[apiKey] ?? [] }
     }
 
     static func makeSession() -> URLSession {
@@ -85,18 +67,18 @@ final class MockURLProtocol: URLProtocol {
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
     override func startLoading() {
-        let key = Self.apiKey(from: request)
-        if let key { Self.registry.record(request, for: key) }
-
-        let outcome: Outcome
-        if let key, let handler = Self.registry.handler(for: key) {
-            outcome = handler(request)
-        } else {
-            outcome = .respond(
-                statusCode: 599,
-                body: Data("MockURLProtocol: no handler registered for request".utf8)
-            )
+        // Record and look up together, but run the handler after releasing the
+        // lock: it is test-supplied code and could re-enter.
+        let handler: Handler? = Self.registry.withLock { registry in
+            guard let key = Self.apiKey(from: request) else { return nil }
+            registry.requests[key, default: []].append(request)
+            return registry.handlers[key]
         }
+
+        let outcome = handler?(request) ?? .respond(
+            statusCode: 599,
+            body: Data("MockURLProtocol: no handler registered for request".utf8)
+        )
 
         switch outcome {
         case .respond(let statusCode, let headers, let body):
@@ -112,5 +94,8 @@ final class MockURLProtocol: URLProtocol {
         }
     }
 
-    override func stopLoading() {}
+    override func stopLoading() {
+        // Responses are delivered synchronously in startLoading(), so by the
+        // time a cancel could arrive there is nothing in flight to stop.
+    }
 }

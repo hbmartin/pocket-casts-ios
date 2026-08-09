@@ -149,4 +149,42 @@ public struct SalientSegmentDataManager: Sendable {
                 .updateAll(db, assignments)
         }
     }
+
+    /// Applies a status transition only while both the generation and row are
+    /// still the exact snapshots the caller rendered. This closes the async
+    /// accept path's read/modify race with `replaceGeneration`.
+    @discardableResult
+    public func setStatus(
+        _ status: SalientSuggestionStatus,
+        matching segment: SalientSegmentRecord,
+        generatedAt: Double,
+        bookmarkUuid: String? = nil,
+        clearBookmarkUuid: Bool = false
+    ) -> Bool {
+        let updated: Bool? = dbQueue.write { db in
+            guard let meta = try SalientSegmentMetaRecord
+                .filter(SalientSegmentMetaRecord.Columns.episodeUuid == segment.episodeUuid)
+                .fetchOne(db),
+                meta.generatorVersion == Self.generatorVersion,
+                meta.generatedAt == generatedAt,
+                let live = try SalientSegmentRecord
+                    .filter(SalientSegmentRecord.Columns.episodeUuid == segment.episodeUuid)
+                    .filter(SalientSegmentRecord.Columns.rank == segment.rank)
+                    .fetchOne(db),
+                live == segment else {
+                return false
+            }
+
+            var updated = live
+            updated.status = status
+            if let bookmarkUuid {
+                updated.bookmarkUuid = bookmarkUuid
+            } else if clearBookmarkUuid {
+                updated.bookmarkUuid = nil
+            }
+            try updated.update(db)
+            return true
+        }
+        return updated ?? false
+    }
 }

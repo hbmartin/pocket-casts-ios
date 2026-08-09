@@ -542,6 +542,10 @@ class DatabaseHelper {
                                   WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1));
             """, values: nil)
             try db.executeUpdate("""
+            DELETE FROM PodcastFoldersHistory
+            WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1);
+            """, values: nil)
+            try db.executeUpdate("""
             DELETE FROM SJEpisode
             WHERE podcastUuid IN (SELECT uuid FROM SJPodcast WHERE refreshSource = 1);
             """, values: nil)

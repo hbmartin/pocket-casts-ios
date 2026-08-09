@@ -124,48 +124,40 @@ public struct TextChunker: Sendable {
     /// This breaks rule 1, which is why it only ever runs when rule 1 is
     /// impossible to keep — a 3,000-character "sentence" with no terminator, or
     /// a wall of CJK text. Breaking at word boundaries keeps the damage to a
-    /// pause in an odd place; word tokenization is used rather than splitting on
-    /// spaces so that scripts without spaces still break somewhere legible.
+    /// pause in an odd place. The split operates on ranges of the original text
+    /// rather than reconstructing `NLTokenizer` word tokens: word token ranges
+    /// omit punctuation, which used to silently turn `hello, world!` into
+    /// `hello world` whenever an overlong sentence was split.
     static func fitting(_ sentence: String, within target: Int) -> [String] {
         guard sentence.count > target else { return [sentence] }
 
         var pieces: [String] = []
-        var current = ""
+        var remaining = sentence[...]
 
-        for word in words(in: sentence) {
-            if current.isEmpty {
-                current = word
-            } else if current.count + 1 + word.count <= target {
-                current += " " + word
-            } else {
-                pieces.append(current)
-                current = word
+        while remaining.count > target {
+            while let first = remaining.first, first.isWhitespace {
+                remaining.removeFirst()
             }
+            guard !remaining.isEmpty else { break }
 
-            // A single "word" longer than the target (a URL, a base64 blob, an
-            // unbroken CJK run the tokenizer kept whole) has to be cut by
-            // character or it would never fit.
-            while current.count > target {
-                let cut = current.index(current.startIndex, offsetBy: target)
-                pieces.append(String(current[..<cut]))
-                current = String(current[cut...])
+            let hardEnd = remaining.index(remaining.startIndex, offsetBy: target)
+            let candidate = remaining[..<hardEnd]
+            let whitespace = candidate.lastIndex(where: \Character.isWhitespace)
+            let split = whitespace == remaining.startIndex ? nil : whitespace
+            let end = split ?? hardEnd
+
+            let piece = String(remaining[..<end])
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if !piece.isEmpty {
+                pieces.append(piece)
             }
+            remaining = remaining[end...]
         }
-        if !current.isEmpty { pieces.append(current) }
 
+        let tail = String(remaining).trimmingCharacters(in: .whitespacesAndNewlines)
+        if !tail.isEmpty {
+            pieces.append(tail)
+        }
         return pieces
-    }
-
-    private static func words(in text: String) -> [String] {
-        let tokenizer = NLTokenizer(unit: .word)
-        tokenizer.string = text
-
-        var words: [String] = []
-        tokenizer.enumerateTokens(in: text.startIndex..<text.endIndex) { range, _ in
-            let word = text[range].trimmingCharacters(in: .whitespacesAndNewlines)
-            if !word.isEmpty { words.append(word) }
-            return true
-        }
-        return words.isEmpty ? [text] : words
     }
 }

@@ -73,13 +73,20 @@ final class ReadAloudCoordinator {
     private static func sweepOrphanedFiles() async {
         await Task.detached(priority: .utility) {
             let dataManager = DataManager.sharedManager
-            let documents = dataManager.readAloud.allDocuments()
-            let narrations = documents.flatMap { dataManager.readAloud.narrations(documentUuid: $0.uuid) }
-
-            let removed = ReadAloudStorage.default.sweepOrphans(
-                liveDocumentUuids: Set(documents.map(\.uuid)),
-                liveNarrationUuids: Set(narrations.map(\.uuid))
-            )
+            let removed = ReadAloudStorage.default.sweepOrphans {
+                // The storage reconciliation lock spans this snapshot and the
+                // filesystem sweep. Import/compose commits hold the same lock
+                // across their source write and DB transaction, so the sweep
+                // can never delete a source between those two halves.
+                let documents = dataManager.readAloud.allDocuments()
+                let narrations = documents.flatMap {
+                    dataManager.readAloud.narrations(documentUuid: $0.uuid)
+                }
+                return (
+                    documentUuids: Set(documents.map(\.uuid)),
+                    narrationUuids: Set(narrations.map(\.uuid))
+                )
+            }
             if removed > 0 {
                 FileLog.shared.addMessage("ReadAloud: swept \(removed) orphaned file(s)")
             }

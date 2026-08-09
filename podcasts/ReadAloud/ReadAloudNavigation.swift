@@ -73,10 +73,10 @@ enum ReadAloudNavigation {
         let box = DismissBox()
         let composeView = ReadAloudComposeView(
             onCancel: { box.controller?.dismiss(animated: true) },
-            onNext: { preview in
+            onNext: { document in
                 guard let host = box.controller, let presenter = host.presentingViewController else { return }
                 host.dismiss(animated: true) {
-                    presentImport(source: .composed(preview), from: presenter)
+                    presentImport(source: .draftDocument(document), from: presenter)
                 }
             }
         )
