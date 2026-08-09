@@ -104,6 +104,16 @@ final class VoiceCatalogTests: XCTestCase {
         XCTAssertNil(VoiceCatalog(voices: []).preferredVoice(for: "en"))
     }
 
+    func testMultilingualProviderVoiceMatchesEveryDocumentLanguage() {
+        let catalog = VoiceCatalog(voices: [
+            voice("provider", language: "mul", quality: .premium),
+        ])
+
+        XCTAssertEqual(catalog.voices(matching: "fr").map(\.id), ["provider"])
+        XCTAssertEqual(catalog.voices(matching: "ja-JP").map(\.id), ["provider"])
+        XCTAssertEqual(VoiceCatalog.displayName(forLanguage: "mul"), L10n.readAloudAllLanguages)
+    }
+
     // MARK: - Stored selections
 
     /// Voices can be deleted in iOS Settings at any time, so a stored default
@@ -114,6 +124,22 @@ final class VoiceCatalogTests: XCTestCase {
         XCTAssertEqual(catalog.voice(id: "installed")?.id, "installed")
         XCTAssertNil(catalog.voice(id: "uninstalled"))
         XCTAssertNil(catalog.voice(id: nil))
+    }
+
+    func testStoredDefaultIsIgnoredWhenItDoesNotMatchTheDocumentLanguage() {
+        let catalog = VoiceCatalog(voices: [
+            voice("english", language: "en-US", quality: .premium),
+            voice("french", language: "fr-FR", quality: .enhanced),
+        ])
+
+        XCTAssertEqual(
+            catalog.preferredVoice(storedId: "english", for: "fr", deviceLanguage: "en-US")?.id,
+            "french"
+        )
+        XCTAssertEqual(
+            catalog.preferredVoice(storedId: "english", for: nil, deviceLanguage: "fr-FR")?.id,
+            "english"
+        )
     }
 
     // MARK: - Quality reporting

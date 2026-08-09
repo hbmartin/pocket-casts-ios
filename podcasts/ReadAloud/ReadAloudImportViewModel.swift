@@ -53,7 +53,7 @@ final class ReadAloudImportViewModel: ObservableObject {
         let kind = NarrationEngineKind(rawValue: Settings.readAloudEngineKind()) ?? .appleBuiltIn
         let providerId = kind == .remoteProvider ? ElevenLabsTTSEngine.providerId : nil
         let modelId = kind == .remoteProvider
-            ? (Settings.readAloudProviderModelId() ?? ElevenLabsModel.default.id)
+            ? (ElevenLabsModel.resolve(id: Settings.readAloudProviderModelId()) ?? .default).id
             : nil
         self.engineKind = kind
         self.providerId = providerId
@@ -85,16 +85,19 @@ final class ReadAloudImportViewModel: ObservableObject {
     // MARK: - Loading
 
     func load() async {
-        // A missing key is the one voices failure the user can act on, so it
-        // becomes the sheet's error; anything else falls back to an empty list.
+        loadError = nil
         var voices: [SynthesisVoice] = []
         do {
             voices = try await engine.availableVoices(
-                apiKey: providerId.flatMap { ProviderKeyStore.apiKey(providerId: $0) }
+                apiKey: providerId.flatMap {
+                    ProviderKeyStore.apiKey(providerId: $0, purpose: .textToSpeech)
+                }
             )
-        } catch ReadAloudError.apiKeyMissing {
-            loadError = .apiKeyMissing
-        } catch {}
+        } catch let error as ReadAloudError {
+            loadError = error
+        } catch {
+            loadError = .engineFailure
+        }
         catalog = VoiceCatalog(voices: voices)
 
         switch source {
@@ -126,12 +129,10 @@ final class ReadAloudImportViewModel: ObservableObject {
     /// the right language, otherwise the best voice for the document.
     private func selectDefaultVoice() {
         let documentVoices = catalog.voices(matching: detectedLanguage)
-        if let stored = catalog.voice(id: Settings.readAloudDefaultVoiceId()),
-           detectedLanguage == nil || documentVoices.contains(stored) {
-            selectedVoice = stored
-        } else {
-            selectedVoice = catalog.preferredVoice(for: detectedLanguage)
-        }
+        selectedVoice = catalog.preferredVoice(
+            storedId: Settings.readAloudDefaultVoiceId(),
+            for: detectedLanguage
+        )
         // Only a document whose language we actually detected can mismatch;
         // "we couldn't tell" is not a mismatch worth explaining.
         fellBackToDeviceLanguage = detectedLanguage != nil && documentVoices.isEmpty && selectedVoice != nil
@@ -240,6 +241,18 @@ extension ReadAloudError {
             L10n.readAloudErrorEmpty
         case .apiKeyMissing:
             L10n.readAloudErrorKeyMissing
+        case .invalidAPIKey:
+            L10n.readAloudKeyInvalid
+        case .insufficientKeyPermissions:
+            L10n.readAloudKeyNoPermission
+        case .providerQuotaExceeded:
+            L10n.readAloudErrorProviderQuota
+        case .providerIPRestricted:
+            L10n.readAloudErrorProviderIpRestricted
+        case .networkUnavailable:
+            L10n.readAloudErrorNetwork
+        case .voiceUnavailable:
+            L10n.readAloudErrorVoiceUnavailable
         default:
             L10n.readAloudErrorGeneric
         }

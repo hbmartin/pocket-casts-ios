@@ -32,7 +32,10 @@ nonisolated struct VoiceCatalog: Sendable {
     func voices(matching language: String?) -> [SynthesisVoice] {
         guard let subtag = Self.languageSubtag(language) else { return [] }
         return voices
-            .filter { Self.languageSubtag($0.language) == subtag }
+            .filter {
+                let voiceSubtag = Self.languageSubtag($0.language)
+                return voiceSubtag == subtag || voiceSubtag == Self.multilingualLanguageCode
+            }
             .sorted(by: Self.betterFirst)
     }
 
@@ -63,6 +66,21 @@ nonisolated struct VoiceCatalog: Sendable {
             ?? voices.min(by: Self.betterFirst)
     }
 
+    /// Resolves a saved default only when it can narrate the current document.
+    /// All entry points use this helper so Shortcuts cannot silently choose a
+    /// stored voice in the wrong language while the interactive sheet rejects it.
+    func preferredVoice(
+        storedId: String?,
+        for language: String?,
+        deviceLanguage: String = Locale.current.identifier
+    ) -> SynthesisVoice? {
+        let matchingVoices = voices(matching: language)
+        if let stored = voice(id: storedId), language == nil || matchingVoices.contains(stored) {
+            return stored
+        }
+        return preferredVoice(for: language, deviceLanguage: deviceLanguage)
+    }
+
     /// Resolves a stored voice id, or nil when that voice is no longer installed
     /// (the user can delete voices in iOS Settings at any time).
     func voice(id: String?) -> SynthesisVoice? {
@@ -79,6 +97,11 @@ nonisolated struct VoiceCatalog: Sendable {
 
     // MARK: - Helpers
 
+    /// ISO 639's code for content that supports multiple languages. Provider
+    /// voices use this instead of pretending their first verified accent is the
+    /// only language they can speak.
+    private static let multilingualLanguageCode = "mul"
+
     /// "en-GB" → "en"; nil or empty → nil.
     static func languageSubtag(_ language: String?) -> String? {
         guard let language, !language.isEmpty else { return nil }
@@ -88,7 +111,10 @@ nonisolated struct VoiceCatalog: Sendable {
     }
 
     static func displayName(forLanguage language: String) -> String {
-        Locale.current.localizedString(forIdentifier: language)
+        if languageSubtag(language) == multilingualLanguageCode {
+            return L10n.readAloudAllLanguages
+        }
+        return Locale.current.localizedString(forIdentifier: language)
             ?? Locale.current.localizedString(forIdentifier: language.replacingOccurrences(of: "-", with: "_"))
             ?? language
     }

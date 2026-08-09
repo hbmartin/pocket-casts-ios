@@ -215,19 +215,35 @@ final class ReadAloudSettingsViewModel: ObservableObject {
         Settings.setReadAloudProviderModelId(id)
     }
 
-    /// Saves the key, then spends one cheap authenticated request to say whether
-    /// it actually works — so a bad key is discovered here rather than as a
-    /// failed narration later.
+    /// Validates a normalized replacement before committing it to Keychain, so
+    /// a typo never destroys the last working text-to-speech credential.
     func saveAndValidateKey() async {
         guard let providerId else { return }
-        ProviderKeyStore.setAPIKey(apiKeyInput, providerId: providerId)
+        guard let normalizedKey = ProviderKeyStore.normalizedAPIKey(apiKeyInput) else {
+            keyStatus = KeyStatus(message: L10n.readAloudKeyInvalid, isGood: false)
+            return
+        }
+        guard let model = ElevenLabsModel.resolve(id: modelId) else {
+            keyStatus = KeyStatus(message: L10n.readAloudErrorGeneric, isGood: false)
+            return
+        }
 
         isValidating = true
         defer { isValidating = false }
 
-        let result = await ElevenLabsTTSEngine(model: .resolve(id: modelId)).validate(apiKey: apiKeyInput)
+        let result = await ElevenLabsTTSEngine(model: model).validate(apiKey: normalizedKey)
         switch result {
         case .success:
+            guard ProviderKeyStore.setAPIKey(
+                normalizedKey,
+                providerId: providerId,
+                purpose: .textToSpeech
+            ) else {
+                keyStatus = KeyStatus(message: L10n.readAloudKeySaveFailed, isGood: false)
+                Analytics.track(.readAloudKeyValidated, properties: ["result": "save_failed"])
+                return
+            }
+            apiKeyInput = normalizedKey
             keyStatus = KeyStatus(message: L10n.readAloudKeyValid, isGood: true)
             Analytics.track(.readAloudKeyValidated, properties: ["result": "valid"])
             await load()
@@ -245,13 +261,31 @@ final class ReadAloudSettingsViewModel: ObservableObject {
 
     func load() async {
         engineKind = NarrationEngineKind(rawValue: Settings.readAloudEngineKind()) ?? .appleBuiltIn
-        modelId = Settings.readAloudProviderModelId() ?? ElevenLabsModel.default.id
+        let persistedModelId = Settings.readAloudProviderModelId()
+        let resolvedModel = ElevenLabsModel.resolve(id: persistedModelId) ?? .default
+        modelId = resolvedModel.id
+        if persistedModelId != nil, persistedModelId != modelId {
+            Settings.setReadAloudProviderModelId(modelId)
+        }
         if let providerId {
-            apiKeyInput = ProviderKeyStore.apiKey(providerId: providerId) ?? ""
+            apiKeyInput = ProviderKeyStore.apiKey(
+                providerId: providerId,
+                purpose: .textToSpeech
+            ) ?? ""
         }
 
-        let key = providerId.flatMap { ProviderKeyStore.apiKey(providerId: $0) }
-        catalog = VoiceCatalog(voices: (try? await currentEngine().availableVoices(apiKey: key)) ?? [])
+        let key = providerId.flatMap {
+            ProviderKeyStore.apiKey(providerId: $0, purpose: .textToSpeech)
+        }
+        do {
+            catalog = VoiceCatalog(voices: try await currentEngine().availableVoices(apiKey: key))
+        } catch let error as ReadAloudError {
+            catalog = VoiceCatalog(voices: [])
+            keyStatus = KeyStatus(message: error.userMessage, isGood: false)
+        } catch {
+            catalog = VoiceCatalog(voices: [])
+            keyStatus = KeyStatus(message: L10n.readAloudErrorGeneric, isGood: false)
+        }
         // Falls back to the best installed voice for this device rather than
         // showing nothing: an unset default still has an effective value, and
         // hiding it would make the row look broken.

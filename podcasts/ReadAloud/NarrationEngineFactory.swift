@@ -29,7 +29,10 @@ nonisolated struct NarrationEngineFactory: NarrationEngineProviding {
                 // The model comes off the narration, never from settings: it
                 // determines the chunk size, and a resumed run must partition
                 // the text exactly as the original did.
-                return ElevenLabsTTSEngine(model: .resolve(id: modelId))
+                guard let model = ElevenLabsModel.resolve(id: modelId) else {
+                    throw ReadAloudError.engineFailure
+                }
+                return ElevenLabsTTSEngine(model: model)
             default:
                 throw ReadAloudError.engineFailure
             }
@@ -38,6 +41,6 @@ nonisolated struct NarrationEngineFactory: NarrationEngineProviding {
 
     func apiKey(providerId: String?) -> String? {
         guard let providerId else { return nil }
-        return ProviderKeyStore.apiKey(providerId: providerId)
+        return ProviderKeyStore.apiKey(providerId: providerId, purpose: .textToSpeech)
     }
 }

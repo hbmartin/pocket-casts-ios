@@ -3619,11 +3619,11 @@ nonisolated internal enum L10n {
   internal static var readAloudComposePlaceholder: String { return L10n.tr("Localizable", "read_aloud_compose_placeholder", fallback: "Paste or type the text you want read aloud.") }
   /// Title of the screen for typing or pasting text to be narrated.
   internal static var readAloudComposeTitle: String { return L10n.tr("Localizable", "read_aloud_compose_title", fallback: "Paste Text") }
-  /// Section header for the paid-narration confirmation on the import sheet.
-  internal static var readAloudConfirmHeader: String { return L10n.tr("Localizable", "read_aloud_confirm_header", fallback: "This will use your provider quota") }
-  /// Toggle confirming the user accepts spending provider quota; placeholders are character count and duration.
+  /// Section header explaining that remote narration uploads the document to a third party.
+  internal static var readAloudConfirmHeader: String { return L10n.tr("Localizable", "read_aloud_confirm_header", fallback: "Upload this document to ElevenLabs?") }
+  /// Toggle confirming the user accepts uploading document text and spending provider quota; placeholders are character count and duration.
   internal static func readAloudConfirmToggle(_ p1: Any, _ p2: Any) -> String {
-    return L10n.tr("Localizable", "read_aloud_confirm_toggle", String(describing: p1), String(describing: p2), fallback: "Narrate %1$@ characters (about %2$@ of audio)")
+    return L10n.tr("Localizable", "read_aloud_confirm_toggle", String(describing: p1), String(describing: p2), fallback: "Upload and narrate %1$@ characters (about %2$@ of audio). ElevenLabs may retain requests in your provider history.")
   }
   /// Action that deletes a document, its recordings and its episodes.
   internal static var readAloudDeleteDocument: String { return L10n.tr("Localizable", "read_aloud_delete_document", fallback: "Delete Document") }
@@ -3639,8 +3639,8 @@ nonisolated internal enum L10n {
   internal static var readAloudEngineBuiltin: String { return L10n.tr("Localizable", "read_aloud_engine_builtin", fallback: "Built-in voices") }
   /// Provider engine option.
   internal static var readAloudEngineElevenlabs: String { return L10n.tr("Localizable", "read_aloud_engine_elevenlabs", fallback: "ElevenLabs") }
-  /// Footer explaining that provider narration spends quota.
-  internal static var readAloudEngineFooter: String { return L10n.tr("Localizable", "read_aloud_engine_footer", fallback: "Built-in voices are free and work offline. ElevenLabs sounds much better and uses your own account's quota.") }
+  /// Footer disclosing the remote provider's data transfer, quota use, and provider-side retention.
+  internal static var readAloudEngineFooter: String { return L10n.tr("Localizable", "read_aloud_engine_footer", fallback: "Built-in voices are free and work offline. ElevenLabs uploads your document text to its service, uses your account quota, and may retain requests in your provider history according to your account settings.") }
   /// Settings section header for choosing which engine narrates.
   internal static var readAloudEngineSection: String { return L10n.tr("Localizable", "read_aloud_engine_section", fallback: "Voice Engine") }
   /// Error shown when a document contains nothing to narrate.
@@ -3649,10 +3649,18 @@ nonisolated internal enum L10n {
   internal static var readAloudErrorGeneric: String { return L10n.tr("Localizable", "read_aloud_error_generic", fallback: "Something went wrong while narrating. Try again.") }
   /// Shown when narration needs a provider API key that hasn't been entered yet. Used on the import sheet and as a Shortcuts error.
   internal static var readAloudErrorKeyMissing: String { return L10n.tr("Localizable", "read_aloud_error_key_missing", fallback: "Add your provider API key in Pocket Casts settings first.") }
+  /// Error shown when the remote provider cannot be reached.
+  internal static var readAloudErrorNetwork: String { return L10n.tr("Localizable", "read_aloud_error_network", fallback: "ElevenLabs couldn't be reached. Check your connection and try again.") }
+  /// Error shown when the provider key restricts requests to other IP addresses.
+  internal static var readAloudErrorProviderIpRestricted: String { return L10n.tr("Localizable", "read_aloud_error_provider_ip_restricted", fallback: "This ElevenLabs key doesn't allow requests from your current IP address. Check its IP allowlist.") }
+  /// Error shown when the provider account or key has no narration quota remaining.
+  internal static var readAloudErrorProviderQuota: String { return L10n.tr("Localizable", "read_aloud_error_provider_quota", fallback: "Your ElevenLabs account or API key has no narration quota remaining.") }
   /// Error shown when a document is too long to narrate.
   internal static var readAloudErrorTooLarge: String { return L10n.tr("Localizable", "read_aloud_error_too_large", fallback: "That document is too long to narrate.") }
   /// Error shown when a document can't be read as text.
   internal static var readAloudErrorUnreadable: String { return L10n.tr("Localizable", "read_aloud_error_unreadable", fallback: "That file couldn't be read as text.") }
+  /// Error shown when the selected provider voice is no longer available.
+  internal static var readAloudErrorVoiceUnavailable: String { return L10n.tr("Localizable", "read_aloud_error_voice_unavailable", fallback: "That ElevenLabs voice is no longer available. Choose another voice.") }
   /// Estimated length of the finished audio, e.g. "About 14 min of audio".
   internal static func readAloudEstimatedDuration(_ p1: Any) -> String {
     return L10n.tr("Localizable", "read_aloud_estimated_duration", String(describing: p1), fallback: "About %1$@ of audio")
@@ -3674,9 +3682,11 @@ nonisolated internal enum L10n {
   /// Shown when the provider rejected the key.
   internal static var readAloudKeyInvalid: String { return L10n.tr("Localizable", "read_aloud_key_invalid", fallback: "That key was rejected.") }
   /// Shown when the key is valid but lacks text-to-speech permission.
-  internal static var readAloudKeyNoPermission: String { return L10n.tr("Localizable", "read_aloud_key_no_permission", fallback: "That key works but isn't allowed to use text to speech. Check its permissions in your ElevenLabs account.") }
+  internal static var readAloudKeyNoPermission: String { return L10n.tr("Localizable", "read_aloud_key_no_permission", fallback: "That key can't access the ElevenLabs voice catalog. Grant it the voice and text-to-speech permissions needed for narration.") }
+  /// Shown when a validated provider key could not be persisted securely.
+  internal static var readAloudKeySaveFailed: String { return L10n.tr("Localizable", "read_aloud_key_save_failed", fallback: "Key works, but it couldn't be saved securely. Try again.") }
   /// Shown when the entered key works.
-  internal static var readAloudKeyValid: String { return L10n.tr("Localizable", "read_aloud_key_valid", fallback: "Key works.") }
+  internal static var readAloudKeyValid: String { return L10n.tr("Localizable", "read_aloud_key_valid", fallback: "Key can load ElevenLabs voices. Text-to-speech access and quota are checked when narration starts.") }
   /// Empty state message on the Read Aloud library screen.
   internal static var readAloudLibraryEmptyMessage: String { return L10n.tr("Localizable", "read_aloud_library_empty_message", fallback: "Import a text or Markdown file and Pocket Casts will narrate it into an episode you can listen to.") }
   /// Empty state title on the Read Aloud library screen.

@@ -35,6 +35,7 @@ for fixture in \
   semgrep/tests/swift-security-concurrency-escape-hatches.swift \
   semgrep/tests/swift-security-unchecked-sendable.swift \
   semgrep/tests/swift-security-auth-tokens.swift \
+  semgrep/tests/swift-security-provider-downloads.swift \
   semgrep/tests/swift-playlist-typed-requests.swift \
   semgrep/tests/swift-custom-query-validator.swift \
   semgrep/tests/swift-closedrange-empty-trap.swift \

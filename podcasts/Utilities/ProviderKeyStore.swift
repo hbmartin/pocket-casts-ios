@@ -1,87 +1,145 @@
 import Foundation
 import PocketCastsUtils
 
-/// Keychain storage for the user's third-party API keys, one item per vendor
-/// (`provider.apikey.<id>`).
+/// Keychain storage for the user's third-party API keys.
 ///
-/// Keyed by *vendor*, not by feature, because that is what the key actually is
-/// (ADR-0021). ElevenLabs authenticates both transcription and Read Aloud with
-/// the same account credential, so asking for it twice — and letting one screen
-/// say "configured" while the other says nothing — would be describing our own
-/// architecture rather than the user's account.
+/// Credentials are scoped by both vendor and purpose. Providers such as
+/// ElevenLabs let users issue least-privilege keys independently for speech to
+/// text and text to speech; saving one must not overwrite or broaden the other.
 ///
-/// IMPORTANT: these keys are **deliberately NOT cleared on logout**. They are the
-/// user's own provider credentials, entered by hand and unrelated to the Pocket
-/// Casts account — signing out must not destroy them. Do not add these keys to
-/// any sign-out cleanup path.
+/// Keys written by older builds used `provider.apikey.<id>` (and, before that,
+/// `transcription.apikey.<id>`). Each purpose lazily imports either legacy item
+/// once. A per-purpose migration marker prevents a later delete from reviving
+/// the legacy value while leaving it available to older app builds and to the
+/// other purpose's independent migration.
 ///
-/// Key material must never be logged; nothing in here (or in the provider
-/// adapters) writes the key anywhere except the keychain and the provider's
-/// auth header.
+/// IMPORTANT: these keys are deliberately not cleared on Pocket Casts logout.
+/// They are the user's own provider credentials and are unrelated to the Pocket
+/// Casts account.
 nonisolated enum ProviderKeyStore {
-    /// Serializes reads, writes and deletes. The legacy fallback in
-    /// `apiKey(providerId:)` is a read-then-promote sequence; without the lock,
-    /// a delete landing between those two steps would be undone when the
-    /// in-flight promotion re-saves the key the user just removed.
+    enum Purpose: String, Sendable {
+        case speechToText = "speech-to-text"
+        case textToSpeech = "text-to-speech"
+    }
+
+    /// Serializes each read/promote/write/delete sequence so deletion cannot be
+    /// undone by a concurrent legacy promotion.
     private static let lock = NSLock()
 
-    /// `kSecAttrAccessibleAfterFirstUnlock` so a queued job restored by a
-    /// background task can read the key without the device being unlocked.
+    /// The vendor-scoped key used by older builds. Kept as an API because tests
+    /// and migration code treat the identifier as a shipped storage contract.
     static func keychainKey(providerId: String) -> String {
         "provider.apikey.\(providerId)"
     }
 
-    /// The key this feature used before keys became vendor-scoped. Read as a
-    /// fallback and promoted on first read, so nobody re-enters a credential
-    /// they already gave the app.
+    static func keychainKey(providerId: String, purpose: Purpose) -> String {
+        "provider.apikey.\(purpose.rawValue).\(providerId)"
+    }
+
+    /// The key used before credentials first became vendor-scoped.
     static func legacyTranscriptionKey(providerId: String) -> String {
         "transcription.apikey.\(providerId)"
     }
 
-    /// The stored key for a vendor, or nil when none has been entered (or the
-    /// stored value is empty).
-    ///
-    /// Falls back to the legacy transcription-scoped item and migrates it
-    /// forward on the way past. The legacy item is left in place: an older build
-    /// running against the same keychain still expects to find it there.
-    static func apiKey(providerId: String) -> String? {
-        lock.lock()
-        defer { lock.unlock() }
-        if let key = try? KeychainHelper.string(for: keychainKey(providerId: providerId)), !key.isEmpty {
-            return key
-        }
-        guard let legacy = try? KeychainHelper.string(for: legacyTranscriptionKey(providerId: providerId)),
-              !legacy.isEmpty else {
+    static func normalizedAPIKey(_ apiKey: String?) -> String? {
+        guard let trimmed = apiKey?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !trimmed.isEmpty else {
             return nil
         }
-        store(legacy, providerId: providerId)
+        return trimmed
+    }
+
+    static func apiKey(providerId: String, purpose: Purpose) -> String? {
+        lock.lock()
+        defer { lock.unlock() }
+
+        if let key = storedKey(keychainKey(providerId: providerId, purpose: purpose)) {
+            return key
+        }
+        guard storedKey(migrationMarkerKey(providerId: providerId, purpose: purpose)) == nil else {
+            return nil
+        }
+
+        guard let legacy = storedKey(keychainKey(providerId: providerId))
+            ?? storedKey(legacyTranscriptionKey(providerId: providerId)) else {
+            return nil
+        }
+
+        let saved = KeychainHelper.save(
+            string: legacy,
+            key: keychainKey(providerId: providerId, purpose: purpose),
+            accessibility: kSecAttrAccessibleAfterFirstUnlock
+        )
+        if saved {
+            markMigration(providerId: providerId, purpose: purpose)
+        }
         return legacy
     }
 
-    /// Stores (or, for nil/whitespace-only input, deletes) the vendor's key.
-    static func setAPIKey(_ apiKey: String?, providerId: String) {
+    @discardableResult
+    static func setAPIKey(_ apiKey: String?, providerId: String, purpose: Purpose) -> Bool {
         lock.lock()
         defer { lock.unlock() }
-        store(apiKey, providerId: providerId)
-    }
 
-    /// Callers must hold `lock`.
-    ///
-    /// A delete clears the legacy item too — otherwise "remove my key" would
-    /// leave a copy that the fallback above immediately resurrects.
-    private static func store(_ apiKey: String?, providerId: String) {
-        let trimmed = apiKey?.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let trimmed, !trimmed.isEmpty {
-            KeychainHelper.save(string: trimmed,
-                                key: keychainKey(providerId: providerId),
-                                accessibility: kSecAttrAccessibleAfterFirstUnlock)
+        let key = keychainKey(providerId: providerId, purpose: purpose)
+        if let normalized = normalizedAPIKey(apiKey) {
+            let saved = KeychainHelper.save(
+                string: normalized,
+                key: key,
+                accessibility: kSecAttrAccessibleAfterFirstUnlock
+            )
+            guard saved else { return false }
+            return markMigration(providerId: providerId, purpose: purpose)
         } else {
-            KeychainHelper.removeKey(keychainKey(providerId: providerId))
-            KeychainHelper.removeKey(legacyTranscriptionKey(providerId: providerId))
+            // Write the tombstone before deleting. If it cannot be persisted,
+            // retain the current scoped value rather than claiming success and
+            // letting a legacy fallback resurrect after the failed delete.
+            guard markMigration(providerId: providerId, purpose: purpose) else { return false }
+            return KeychainHelper.removeKey(key)
         }
     }
 
-    static func deleteAPIKey(providerId: String) {
-        setAPIKey(nil, providerId: providerId)
+    @discardableResult
+    static func deleteAPIKey(providerId: String, purpose: Purpose) -> Bool {
+        setAPIKey(nil, providerId: providerId, purpose: purpose)
+    }
+
+    // MARK: - Compatibility
+
+    /// Remaining call sites from the Read Aloud feature's first release use the
+    /// vendor-only spelling. Keep them source-compatible while routing them to
+    /// the text-to-speech slot; new code should always state its purpose.
+    static func apiKey(providerId: String) -> String? {
+        apiKey(providerId: providerId, purpose: .textToSpeech)
+    }
+
+    @discardableResult
+    static func setAPIKey(_ apiKey: String?, providerId: String) -> Bool {
+        setAPIKey(apiKey, providerId: providerId, purpose: .textToSpeech)
+    }
+
+    @discardableResult
+    static func deleteAPIKey(providerId: String) -> Bool {
+        deleteAPIKey(providerId: providerId, purpose: .textToSpeech)
+    }
+
+    // MARK: - Migration internals
+
+    private static func migrationMarkerKey(providerId: String, purpose: Purpose) -> String {
+        "provider.apikey.migrated.\(purpose.rawValue).\(providerId)"
+    }
+
+    private static func storedKey(_ key: String) -> String? {
+        guard let value = try? KeychainHelper.string(for: key) else { return nil }
+        return normalizedAPIKey(value)
+    }
+
+    @discardableResult
+    private static func markMigration(providerId: String, purpose: Purpose) -> Bool {
+        KeychainHelper.save(
+            string: "1",
+            key: migrationMarkerKey(providerId: providerId, purpose: purpose),
+            accessibility: kSecAttrAccessibleAfterFirstUnlock
+        )
     }
 }
