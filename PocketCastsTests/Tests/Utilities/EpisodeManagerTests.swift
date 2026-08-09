@@ -181,4 +181,28 @@ final class EpisodeManagerTests: DBTestCase {
 
         XCTAssertEqual(EpisodeManager.orphanedTmpFolderSize(folderPath: tmpDir), 3)
     }
+
+    func testCleanUpOrphanedDownloadsKeepsKnownEpisodeAndRemovesOrphan() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let known = directory.appendingPathComponent("known-episode.mp3")
+        let orphan = directory.appendingPathComponent("purged-local-episode.m4a")
+        let ancillary = directory.appendingPathComponent("README")
+        XCTAssertTrue(FileManager.default.createFile(atPath: known.path, contents: Data()))
+        XCTAssertTrue(FileManager.default.createFile(atPath: orphan.path, contents: Data()))
+        XCTAssertTrue(FileManager.default.createFile(atPath: ancillary.path, contents: Data()))
+
+        XCTAssertTrue(EpisodeManager.cleanUpOrphanedDownloads(
+            folderPath: directory.path,
+            episodeExists: { $0 == "known-episode" }
+        ))
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: known.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: orphan.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: ancillary.path),
+                      "non-episode ancillary files are outside cleanup scope")
+    }
 }

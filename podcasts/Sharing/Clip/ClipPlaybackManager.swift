@@ -28,11 +28,14 @@ class ClipPlaybackManager: ObservableObject {
             avPlayer = nil
         }
 
-        normalPlaybackManager.pause()
-
         guard let playerItem = downloadManager.downloadParallelToStream(of: episode) else {
             return
         }
+
+        // Do not interrupt ordinary episode playback unless the clip has a
+        // playable item. A failed parallel download should leave the user's
+        // current listening session untouched.
+        normalPlaybackManager.pause()
 
         avPlayer = AVPlayer(playerItem: playerItem)
 

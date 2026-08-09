@@ -36,13 +36,10 @@ final class HighlightsTourController {
     /// background-suppressed progress notification make it useless here).
     private var transcriptSource = ""
 
-    /// Latched at plan-ready so the whole tour runs in one time domain:
-    /// adopting the alignment mid-tour (the user opening the transcript view
-    /// starts it) would shift every later tick by the ad offset, which the
-    /// reducer reads as an external seek and cancels on. If the alignment
-    /// instead DROPS mid-tour the mapping calls fail closed to raw times —
-    /// that shift is unavoidable since mapping requires an active alignment.
-    private var useReferenceMapping = false
+    /// Captured at plan-ready so the whole tour runs against one immutable
+    /// time mapping. Singleton restarts, stops, and episode changes must not
+    /// shift later ticks back to raw transcript time.
+    private var timeMapping: FingerprintTimingManager.TimeMappingSnapshot?
 
     private var cancellables = Set<AnyCancellable>()
     private let observationTokens = ObservationTokenBox()
@@ -159,9 +156,9 @@ final class HighlightsTourController {
         }
 
         if case .active = FingerprintTimingManager.shared.state, transcriptSource == "provided" {
-            useReferenceMapping = true
+            timeMapping = FingerprintTimingManager.shared.mappingSnapshot(episodeUuid: episode.uuid)
         } else {
-            useReferenceMapping = false
+            timeMapping = nil
         }
         machine = TourStateMachine(plan: plan, spokenTransitions: Settings.tourSpokenTransitionsEnabled)
         dispatch(.planReady)
@@ -273,10 +270,7 @@ final class HighlightsTourController {
     /// was already active at plan-ready (the transcript view running
     /// alongside); raw time otherwise — ad drift accepted for v1.
     private func resolvedSeekTime(_ referenceTime: TimeInterval) -> TimeInterval {
-        guard useReferenceMapping,
-              case .active = FingerprintTimingManager.shared.state,
-              let mapped = FingerprintTimingManager.shared.playbackTime(
-                  forReferenceTime: referenceTime, episodeUuid: episode.uuid) else {
+        guard let mapped = timeMapping?.playbackTime(forReferenceTime: referenceTime) else {
             return referenceTime
         }
         return mapped
@@ -286,10 +280,7 @@ final class HighlightsTourController {
     /// transcript's reference timeline, so player times (ticks, external
     /// seeks) map back before the reducer compares them.
     private func resolvedReferenceTime(_ playbackTime: TimeInterval) -> TimeInterval {
-        guard useReferenceMapping,
-              case .active = FingerprintTimingManager.shared.state,
-              let mapped = FingerprintTimingManager.shared.referenceTime(
-                  forPlaybackTime: playbackTime, episodeUuid: episode.uuid) else {
+        guard let mapped = timeMapping?.referenceTime(forPlaybackTime: playbackTime) else {
             return playbackTime
         }
         return mapped

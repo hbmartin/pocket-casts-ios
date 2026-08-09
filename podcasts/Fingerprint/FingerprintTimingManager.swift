@@ -83,7 +83,7 @@ nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable 
         }
     }
 
-    nonisolated struct TimeMappingEntry {
+    nonisolated struct TimeMappingEntry: Sendable {
         let playbackTime: Double
         let referenceTime: Double
         let score: Float
@@ -92,6 +92,36 @@ nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable 
             self.playbackTime = playbackTime
             self.referenceTime = referenceTime
             self.score = score
+        }
+    }
+
+    /// Immutable conversion tables for callers that must keep one time-domain
+    /// decision across a longer-lived operation such as a Highlights Tour.
+    nonisolated struct TimeMappingSnapshot: Sendable {
+        private let playbackToReference: [TimeMappingEntry]
+        private let referenceToPlayback: [TimeMappingEntry]
+
+        init(entries: [TimeMappingEntry]) {
+            playbackToReference = entries.sorted { $0.playbackTime < $1.playbackTime }
+            referenceToPlayback = entries.sorted { $0.referenceTime < $1.referenceTime }
+        }
+
+        func referenceTime(forPlaybackTime playbackTime: Double) -> Double? {
+            FingerprintTimingManager.interpolate(
+                time: playbackTime,
+                in: playbackToReference,
+                keyPath: \.playbackTime,
+                valuePath: \.referenceTime
+            )
+        }
+
+        func playbackTime(forReferenceTime referenceTime: Double) -> Double? {
+            FingerprintTimingManager.interpolate(
+                time: referenceTime,
+                in: referenceToPlayback,
+                keyPath: \.referenceTime,
+                valuePath: \.playbackTime
+            )
         }
     }
 
@@ -322,6 +352,17 @@ nonisolated final class FingerprintTimingManager: NSObject, @unchecked Sendable 
                 keyPath: \.referenceTime,
                 valuePath: \.playbackTime
             )
+        }
+    }
+
+    /// Atomically captures the current mapping only when it belongs to the
+    /// requested episode. The returned value remains valid if the singleton is
+    /// later restarted, stopped, or switched to another episode.
+    func mappingSnapshot(episodeUuid: String) -> TimeMappingSnapshot? {
+        dispatchPrecondition(condition: .notOnQueue(queue))
+        return queue.sync {
+            guard context?.episodeUuid == episodeUuid, !playbackToReference.isEmpty else { return nil }
+            return TimeMappingSnapshot(entries: playbackToReference)
         }
     }
 

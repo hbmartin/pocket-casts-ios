@@ -416,6 +416,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 UserDefaults.standard.set(true, forKey: "SweptLocalFeedKeychainV1")
             }
         }
+        if !UserDefaults.standard.bool(forKey: "SweptLocalFeedDownloadsV1"),
+           EpisodeManager.cleanUpOrphanedDownloads() {
+            UserDefaults.standard.set(true, forKey: "SweptLocalFeedDownloadsV1")
+        }
         Task {
             await DownloadManager.shared.clearStuckDownloads()
         }

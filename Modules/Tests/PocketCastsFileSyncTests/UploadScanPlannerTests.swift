@@ -62,12 +62,15 @@ final class UploadScanPlannerTests: XCTestCase {
         XCTAssertEqual(actions, [.updatePath(episodeUuid: "ue-1", entry: moved, group: "Audiobooks")])
     }
 
-    func testRenameUsesSizeWhenKnownMtimeIsUnavailable() {
+    func testSizeAloneDoesNotTransferEpisodeIdentity() {
         let moved = entry("renamed.mp3", size: 1234, mtime: 777)
         let actions = UploadScanPlanner.plan(
             mediaEntries: [moved],
             knownEpisodes: [known("ue-1", path: "old-name.mp3", size: 1234, mtime: 0)])
-        XCTAssertEqual(actions, [.updatePath(episodeUuid: "ue-1", entry: moved, group: "")])
+        XCTAssertEqual(actions, [
+            .createProvisional(entry: moved, group: ""),
+            .removeEpisode(episodeUuid: "ue-1"),
+        ])
     }
 
     func testDeletedFileRemovesEpisode() {

@@ -406,6 +406,45 @@ nonisolated class EpisodeManager: NSObject {
         FileLog.shared.addMessage("Episode Manager: Ending removing the temporary orphan files. Removed \(formatFileSizes)")
     }
 
+    /// Removes completed-download files whose episode row no longer exists.
+    /// Migration 90 deleted local-feed rows from the database, but database
+    /// migrations cannot remove their audio from the app's Documents folder.
+    /// Returns false when enumeration or any removal fails so the one-time
+    /// launch reconciliation can retry later.
+    @discardableResult
+    class func cleanUpOrphanedDownloads(
+        folderPath: String = DownloadManager.shared.podcastsDirectory,
+        episodeExists: (String) -> Bool = { DataManager.sharedManager.findBaseEpisode(uuid: $0) != nil }
+    ) -> Bool {
+        let folderURL = URL(fileURLWithPath: folderPath, isDirectory: true)
+        let fileManager = FileManager.default
+        let urls: [URL]
+        do {
+            urls = try fileManager.contentsOfDirectory(
+                at: folderURL,
+                includingPropertiesForKeys: [.isRegularFileKey],
+                options: [.skipsHiddenFiles]
+            )
+        } catch {
+            FileLog.shared.addMessage("Episode Manager: Could not enumerate downloaded episodes: \(error)")
+            return false
+        }
+
+        var allRemovalsSucceeded = true
+        for url in urls {
+            guard (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true,
+                  !url.pathExtension.isEmpty else { continue }
+            let episodeUuid = url.deletingPathExtension().lastPathComponent
+            guard !episodeExists(episodeUuid) else { continue }
+
+            FileLog.shared.addMessage("Episode Manager: Removing orphaned downloaded file \(url.lastPathComponent)")
+            if !StorageManager.removeItem(at: url) {
+                allRemovalsSucceeded = false
+            }
+        }
+        return allRemovalsSucceeded
+    }
+
     class func tmpFolderSize(folderPath: String = DownloadManager.shared.tempDownloadFolder) -> UInt64 {
         var totalFilesSize: UInt64 = 0
         enumerateTmpFolder(folderPath: folderPath) { _, attributes in

@@ -279,6 +279,8 @@ final class DatabaseHelperMigrationTests: XCTestCase {
             try db.execute(sql: "INSERT INTO BookmarkTag (bookmarkUuid, tag) VALUES ('bm-local', 'tag-1')")
             try db.execute(sql: "INSERT INTO PendingTranscriptUpload (episodeUuid, podcastUuid) VALUES ('ep-local', 'pod-local')")
             try db.execute(sql: "INSERT INTO PendingTranscriptUpload (episodeUuid, podcastUuid) VALUES ('ep-server', 'pod-server')")
+            try db.execute(sql: "INSERT INTO PodcastFoldersHistory (podcastUuid, folderUuid, date) VALUES ('pod-local', 'folder-1', 1000)")
+            try db.execute(sql: "INSERT INTO PodcastFoldersHistory (podcastUuid, folderUuid, date) VALUES ('pod-server', 'folder-1', 1000)")
             try db.execute(sql: "INSERT INTO SJFilteredPlaylist (id, playlistName, uuid, filterAllPodcasts, podcastUuids) VALUES (1, 'Mixed', 'filter-mixed', 0, 'pod-local,pod-server')")
             try db.execute(sql: "INSERT INTO SJFilteredPlaylist (id, playlistName, uuid, filterAllPodcasts, podcastUuids) VALUES (2, 'Local', 'filter-local', 0, 'pod-local')")
             try db.execute(sql: "INSERT INTO SJFilteredPlaylist (id, playlistName, uuid, filterAllPodcasts, podcastUuids) VALUES (3, 'Server', 'filter-server', 0, 'pod-server')")
@@ -307,6 +309,10 @@ final class DatabaseHelperMigrationTests: XCTestCase {
             XCTAssertEqual(
                 try String.fetchAll(db, sql: "SELECT episodeUuid FROM PendingTranscriptUpload"),
                 ["ep-server"]
+            )
+            XCTAssertEqual(
+                try String.fetchAll(db, sql: "SELECT podcastUuid FROM PodcastFoldersHistory"),
+                ["pod-server"]
             )
             XCTAssertEqual(
                 try Row.fetchAll(db, sql: "SELECT uuid, podcastUuids FROM SJFilteredPlaylist ORDER BY id").map {
