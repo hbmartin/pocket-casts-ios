@@ -199,6 +199,14 @@ enum UITestScenarioLauncher {
     private static func configureStableUserState() {
         Settings.shouldShowInitialOnboardingFlow = false
         SyncManager.clearTokensFromKeyChain()
+        // The email is what `SyncManager.isUserLoggedIn()` actually reads, so
+        // clearing only the tokens leaves the app believing it is signed in. It
+        // then tries to refresh a token that is no longer there, decides the
+        // account is "in a weird state", and signs out *during* the test —
+        // putting the onboarding flow on screen over whatever was being
+        // asserted. Without this the readiness marker's `account=signedOut` is
+        // not true on any simulator that has ever signed in.
+        ServerSettings.setSyncingEmail(email: nil)
         ServerSettings.userId = nil
         ServerSettings.removePushToken()
 
