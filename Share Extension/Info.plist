@@ -19,7 +19,7 @@
                 || ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "org.opml.opml"
                 || ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "public.audio"
                 || ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "public.movie"
-                || ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "public.plain-text"
+				|| ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "$(READ_ALOUD_SHARE_TYPE)"
                 )
                 ).@count == 1
                 ).@count == 1
